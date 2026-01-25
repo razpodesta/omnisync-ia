@@ -1,0 +1,19 @@
+{
+  "name": "vector-qdrant-driver",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/vector-qdrant-driver/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:integration"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/vector-qdrant-driver",
+        "main": "libs/integrations/vector-qdrant-driver/src/index.ts",
+        "tsConfig": "libs/integrations/vector-qdrant-driver/tsconfig.lib.json",
+        "assets": ["libs/integrations/vector-qdrant-driver/*.md"]
+      }
+    }
+  }
+}

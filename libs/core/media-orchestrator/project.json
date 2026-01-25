@@ -1,0 +1,19 @@
+{
+  "name": "media-orchestrator",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/core/media-orchestrator/src",
+  "projectType": "library",
+  "tags": ["scope:core", "type:util"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/core/media-orchestrator",
+        "main": "libs/core/media-orchestrator/src/index.ts",
+        "tsConfig": "libs/core/media-orchestrator/tsconfig.lib.json",
+        "assets": ["libs/core/media-orchestrator/*.md"]
+      }
+    }
+  }
+}

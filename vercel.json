@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "buildCommand": "npx nx build admin-dashboard --prod",
+  "outputDirectory": "dist/apps/admin-dashboard/.next",
+  "framework": "nextjs"
+}

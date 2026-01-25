@@ -1,0 +1,19 @@
+{
+  "name": "tenants",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/domain/tenants/src",
+  "projectType": "library",
+  "tags": ["scope:domain", "type:application"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/domain/tenants",
+        "main": "libs/domain/tenants/src/index.ts",
+        "tsConfig": "libs/domain/tenants/tsconfig.lib.json",
+        "assets": ["libs/domain/tenants/*.md"]
+      }
+    }
+  }
+}

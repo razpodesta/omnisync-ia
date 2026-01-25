@@ -1,0 +1,12 @@
+
+{
+    "domain": {
+      "tenants": {
+        "errors": {
+          "not_found": "La configuración de la organización no pudo ser localizada.",
+          "inactive": "El servicio para esta organización se encuentra temporalmente suspendido.",
+          "invalid_config": "Error crítico: La configuración del adaptador ERP/IA es inconsistente."
+        }
+      }
+    }
+  }

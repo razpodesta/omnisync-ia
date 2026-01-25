@@ -1,0 +1,19 @@
+{
+  "name": "erp-adapter-mock",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/erp-adapter-mock/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:integration"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/erp-adapter-mock",
+        "main": "libs/integrations/erp-adapter-mock/src/index.ts",
+        "tsConfig": "libs/integrations/erp-adapter-mock/tsconfig.lib.json",
+        "assets": ["libs/integrations/erp-adapter-mock/*.md"]
+      }
+    }
+  }
+}

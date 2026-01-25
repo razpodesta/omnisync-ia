@@ -1,0 +1,14 @@
+autoInstallPeers: true
+
+onlyBuiltDependencies:
+  - '@apollo/protobufjs'
+  - '@nestjs/core'
+  - '@parcel/watcher'
+  - '@prisma/engines'
+  - '@swc/core'
+  - esbuild
+  - less
+  - nx
+  - prisma
+  - sharp
+  - unrs-resolver

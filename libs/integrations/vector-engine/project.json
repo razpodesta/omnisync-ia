@@ -1,0 +1,19 @@
+{
+  "name": "vector-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/vector-engine/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/vector-engine",
+        "main": "libs/integrations/vector-engine/src/index.ts",
+        "tsConfig": "libs/integrations/vector-engine/tsconfig.lib.json",
+        "assets": ["libs/integrations/vector-engine/*.md"]
+      }
+    }
+  }
+}

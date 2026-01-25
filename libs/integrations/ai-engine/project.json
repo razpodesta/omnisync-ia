@@ -1,0 +1,19 @@
+{
+  "name": "ai-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/ai-engine/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/ai-engine",
+        "main": "libs/integrations/ai-engine/src/index.ts",
+        "tsConfig": "libs/integrations/ai-engine/tsconfig.lib.json",
+        "assets": ["libs/integrations/ai-engine/*.md"]
+      }
+    }
+  }
+}

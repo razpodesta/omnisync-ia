@@ -1,0 +1,13 @@
+/** libs/core/security/src/lib/i18n/es.json (Actualización) */
+{
+  "common": {
+    "welcome": "Bienvenido a Omnisync-AI",
+    "status": "Sistema en línea",
+    "input_placeholder": "Escribe una consulta técnica..."
+  },
+  "widget": {
+    "header": "Soporte Neural",
+    "send": "Enviar",
+    "ai_typing": "La IA está procesando..."
+  }
+}

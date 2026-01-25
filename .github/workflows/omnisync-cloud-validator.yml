@@ -1,0 +1,45 @@
+/** .github/workflows/omnisync-cloud-validator.yml */
+
+name: 🧠 Omnisync Cloud Validator
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js & PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🗄️ Database Sync (Prisma Cloud)
+        run: npx prisma db push --schema=libs/core/persistence/prisma/schema.prisma
+
+      - name: 🏗️ Nx Build (Atomic Check)
+        run: npx nx run-many -t build --all
+
+      - name: 🧪 Mirror Testing
+        run: npx nx run-many -t test --all

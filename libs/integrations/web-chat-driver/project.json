@@ -1,0 +1,19 @@
+{
+  "name": "web-chat-driver",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/web-chat-driver/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/web-chat-driver",
+        "main": "libs/integrations/web-chat-driver/src/index.ts",
+        "tsConfig": "libs/integrations/web-chat-driver/tsconfig.lib.json",
+        "assets": ["libs/integrations/web-chat-driver/*.md"]
+      }
+    }
+  }
+}

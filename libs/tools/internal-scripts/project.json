@@ -1,0 +1,19 @@
+{
+  "name": "internal-scripts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/tools/internal-scripts/src",
+  "projectType": "library",
+  "tags": ["scope:tools", "type:util"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/tools/internal-scripts",
+        "main": "libs/tools/internal-scripts/src/index.ts",
+        "tsConfig": "libs/tools/internal-scripts/tsconfig.lib.json",
+        "assets": ["libs/tools/internal-scripts/*.md"]
+      }
+    }
+  }
+}

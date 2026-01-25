@@ -1,0 +1,41 @@
+/** .gitignore */
+# Dependency directories
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+out-tsc/
+.next/
+bin/
+
+# Nx & Cache
+.nx/cache/
+.nx/workspace-data/
+tmp/
+
+# Testing & Coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+secrets.*
+
+# OS Specific (Windows 10)
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Project Specific (Omnisync)
+snapshot-reports/
+*.log
+
+# Next.js
+.next
+out
