@@ -1,15 +1,24 @@
-const { join } = require('path');
+/** apps/admin-dashboard/postcss.config.js */
 
-// Note: If you use library-specific PostCSS/Tailwind configuration then you should remove the `postcssConfig` build
-// option from your application's configuration (i.e. project.json).
-//
-// See: https://nx.dev/guides/using-tailwind-css-in-react#step-4:-applying-configuration-to-libraries
-
+/**
+ * @name PostcssConfiguration
+ * @description Aparato de configuración para el procesamiento de estilos CSS.
+ * Nivelado específicamente para Tailwind CSS v4 y Next.js 16. Sustituye la 
+ * invocación directa del motor por el plugin especializado de PostCSS para 
+ * garantizar la compatibilidad con el compilador Turbopack en Vercel.
+ */
 module.exports = {
   plugins: {
-    tailwindcss: {
-      config: join(__dirname, 'tailwind.config.js'),
-    },
-    autoprefixer: {},
+    /** 
+     * Invocación del plugin oficial de Tailwind v4 para PostCSS.
+     * Requerido por el estándar de la versión 4.0+.
+     */
+    '@tailwindcss/postcss': {},
+    
+    /** 
+     * Plugin para la adición automática de prefijos de navegadores, 
+     * asegurando la consistencia visual en entornos de producción.
+     */
+    'autoprefixer': {},
   },
 };

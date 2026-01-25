@@ -1,37 +1,49 @@
-/** .github/workflows/remote-integrity-check.yml */
-
+# .github/workflows/remote-integrity-check.yml
 name: Omnisync Remote Integrity (Manual)
 
-# Se activa exclusivamente de forma manual para controlar el consumo de recursos Cloud
+# Ejecución estrictamente manual para control de costos y recursos
 on:
   workflow_dispatch:
     inputs:
-      reason:
+      audit_reason:
         description: 'Motivo de la auditoría manual'
-        required: false
-        default: 'Validación de nivelación de aparato'
+        required: true
+        default: 'Verificación de Nivelación de Aparato'
 
 jobs:
-  cloud-validation:
+  validate-neural-infrastructure:
     runs-on: ubuntu-latest
+    
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js (V22)
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install PNPM
-        run: npm install -g pnpm
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
 
-      - name: Install Dependencies
+      - name: 📥 Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Atomic Tests
-        run: pnpm nx run-many -t test --all
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+      - name: 🗄️ Database DNA Sync (Prisma)
+        run: npx prisma db push --schema=libs/core/persistence/prisma/schema.prisma
+
+      - name: 🏗️ Nx Atomic Build
+        run: npx nx run-many -t build --all
+
+      - name: 🧪 Mirror Testing (Logic Validation)
+        run: npx nx run-many -t test --all

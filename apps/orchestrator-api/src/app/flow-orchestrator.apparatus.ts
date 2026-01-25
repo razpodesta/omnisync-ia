@@ -1,71 +1,134 @@
-/** apps/orchestrator-api/src/app/flow-orchestrator.apparatus.ts */
+/** apps/admin-dashboard/src/app/[locale]/knowledge/page.tsx */
 
+'use client';
+
+import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { NeuralBridge } from '@omnisync/core-contracts';
+import { TenantId } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
-import { OmnisyncDatabase } from '@omnisync/core-persistence';
-import { OmnisyncMemory } from '@omnisync/core-persistence';
-import { AIDriverFactory } from '@omnisync/ai-engine';
-import { 
-  INeuralIntent, 
-  INeuralFlowResult, 
-  AIResponseSchema,
-  NeuralFlowResultSchema 
-} from '@omnisync/core-contracts';
 
 /**
- * @name NeuralFlowOrchestrator
- * @description Punto central de inteligencia. Coordina la persistencia, 
- * la recuperación de memoria y la inferencia de IA.
+ * @interface KnowledgeAdministrativePageProperties
+ * @description Define la estructura de parámetros para la página de gestión de conocimiento.
  */
-export class NeuralFlowOrchestrator {
+interface KnowledgeAdministrativePageProperties {
+  readonly params: Promise<{ locale: string }>;
+}
+
+/**
+ * @name KnowledgeAdministrativePage
+ * @description Interfaz de alta gama diseñada bajo los principios de Manus.io. 
+ * Permite a los administradores del Tenant inyectar manuales técnicos y comerciales 
+ * en el motor de búsqueda semántica (RAG), asegurando que la IA posea el contexto 
+ * operativo más actualizado.
+ */
+export default function KnowledgeAdministrativePage({
+  params,
+}: KnowledgeAdministrativePageProperties): JSX.Element {
+  const translations = useTranslations('knowledge');
   
-  public static async process(intent: INeuralIntent): Promise<INeuralFlowResult> {
-    return await OmnisyncTelemetry.traceExecution(
-      'NeuralFlowOrchestrator',
-      'process',
-      async () => {
-        const startTime = performance.now();
+  // Estados de control con tipado estricto
+  const [documentContent, setDocumentContent] = useState<string>('');
+  const [documentTitle, setDocumentTitle] = useState<string>('');
+  const [operationStatus, setOperationStatus] = useState<'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILURE'>('IDLE');
 
-        // 1. Resolución de Tenant y Configuración (PostgreSQL)
-        const tenant = await OmnisyncDatabase.db.tenant.findUnique({
-          where: { id: intent.tenantId }
-        });
+  /**
+   * @method handleKnowledgeIngestion
+   * @description Orquesta el envío del documento al Neural Hub para su vectorización.
+   */
+  const handleKnowledgeIngestion = async (): Promise<void> => {
+    if (!documentContent || !documentTitle) return;
 
-        if (!tenant) throw new Error('TENANT_NOT_FOUND');
+    setOperationStatus('PROCESSING');
 
-        // 2. Recuperación de Memoria (Upstash Redis)
-        const sessionId = `${intent.tenantId}:${intent.externalUserId}`;
-        const history = await OmnisyncMemory.getHistory(sessionId);
+    try {
+      // Nota: En fase de hidratación real, el TenantID se recupera de la sesión activa
+      const currentTenantIdentifier = '00000000-0000-0000-0000-000000000000' as TenantId;
 
-        // 3. Inferencia de IA (Agnóstica)
-        const driver = AIDriverFactory.getDriver(tenant.aiProvider);
-        const aiSuggestion = await driver.generateResponse(
-          intent.payload.content,
-          tenant.aiConfig as any, // Cast controlado del JSON de Prisma
-          history as any
-        );
+      await NeuralBridge.request('/v1/neural/ingest', currentTenantIdentifier, {
+        documentTitle,
+        documentRawContent: documentContent,
+        documentCategory: 'TECHNICAL',
+      });
 
-        // 4. Actualización de Memoria (Asíncrona)
-        const userMsg = { role: 'user', parts: [{ text: intent.payload.content }] };
-        const modelMsg = { role: 'model', parts: [{ text: aiSuggestion }] };
-        
-        await OmnisyncMemory.pushHistory(sessionId, userMsg);
-        await OmnisyncMemory.pushHistory(sessionId, modelMsg);
+      OmnisyncTelemetry.verbose('KnowledgeAdministrativePage', 'ingest', `Documento indexado: ${documentTitle}`);
+      
+      setOperationStatus('SUCCESS');
+      setDocumentContent('');
+      setDocumentTitle('');
 
-        // 5. Respuesta Final (SSOT)
-        return NeuralFlowResultSchema.parse({
-          intentId: intent.id,
-          tenantId: intent.tenantId,
-          aiResponse: {
-            conversationId: sessionId,
-            suggestion: aiSuggestion,
-            status: 'RESOLVED',
-            confidenceScore: 1,
-            sourceManuals: []
-          },
-          finalMessage: aiSuggestion,
-          executionTime: performance.now() - startTime
-        });
-      }
-    );
-  }
+      // Reset de estado tras éxito
+      setTimeout(() => setOperationStatus('IDLE'), 3000);
+
+    } catch (error: unknown) {
+      console.error('[KNOWLEDGE_INGESTION_FAILURE]', error);
+      setOperationStatus('FAILURE');
+      setTimeout(() => setOperationStatus('IDLE'), 5000);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto py-24 px-8 space-y-20 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      
+      {/* Cabecera de Identidad */}
+      <header className="space-y-6">
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-black uppercase tracking-[0.6em] text-neutral-400">
+            {translations('section_label')}
+          </span>
+          <div className="h-[1px] w-12 bg-neutral-200 dark:bg-neutral-800" />
+        </div>
+        <h1 className="text-6xl font-light tracking-tighter leading-tight text-black dark:text-white italic">
+          Ingeniería de <span className="font-bold not-italic underline decoration-1 underline-offset-8">Contexto Semántico.</span>
+        </h1>
+      </header>
+
+      {/* Editor de Ingesta Manus-Style */}
+      <div className="grid grid-cols-1 gap-16">
+        <section className="space-y-8 group">
+          <div className="relative">
+            <input 
+              value={documentTitle}
+              onChange={(event) => setDocumentTitle(event.target.value.toUpperCase())}
+              placeholder={translations('title_placeholder')}
+              className="w-full bg-transparent border-b border-border py-6 text-sm font-bold outline-none uppercase tracking-[0.2em] focus:border-black dark:focus:border-white transition-all duration-500 placeholder:opacity-20"
+            />
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-white group-focus-within:w-full transition-all duration-700" />
+          </div>
+
+          <textarea 
+            value={documentContent}
+            onChange={(event) => setDocumentContent(event.target.value)}
+            className="w-full h-[450px] bg-neutral-50 dark:bg-neutral-900/30 border border-border p-10 text-[15px] leading-relaxed font-light outline-none focus:ring-1 ring-neutral-200 dark:ring-neutral-800 transition-all placeholder:opacity-20 scrollbar-hide"
+            placeholder={translations('content_placeholder')}
+          />
+        </section>
+
+        {/* Barra de Acciones y Estado */}
+        <footer className="flex justify-between items-center border-t border-border pt-12">
+          <div className="flex flex-col gap-2">
+            <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-30">
+              {operationStatus === 'PROCESSING' ? translations('status_syncing') : translations('status_ready')}
+            </span>
+            {operationStatus === 'SUCCESS' && (
+              <span className="text-[9px] text-green-500 font-bold uppercase tracking-widest animate-pulse">
+                ADN CORPORATIVO ACTUALIZADO
+              </span>
+            )}
+          </div>
+
+          <button 
+            onClick={handleKnowledgeIngestion}
+            disabled={operationStatus === 'PROCESSING' || !documentContent || !documentTitle}
+            className="group relative overflow-hidden bg-black dark:bg-white text-white dark:text-black px-16 py-5 text-[11px] font-black uppercase tracking-[0.3em] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-10 disabled:grayscale"
+          >
+            <span className="relative z-10">
+              {operationStatus === 'PROCESSING' ? '...' : translations('ingest_button')}
+            </span>
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
 }

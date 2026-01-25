@@ -1,20 +1,21 @@
-//@ts-check
+/** apps/admin-dashboard/next.config.ts */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { composePlugins, withNx } = require('@nx/next');
+import { withNx } from '@nx/next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
-/**
- * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
- **/
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
 const nextConfig = {
-  // Use this to set Nx-specific options
-  // See: https://nx.dev/recipes/next/next-config-setup
-  nx: {},
+  nx: { svgr: true },
+  experimental: {
+    // Preparados para Next.js 16 Partial Prerendering
+    ppr: true, 
+  },
+  // Seguridad de cabeceras para Vercel
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: []
+  }
 };
 
-const plugins = [
-  // Add more Next.js plugins to this list if needed.
-  withNx,
-];
-
-module.exports = composePlugins(...plugins)(nextConfig);
+export default withNx(withNextIntl(nextConfig));

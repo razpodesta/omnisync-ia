@@ -9,17 +9,46 @@
     "type": "git",
     "url": "https://github.com/metashark-tech/omnisync-ai-ecosystem.git"
   },
-  "scripts": {
-    "nx": "nx",
+   "scripts": {
+   
+    /* 🌐 i18n & Integrity: Se ejecutan antes de build/dev */
+    "i18n:build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
+    "guardian:audit": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    
+    /* 🗄️ Database DNA (Cloud-First) */
+    "prisma:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
+    "prisma:sync": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
+
+    /* 🚀 Ciclo de Vida: Automatización Total */
+    "prestart": "pnpm run i18n:build",
     "start": "nx run-many -t serve --all",
-    "build": "nx run-many -t build --all --parallel=3",
+    
+    "predev": "pnpm run i18n:build",
+
+    "prebuild": "pnpm run i18n:build && pnpm run prisma:generate",
+   
+
+    /* 🧪 Calidad & Telemetría */
     "test": "nx run-many -t test --all --parallel=3",
     "lint": "nx run-many -t lint --all",
     "format": "prettier --write \"**/*.{ts,tsx,json,md,scss}\"",
-    "prepare": "husky",
     "telemetry:check": "nx test core-telemetry",
+
+    /* 🛡️ Seguridad & Git */
+    "prepare": "husky",
+    
+    /* ☁️ Infraestructura (Docker solo si es necesario, priorizamos Cloud) */
     "infra:up": "docker-compose up -d",
-    "infra:down": "docker-compose down"
+    "infra:down": "docker-compose down",
+    "dev": "pnpm run internal-internationalization-build && nx run-many --target=serve --all",
+    "build": "pnpm run internal-internationalization-build && pnpm run persistence-database-generate && nx run-many --target=build --all --parallel=3",
+    "internal-internationalization-build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
+    "persistence-database-generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
+    "persistence-database-synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
+    "integrity-guardian-audit": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    "infrastructure-check": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-connectivity.ts",
+  "infrastructure-config": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-config-audit.ts",
+  "infrastructure-dump": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-data-snapshot.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
