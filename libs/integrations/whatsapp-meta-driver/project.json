@@ -1,0 +1,26 @@
+{
+  "name": "whatsapp-meta-driver",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/whatsapp-meta-driver/src",
+  "projectType": "library",
+  "tags": [
+    "scope:integrations",
+    "type:integration"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/integrations/whatsapp-meta-driver",
+        "main": "libs/integrations/whatsapp-meta-driver/src/index.ts",
+        "tsConfig": "libs/integrations/whatsapp-meta-driver/tsconfig.lib.json",
+        "assets": [
+          "libs/integrations/whatsapp-meta-driver/*.md"
+        ]
+      }
+    }
+  }
+}

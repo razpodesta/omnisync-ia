@@ -1,75 +1,124 @@
-/** apps/admin-dashboard/src/app/[locale]/knowledge/page.tsx (Nivelación Final) */
+/** apps/admin-dashboard/src/app/[locale]/knowledge/page.tsx */
 
 'use client';
-import React, { useState } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { NeuralBridge } from '@omnisync/core-contracts';
-import { TenantId } from '@omnisync/core-contracts';
+import { NeuralBridge, TenantId } from '@omnisync/core-contracts';
+import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+// Ruta nivelada según estándar OEDP
+import { KnowledgeIngestionSchema, IKnowledgeIngestion } from './schemas/knowledge-ingestion.schema';
 
 /**
- * @name KnowledgeAdminPage
- * @description Interfaz de alta gama para la inyección de ADN corporativo en el Vector Engine.
+ * @name KnowledgeAdministrativePage
+ * @description Aparato de interfaz para la gestión de ADN técnico corporativo.
  */
-export default function KnowledgeAdminPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = useTranslations('knowledge');
-  const [content, setContent] = useState('');
-  const [title, setTitle] = useState('');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+export default function KnowledgeAdministrativePage(): React.ReactNode {
+  const translations = useTranslations('knowledge');
 
-  const handleIngest = async () => {
-    if (!content || !title) return;
-    setStatus('processing');
+  const currentTenantIdentifier: TenantId = '00000000-0000-0000-0000-000000000000' as TenantId;
+
+  const [documentTitle, setDocumentTitle] = useState<string>('');
+  const [documentContent, setDocumentContent] = useState<string>('');
+  const [operationStatus, setOperationStatus] = useState<'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILURE'>('IDLE');
+  const [validationErrorMessage, setValidationErrorMessage] = useState<string | null>(null);
+
+  const handleKnowledgeDocumentIngestion = useCallback(async (): Promise<void> => {
+    setValidationErrorMessage(null);
+
+    const rawPayload = {
+      documentTitle,
+      documentRawContent: documentContent,
+      documentCategory: 'TECHNICAL'
+    };
+
+    const validationResult = KnowledgeIngestionSchema.safeParse(rawPayload);
+
+    if (!validationResult.success) {
+      setValidationErrorMessage(validationResult.error.issues[0].message);
+      return;
+    }
+
+    const validatedPayload: IKnowledgeIngestion = validationResult.data;
+    setOperationStatus('PROCESSING');
 
     try {
-      await NeuralBridge.request('/v1/neural/ingest', 'current-tenant-id' as TenantId, {
-        title,
-        rawContent: content,
-        category: 'TECHNICAL'
-      });
-      setStatus('success');
-      setContent('');
-      setTitle('');
-    } catch (error) {
-      console.error('Ingestion failed', error);
-      setStatus('idle');
+      await NeuralBridge.request<void>(
+        '/v1/neural/ingest',
+        currentTenantIdentifier,
+        validatedPayload
+      );
+
+      setOperationStatus('SUCCESS');
+      setDocumentTitle('');
+      setDocumentContent('');
+      setTimeout(() => setOperationStatus('IDLE'), 4000);
+
+    } catch (criticalError: unknown) {
+      OmnisyncTelemetry.verbose('KnowledgePage', 'failure', String(criticalError));
+      setOperationStatus('FAILURE');
+      setTimeout(() => setOperationStatus('IDLE'), 6000);
     }
-  };
+  }, [documentTitle, documentContent, currentTenantIdentifier]);
 
   return (
-    <div className="max-w-5xl mx-auto py-24 px-8 space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <header className="space-y-4">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-muted">Knowledge Base</h2>
-        <h1 className="text-5xl font-light tracking-tighter text-black dark:text-white italic">
-          Mentes Artificiales, <span className="font-bold">Conocimiento Real.</span>
+    <div className="max-w-5xl mx-auto py-24 px-10 space-y-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <header className="space-y-8">
+        <div className="flex items-center gap-6">
+          <span className="text-[10px] font-black uppercase tracking-[0.7em] text-foreground opacity-30">
+            {translations('section_label')}
+          </span>
+          <div className="h-[1px] flex-1 bg-border opacity-50" />
+        </div>
+        <h1 className="text-7xl font-light tracking-tighter leading-tight text-foreground italic">
+          Ingeniería de <span className="font-bold not-italic underline decoration-1 underline-offset-[12px]">Contexto Semántico.</span>
         </h1>
       </header>
 
       <div className="grid grid-cols-1 gap-12">
-        <div className="space-y-6">
-          <input 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="TÍTULO DEL MANUAL (EJ: SOPORTE V3)"
-            className="w-full bg-transparent border-b border-border py-4 text-sm outline-none uppercase tracking-widest focus:border-black transition-colors"
-          />
-          <textarea 
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full h-80 bg-neutral-50 dark:bg-neutral-900 border border-border p-8 text-sm leading-relaxed outline-none focus:ring-1 ring-black"
-            placeholder="PEGA AQUÍ EL CONTENIDO TÉCNICO..."
-          />
-        </div>
-
-        <footer className="flex justify-between items-center border-t border-border pt-12">
-          <div className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30">
-            {status === 'processing' ? 'Sincronizando con Qdrant Cloud...' : 'Listo para procesar'}
+        <section className="space-y-10 group">
+          <div className="relative">
+            <input
+              value={documentTitle}
+              onChange={(e) => setDocumentTitle(e.target.value.toUpperCase())}
+              placeholder={translations('title_placeholder')}
+              className="w-full bg-transparent border-b border-border py-8 text-sm font-black outline-none uppercase tracking-[0.3em] focus:border-foreground transition-all duration-700 placeholder:opacity-20"
+            />
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-foreground group-focus-within:w-full transition-all duration-1000" />
           </div>
-          <button 
-            onClick={handleIngest}
-            disabled={status === 'processing'}
-            className="bg-black text-white dark:bg-white dark:text-black px-12 py-4 text-[10px] font-bold uppercase tracking-widest hover:invert transition-all disabled:opacity-20"
+
+          <textarea
+            value={documentContent}
+            onChange={(e) => setDocumentContent(e.target.value)}
+            className="w-full h-[500px] bg-neutral-50/50 dark:bg-neutral-900/20 border border-border p-12 text-[16px] leading-relaxed font-light outline-none focus:ring-1 ring-border transition-all"
+            placeholder={translations('content_placeholder')}
+          />
+
+          {validationErrorMessage && (
+            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+              [ VALIDATION_ERROR ]: {validationErrorMessage}
+            </p>
+          )}
+        </section>
+
+        <footer className="flex justify-between items-center border-t border-border pt-16">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${
+                operationStatus === 'PROCESSING' ? 'bg-foreground animate-ping' : 'bg-foreground opacity-20'
+              }`} />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">
+                {operationStatus === 'PROCESSING' ? translations('status_syncing') : translations('status_ready')}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleKnowledgeDocumentIngestion}
+            disabled={operationStatus === 'PROCESSING' || !documentContent.trim()}
+            className="bg-foreground text-background px-20 py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:scale-[1.03] transition-all disabled:opacity-10 shadow-2xl"
           >
-            {status === 'success' ? 'DOCUMENTO INDEXADO' : 'INYECTAR CONOCIMIENTO'}
+            {operationStatus === 'PROCESSING' ? '...' : translations('ingest_button')}
           </button>
         </footer>
       </div>

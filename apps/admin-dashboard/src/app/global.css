@@ -1,87 +1,120 @@
 /** apps/admin-dashboard/src/app/global.css */
 
-/* Invocación del motor central de Tailwind CSS v4 */
 @import "tailwindcss";
 
 /**
- * @name ThemeConfiguration
- * @description Mapeo de variables semánticas para el motor de diseño.
- * Siguiendo el estándar de la versión 4, definimos el núcleo visual 
- * "Obsidian & Milk" para que esté disponible como clases de utilidad.
+ * @name GlobalDesignSystem
+ * @description ADN Visual "Obsidian & Milk" (V4 Engine).
+ * Orquesta la identidad cromática y tipográfica del ecosistema Omnisync-AI.
+ * Se utilizan variables CSS nativas para garantizar la soberanía del tema.
+ */
+
+@layer base {
+  :root {
+    /* Paleta Milk (Light Mode) */
+    --background: #ffffff;
+    --foreground: #000000;
+    --border: #e5e5e5;
+    --accent: #000000;
+    --muted: #737373;
+    --ring: #d4d4d4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* Paleta Obsidian (Dark Mode) */
+      --background: #000000;
+      --foreground: #ffffff;
+      --border: #262626;
+      --accent: #ffffff;
+      --muted: #a3a3a3;
+      --ring: #404040;
+    }
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+/**
+ * @section Tailwind V4 Theme Mapping
+ * Sincroniza las variables nativas con el compilador de Tailwind.
+ * Nota: Si el editor marca "@theme" como desconocido, es una limitación
+ * del linter local, el motor de build v4 lo procesará correctamente.
  */
 @theme {
-  /* Paleta Primaria: Manus.io Signature */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-muted: var(--muted);
+  --color-ring: var(--ring);
 
-  /* Tipografía de Ingeniería */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
 }
 
-/**
- * @section Entorno de Variables de Raíz
- * Definición de los valores cromáticos absolutos para los temas claro y oscuro.
- */
-:root {
-  --background: #ffffff;   /* Milk */
-  --foreground: #000000;   /* Obsidian */
-  --border: #e5e5e5;       /* Sutil Border */
-  --accent: #000000;
-  --muted: #737373;
-}
+@layer components {
+  /**
+   * @name MainWrapper
+   * @description Contenedor estructural con bordes de grado arquitectónico.
+   * Define los límites físicos de la interfaz administrativa.
+   */
+  .main-wrapper {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: 100vh;
+    max-width: 1440px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.5s ease;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000; /* Obsidian */
-    --foreground: #ffffff; /* Milk */
-    --border: #262626;     /* Deep Border */
-    --accent: #ffffff;
-    --muted: #a3a3a3;
+  /**
+   * @name HeaderGlass
+   * @description Efecto de cristal esmerilado institucional.
+   * Proporciona profundidad visual manteniendo la sobriedad del diseño.
+   */
+  .header-glass {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--border);
+    background-color: color-mix(in srgb, var(--background), transparent 20%);
+    backdrop-filter: blur(20px);
+    transition: all 0.5s ease;
+  }
+
+  /**
+   * @name ObsidianButton
+   * @description Componente atómico de acción principal.
+   */
+  .btn-primary {
+    @apply bg-foreground text-background px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95;
   }
 }
 
 /**
- * @section Estilos Base del Documento
- * Configuración de alta gama para la experiencia del usuario (UX).
+ * @section Utility Overrides
+ * Ajustes finos para la legibilidad técnica.
  */
-@layer base {
-  html {
-    scroll-behavior: smooth;
-    -webkit-tap-highlight-color: transparent;
+@layer utilities {
+  .text-technical {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
   }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-foreground selection:text-background;
-    overflow-x: hidden;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-  }
-}
-
-/**
- * @section Manus.io Signature Layout
- * Estructura de bordes infinitos y espaciado de lujo.
- */
-.main-wrapper {
-  @apply border-x border-border min-h-screen max-w-[1440px] mx-auto transition-opacity duration-1000;
-}
-
-header {
-  @apply border-b border-border px-8 py-6 flex justify-between items-center bg-background/80 backdrop-blur-xl sticky top-0 z-50;
-}
-
-footer {
-  @apply border-t border-border px-12 py-16 flex flex-col md:flex-row justify-between items-end gap-8 bg-neutral-50 dark:bg-neutral-900/50;
-}
-
-/* Estilizaciones de texto de grado institucional */
-.footer-label {
-  @apply text-[10px] font-black uppercase tracking-[0.4em] text-muted;
-}
-
-.footer-copyright {
-  @apply text-[9px] font-medium uppercase tracking-[0.2em] opacity-40;
 }

@@ -1,37 +1,55 @@
 /** libs/tools/internal-scripts/src/lib/i18n-aggregator.apparatus.ts */
 
-import * as fs from 'node:fs';
+import * as fileSystem from 'node:fs';
+import * as path from 'node:path';
 import { glob } from 'glob';
-import { merge } from 'lodash'; // Se requiere instalar lodash para merge profundo
-
+import { merge } from 'lodash';
 /**
- * @name I18nAggregator
- * @description Compila fragmentos JSON distribuidos en un Diccionario Global SSOT.
+ * @note Tras ejecutar 'pnpm add -D @types/lodash', el error 7016 desaparece,
+ * permitiendo que 'merge' posea firmas de tipo completas para el análisis de IA.
  */
-export class I18nAggregator {
-  private static readonly LOCALES = ['es', 'en', 'pt'];
-  private static readonly OUTPUT_PATH = 'libs/core/security/src/lib/i18n';
 
-  /**
-   * @method buildMasterDictionaries
-   * @description Ejecuta el ciclo de agregación para todos los idiomas soportados.
-   */
-  public static async buildMasterDictionaries(): Promise<void> {
-    for (const locale of this.LOCALES) {
-      const fragments = await glob(`libs/**/i18n/${locale}.json`);
-      let masterDictionary = {};
+export class InternationalizationAggregator {
+  private static readonly SUPPORTED_LOCALES = ['es', 'en', 'pt'];
+  private static readonly MASTER_OUTPUT_DIRECTORY = 'libs/core/security/src/lib/i18n';
 
-      for (const fragmentPath of fragments) {
-        const content = JSON.parse(fs.readFileSync(fragmentPath, 'utf-8'));
-        // Fusionamos recursivamente el fragmento en el diccionario maestro
-        masterDictionary = merge(masterDictionary, content);
+  public static async executeInternationalizationDictionaryAggregation(): Promise<void> {
+    console.log('--- 🌐 OMNISYNC INTERNATIONALIZATION: AGGREGATION START ---');
+
+    for (const localeIdentifier of this.SUPPORTED_LOCALES) {
+      const dictionaryFragmentsFound = await glob(`libs/**/i18n/${localeIdentifier}.json`, {
+        ignore: 'node_modules/**'
+      });
+
+      let masterDictionaryAccumulator: Record<string, unknown> = {};
+
+      for (const fragmentPath of dictionaryFragmentsFound) {
+        try {
+          const fragmentRawContent = fileSystem.readFileSync(fragmentPath, 'utf-8');
+          const fragmentParsedContent = JSON.parse(fragmentRawContent) as Record<string, unknown>;
+
+          // La función merge ahora está tipada correctamente
+          masterDictionaryAccumulator = merge(masterDictionaryAccumulator, fragmentParsedContent);
+        } catch (parsingError: unknown) {
+          console.error(`[AGGREGATOR_ERROR] Error en fragmento: ${fragmentPath}`, parsingError);
+        }
       }
 
-      // Guardamos el resultado en el punto de verdad central
-      const finalPath = `${this.OUTPUT_PATH}/${locale}.json`;
-      fs.writeFileSync(finalPath, JSON.stringify(masterDictionary, null, 2));
-      
-      console.log(`[i18n] Diccionario Maestro [${locale}] sincronizado con ${fragments.length} fragmentos.`);
+      this.persistMasterDictionary(localeIdentifier, masterDictionaryAccumulator);
     }
+  }
+
+  private static persistMasterDictionary(
+    localeIdentifier: string,
+    content: Record<string, unknown>
+  ): void {
+    const finalDictionaryPath = path.join(this.MASTER_OUTPUT_DIRECTORY, `${localeIdentifier}.json`);
+
+    if (!fileSystem.existsSync(this.MASTER_OUTPUT_DIRECTORY)) {
+      fileSystem.mkdirSync(this.MASTER_OUTPUT_DIRECTORY, { recursive: true });
+    }
+
+    fileSystem.writeFileSync(finalDictionaryPath, JSON.stringify(content, null, 2), 'utf-8');
+    console.log(`[i18n] Diccionario [${localeIdentifier.toUpperCase()}] sincronizado.`);
   }
 }

@@ -45,7 +45,8 @@
       "@omnisync-ecosystem/omnichannel-orchestrator": [
         "libs/integrations/omnichannel-orchestrator/src/index.ts"
       ],
-      "@omnisync-ecosystem/persistence": ["libs/core/persistence/src/index.ts"]
+      "@omnisync-ecosystem/persistence": ["libs/core/persistence/src/index.ts"],
+      "@omnisync/erp-odoo": ["libs/integrations/erp-odoo/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

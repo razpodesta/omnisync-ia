@@ -48,29 +48,8 @@
       "options": {
         "targetName": "e2e"
       }
-    },
-    {
-      "plugin": "@nx/webpack/plugin",
-      "options": {
-        "buildTargetName": "build",
-        "serveTargetName": "serve",
-        "previewTargetName": "preview"
-      }
     }
   ],
-  "generators": {
-    "@nx/next": {
-      "application": {
-        "style": "tailwind",
-        "linter": "none"
-      }
-    },
-    "@nx/react": {
-      "library": {
-        "unitTestRunner": "jest"
-      }
-    }
-  },
   "targetDefaults": {
     "build": {
       "cache": true,
@@ -94,7 +73,10 @@
   "release": {
     "projects": ["libs/**/*"],
     "version": {
-      "generator": "@nx/js:release-version"
+      "conventionalCommits": true
+    },
+    "changelog": {
+      "projectChangelogs": true
     }
   }
 }

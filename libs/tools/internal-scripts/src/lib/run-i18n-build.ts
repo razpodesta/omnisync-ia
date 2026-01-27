@@ -1,21 +1,33 @@
 /** libs/tools/internal-scripts/src/lib/run-i18n-build.ts */
 
-import { I18nAggregator } from './i18n-aggregator.apparatus';
+import { InternationalizationAggregator } from './i18n-aggregator.apparatus';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 /**
- * @name runI18nBuild
- * @description Punto de entrada para la agregación de diccionarios en tiempo de compilación.
+ * @name runInternationalizationBuild
+ * @description Punto de entrada soberano para la agregación de diccionarios JSON.
+ * Garantiza que todos los fragmentos i18n del monorepo se unifiquen en el SSOT de seguridad.
  */
-async function runI18nBuild() {
+async function runInternationalizationBuild(): Promise<void> {
+  const processStartTime = performance.now();
+
   try {
-    console.log('--- 🌐 OMNISYNC I18N AGGREGATOR START ---');
-    await I18nAggregator.buildMasterDictionaries();
-    console.log('--- ✅ I18N SYNC COMPLETE ---');
-  } catch (error) {
-    console.error('--- ❌ I18N SYNC FAILED ---', error);
+    console.log('--- 🌐 OMNISYNC I18N: AGGREGATION ENGINE START ---');
+
+    await InternationalizationAggregator.executeInternationalizationDictionaryAggregation();
+
+    const duration = (performance.now() - processStartTime).toFixed(2);
+
+    // CORRECCIÓN LINT: Uso proactivo de Telemetry para registrar el éxito del build
+    OmnisyncTelemetry.verbose('I18nRunner', 'build_success', `Aggregation completed in ${duration}ms`);
+
+    console.log(`--- ✅ I18N SYNC COMPLETE [${duration}ms] ---`);
+    process.exit(0);
+  } catch (criticalError: unknown) {
+    console.error('--- ❌ I18N AGGREGATION CRITICAL FAILURE ---', criticalError);
     process.exit(1);
   }
 }
 
-runI18nBuild();
+// Ejecución inmediata controlada
+runInternationalizationBuild();

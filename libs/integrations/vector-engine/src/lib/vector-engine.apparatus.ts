@@ -2,70 +2,95 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { 
-  IKnowledgeChunk, 
-  ISemanticSearchResult, 
-  SemanticSearchResultSchema 
+import {
+  IKnowledgeSemanticChunk,
+  IKnowledgeSemanticSearchResult,
+  KnowledgeSemanticSearchResultSchema
 } from '@omnisync/core-contracts';
+import { SemanticRelevanceAssessor } from './semantic-relevance-assessor.apparatus';
 
 /**
- * @interface IVectorDatabaseDriver
- * @description Contrato estricto que debe cumplir cualquier proveedor de base de datos vectorial.
+ * @interface IVectorDatabaseAgnosticDriver
+ * @description Contrato para proveedores de base de datos vectorial.
  */
-export interface IVectorDatabaseDriver {
+export interface IVectorDatabaseAgnosticDriver {
   readonly providerName: string;
-  search(queryVector: number[], tenantId: string, limit: number): Promise<IKnowledgeChunk[]>;
-  upsert(chunks: IKnowledgeChunk[]): Promise<void>;
+  executeSemanticSearch(
+    queryVector: number[],
+    tenantId: string,
+    limit: number
+  ): Promise<IKnowledgeSemanticChunk[]>;
+  upsertKnowledgeChunks(knowledgeChunks: IKnowledgeSemanticChunk[]): Promise<void>;
 }
 
 /**
  * @name OmnisyncVectorEngine
- * @description Aparato agnóstico para la gestión de recuperación de conocimiento (RAG).
- * Coordina la búsqueda semántica delegando la ejecución técnica a drivers especializados.
+ * @description Orquestador de recuperación de conocimiento (RAG).
+ * Puente de alta disponibilidad entre los drivers vectoriales y el AI-Engine.
+ * 
+ * @protocol OEDP-Level: Elite (Clean Orchestration)
  */
 export class OmnisyncVectorEngine {
+
   /**
-   * @method retrieveRelevantContext
-   * @description Recupera fragmentos de manuales técnicos basados en la similitud vectorial.
+   * @method retrieveRelevantKnowledgeContext
+   * @description Orquesta la búsqueda semántica y delega la evaluación de relevancia.
    */
-  public static async retrieveRelevantContext(
-    driver: IVectorDatabaseDriver,
-    queryVector: number[],
+  public static async retrieveRelevantKnowledgeContext(
+    databaseDriver: IVectorDatabaseAgnosticDriver,
+    queryVectorCoordinates: number[],
     tenantId: string,
-    limit: number = 3
-  ): Promise<ISemanticSearchResult> {
+    maximumResultsToRetrieve = 3,
+    similarityThreshold = 0.7
+  ): Promise<IKnowledgeSemanticSearchResult> {
     return await OmnisyncTelemetry.traceExecution(
       'OmnisyncVectorEngine',
-      `retrieve:${driver.providerName}`,
+      `retrieve:${databaseDriver.providerName}`,
       async () => {
-        try {
-          const startTimeInMilliseconds: number = performance.now();
+        const searchStartTime = performance.now();
 
-          // Ejecución delegada al driver con política de resiliencia
-          const foundChunks: IKnowledgeChunk[] = await OmnisyncSentinel.executeWithResilience(
-            () => driver.search(queryVector, tenantId, limit),
+        try {
+          /**
+           * 1. Recuperación via Driver (Resiliencia Sentinel)
+           */
+          const searchResultsFound = await OmnisyncSentinel.executeWithResilience(
+            () => databaseDriver.executeSemanticSearch(
+              queryVectorCoordinates,
+              tenantId,
+              maximumResultsToRetrieve
+            ),
             'OmnisyncVectorEngine',
-            `search:${driver.providerName}`
+            `search_operation:${databaseDriver.providerName}`
           );
 
-          const durationInMilliseconds: number = performance.now() - startTimeInMilliseconds;
+          /**
+           * 2. Evaluación de Relevancia (Delegación Atómica)
+           */
+          const { filteredChunks, averageScore } = SemanticRelevanceAssessor.assess(
+            searchResultsFound,
+            similarityThreshold
+          );
 
-          // Normalización del resultado bajo contrato SSOT
-          return SemanticSearchResultSchema.parse({
-            chunks: foundChunks,
-            score: foundChunks.length > 0 ? 0.92 : 0, // Score base para el MVP
-            latencyInMilliseconds: durationInMilliseconds
+          /**
+           * 3. Consolidación SSOT
+           */
+          return KnowledgeSemanticSearchResultSchema.parse({
+            chunks: filteredChunks,
+            relevanceScore: averageScore,
+            latencyInMilliseconds: performance.now() - searchStartTime
           });
-        } catch (error: unknown) {
+
+        } catch (criticalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-601',
             severity: 'HIGH',
             apparatus: 'OmnisyncVectorEngine',
-            operation: 'retrieve',
-            message: 'Error crítico en la recuperación de contexto semántico',
-            context: { tenantId, driver: driver.providerName }
+            operation: 'retrieveRelevantKnowledgeContext',
+            message: 'integrations.vector_engine.errors.retrieval_failure',
+            context: { tenantId, error: String(criticalError) },
+            isRecoverable: true
           });
-          throw error;
+          throw criticalError;
         }
       }
     );

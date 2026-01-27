@@ -3,7 +3,18 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/ui-kit/web-chat-widget/src",
   "projectType": "library",
-  "tags": ["scope:ui", "type:ui"],
-  "// targets": "to see all targets run: nx show project web-chat-widget --web",
-  "targets": {}
+  "tags": ["type:ui", "scope:ui"],
+
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/ui-kit/web-chat-widget",
+        "main": "libs/ui-kit/web-chat-widget/src/index.ts",
+        "tsConfig": "libs/ui-kit/web-chat-widget/tsconfig.lib.json",
+        "assets": ["libs/ui-kit/web-chat-widget/*.md"]
+      }
+    }
+  }
 }

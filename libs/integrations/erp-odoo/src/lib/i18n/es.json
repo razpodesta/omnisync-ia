@@ -1,0 +1,19 @@
+{
+  "integrations": {
+    "odoo": {
+      "auth": {
+        "failed": "Incapacidad de autenticar con el cluster Odoo Online.",
+        "invalid_key": "La API Key de Odoo ha sido rechazada por el servidor."
+      },
+      "operation": {
+        "ticket_created": "Ticket de soporte #{id} sincronizado exitosamente.",
+        "partner_not_found": "El contacto no existe en Odoo. Iniciando auto-provisionamiento.",
+        "partner_created": "Nuevo Partner registrado en el ERP: {name}."
+      },
+      "errors": {
+        "timeout": "La instancia de Odoo no respondió dentro del umbral de 15s.",
+        "model_access_denied": "Permisos insuficientes para acceder al modelo {model}."
+      }
+    }
+  }
+}

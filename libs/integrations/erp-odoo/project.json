@@ -1,0 +1,19 @@
+{
+  "name": "erp-odoo",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/erp-odoo/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/erp-odoo",
+        "main": "libs/integrations/erp-odoo/src/index.ts",
+        "tsConfig": "libs/integrations/erp-odoo/tsconfig.lib.json",
+        "assets": ["libs/integrations/erp-odoo/*.md"]
+      }
+    }
+  }
+}

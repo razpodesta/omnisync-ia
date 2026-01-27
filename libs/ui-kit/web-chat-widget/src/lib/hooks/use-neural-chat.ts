@@ -1,49 +1,74 @@
 /** libs/ui-kit/web-chat-widget/src/lib/hooks/use-neural-chat.ts */
 
 import { useState } from 'react';
-import { INeuralIntent, INeuralFlowResult, TenantId } from '@omnisync/core-contracts';
+import {
+  INeuralIntent,
+  INeuralFlowResult,
+  TenantId,
+  NeuralBridge
+} from '@omnisync/core-contracts';
 
-/**
- * @name useNeuralChat
- * @description Aparato de lógica reactiva para gestionar el flujo de conversación con el Neural Hub.
- * @param {TenantId} tenantId - Identificador único de la organización (Branded Type).
- */
-export const useNeuralChat = (tenantId: TenantId) => {
-  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
+interface IConversationMessage {
+  readonly role: 'user' | 'assistant';
+  readonly content: string;
+}
 
-  const sendMessage = async (content: string) => {
-    if (!content || isTyping) return;
+export const useNeuralChat = (tenantOrganizationIdentifier: TenantId) => {
+  const [conversationStream, setConversationStream] = useState<IConversationMessage[]>([]);
+  const [isProcessingInference, setIsProcessingInference] = useState<boolean>(false);
 
-    // 1. UI State: Optimistic update
-    setMessages((prev) => [...prev, { role: 'user', content }]);
-    setIsTyping(true);
+  const sendNeuralMessage = async (userMessageContent: string): Promise<void> => {
+    if (!userMessageContent || isProcessingInference) return;
+
+    setConversationStream((previousStream) => [
+      ...previousStream,
+      { role: 'user', content: userMessageContent }
+    ]);
+
+    setIsProcessingInference(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/neural/chat`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-omnisync-tenant': tenantId 
-        },
-        body: JSON.stringify({
+      const neuralFlowResult = await NeuralBridge.request<INeuralFlowResult>(
+        '/v1/neural/chat',
+        tenantOrganizationIdentifier,
+        {
           id: window.crypto.randomUUID(),
           channel: 'WEB_CHAT',
-          externalUserId: 'anonymous_session', // Se puede nivelar con cookies/sessionStorage
-          tenantId,
-          payload: { type: 'TEXT', content },
+          /**
+           * CORRECCIÓN DE ELITE:
+           * Se usa 'externalUserId' (Nombre exacto del esquema)
+           * y se añade 'metadata' para cumplir con el contrato SSOT.
+           */
+          externalUserId: 'anonymous_cloud_session',
+          tenantId: tenantOrganizationIdentifier,
+          payload: {
+            type: 'TEXT',
+            content: userMessageContent,
+            metadata: {} // Requerido por NeuralIntentSchema
+          },
           timestamp: new Date().toISOString()
-        } as INeuralIntent)
-      });
+        } as INeuralIntent
+      );
 
-      const result: INeuralFlowResult = await response.json();
-      setMessages((prev) => [...prev, { role: 'ai', content: result.finalMessage }]);
-    } catch (error) {
-      console.error('[NEURAL_ORCHESTRATOR_FAILURE]', error);
+      setConversationStream((previousStream) => [
+        ...previousStream,
+        { role: 'assistant', content: neuralFlowResult.finalMessage }
+      ]);
+
+    } catch (communicationError: unknown) {
+      console.error('[NEURAL_BRIDGE_ERROR]', communicationError);
+      setConversationStream((previousStream) => [
+        ...previousStream,
+        { role: 'assistant', content: 'SISTEMA_TEMPORALMENTE_FUERA_DE_LINEA.' }
+      ]);
     } finally {
-      setIsTyping(false);
+      setIsProcessingInference(false);
     }
   };
 
-  return { messages, isTyping, sendMessage };
+  return {
+    conversationMessages: conversationStream,
+    isTyping: isProcessingInference,
+    sendNeuralMessage
+  };
 };

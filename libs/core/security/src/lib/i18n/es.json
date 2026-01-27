@@ -1,13 +1,51 @@
-/** libs/core/security/src/lib/i18n/es.json (Actualización) */
 {
   "common": {
     "welcome": "Bienvenido a Omnisync-AI",
-    "status": "Sistema en línea",
-    "input_placeholder": "Escribe una consulta técnica..."
+    "status": "Neural Hub Activo",
+    "hero_description": "Infraestructura descentralizada para orquestación de comunicaciones e IA generativa.",
+    "input_placeholder": "Escribe una consulta técnica...",
+    "footer": {
+      "version_label": "Omnisync-AI",
+      "credits": "Infraestructura Neural por MetaShark Tech Cloud Architecture",
+      "rights": "Todos los derechos reservados",
+      "latency_label": "Latencia",
+      "region_label": "Región"
+    }
   },
   "widget": {
     "header": "Soporte Neural",
+    "nav_dashboard": "Dashboard",
+    "nav_knowledge": "Knowledge",
     "send": "Enviar",
-    "ai_typing": "La IA está procesando..."
+    "ai_typing": "Procesando...",
+    "welcome_message": "Soberanía Técnica habilitada. ¿En qué puedo asistirle hoy?"
+  },
+  "knowledge": {
+    "section_label": "Repositorio de Conocimiento",
+    "title_placeholder": "TÍTULO DEL DOCUMENTO",
+    "content_placeholder": "INYECTE EL CONTENIDO TÉCNICO AQUÍ...",
+    "status_syncing": "Sincronizando ADN...",
+    "status_ready": "Nodo listo para ingesta",
+    "ingest_button": "Indexar Conocimiento"
+  },
+  "security": {
+    "auth": {
+      "invalid_token": "El token proporcionado no es válido o ha expirado.",
+      "unauthorized": "No tiene permisos suficientes para realizar esta acción.",
+      "session_expired": "Su sesión ha caducado. Por favor, inicie sesión nuevamente."
+    },
+    "encryption": {
+      "failure": "Error crítico al procesar el cifrado de datos sensibles.",
+      "integrity_violation": "Los datos han sido manipulados o la clave es incorrecta."
+    },
+    "geofencing": {
+      "restricted_region": "Acceso restringido: Omnisync-AI no está disponible en su ubicación actual ({country}).",
+      "token_protection_active": "Protección de tokens activa para la región: {country}.",
+      "error_code": "OS-SEC-403"
+    },
+    "exceptions": {
+      "page_not_found_description": "El nodo solicitado no ha sido localizado en la red neural de Omnisync.",
+      "return_genesis": "Volver al Inicio Seguro"
+    }
   }
 }

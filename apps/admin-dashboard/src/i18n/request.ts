@@ -4,18 +4,38 @@ import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
 
 /**
+ * @type SupportedLocale
+ * @description Inferencia del conjunto de idiomas autorizados por la arquitectura.
+ */
+type SupportedLocale = (typeof routing.locales)[number];
+
+/**
  * @name getRequestConfig
- * @description Carga dinámica de mensajes basada en el locale de la petición.
+ * @description Aparato de configuración de peticiones para internacionalización.
+ * Orquesta la carga dinámica de diccionarios basados en la soberanía lingüística
+ * detectada por el middleware.
  */
 export default getRequestConfig(async ({ requestLocale }) => {
-  let locale = await requestLocale;
+  /**
+   * @section Resolución de Identidad Lingüística
+   */
+  let localeIdentifier = await requestLocale;
 
-  if (!locale || !routing.locales.includes(locale as any)) {
-    locale = routing.defaultLocale;
+  // Validación de integridad: Si el locale no está soportado, se degrada al valor por defecto.
+  if (!localeIdentifier || !routing.locales.includes(localeIdentifier as SupportedLocale)) {
+    localeIdentifier = routing.defaultLocale;
   }
 
   return {
-    locale,
-    messages: (await import(`../../../../libs/core/security/src/lib/i18n/${locale}.json`)).default
+    locale: localeIdentifier,
+    /**
+     * @note Carga Dinámica de ADN Lingüístico
+     * Los diccionarios se importan desde la capa core de seguridad (SSOT).
+     */
+    messages: (
+      await import(
+        `../../../../libs/core/security/src/lib/i18n/${localeIdentifier}.json`
+      )
+    ).default,
   };
 });

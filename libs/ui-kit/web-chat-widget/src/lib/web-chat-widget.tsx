@@ -1,100 +1,152 @@
 /** libs/ui-kit/web-chat-widget/src/lib/web-chat-widget.tsx */
 
+'use client';
+
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { TenantId } from '@omnisync/core-contracts';
 import { useNeuralChat } from './hooks/use-neural-chat';
 
 /**
- * @interface WebChatWidgetProps
+ * @interface WebChatWidgetProperties
+ * @description Definición de propiedades para la instancia del widget neural.
  */
-interface WebChatWidgetProps {
-  /** Identificador de élite del suscriptor */
+interface WebChatWidgetProperties {
+  /** Identificador de élite de la organización suscriptora */
   readonly tenantId: TenantId;
 }
 
 /**
  * @name WebChatWidget
- * @description Interfaz neural omnicanal. Sigue los principios de Manus.io: 
- * Tipografía Inter, tracking amplio, bordes de 1px y paleta Obsidian (#000) & Milk (#FFF).
+ * @description Aparato de interfaz de usuario encargado de la interacción omnicanal. 
+ * Implementa una estética de alta gama basada en los principios de Manus.io: 
+ * paleta Obsidian & Milk, tipografía técnica, bordes de 1px y espaciado institucional.
+ * 
+ * @param {WebChatWidgetProperties} properties - Configuración del componente.
+ * @returns {React.ReactNode} El nodo del widget renderizado.
  */
-export const WebChatWidget: React.FC<WebChatWidgetProps> = ({ tenantId }) => {
-  const t = useTranslations('widget');
-  const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const { messages, isTyping, sendMessage } = useNeuralChat(tenantId);
+export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({ tenantId }) => {
+  /**
+   * @section Internacionalización de Élite
+   * Centraliza la comunicación lingüística a través del namespace 'widget'.
+   */
+  const translations = useTranslations('widget');
+  
+  const [isWidgetInterfaceOpen, setIsWidgetInterfaceOpen] = useState<boolean>(false);
+  const [userTextInputValue, setUserTextInputValue] = useState<string>('');
+  
+  /** 
+   * Consumo de lógica reactiva pura desde el Hook de Aparato.
+   * Se extrae el stream de conversación y el estado de inferencia.
+   */
+  const { 
+    conversationMessages, 
+    isTyping: isArtificialIntelligenceProcessing, 
+    sendNeuralMessage 
+  } = useNeuralChat(tenantId);
 
-  const handleSubmit = () => {
-    sendMessage(inputValue);
-    setInputValue('');
+  /**
+   * @method handleMessageSubmission
+   * @description Procesa el envío del mensaje y limpia el estado local del input.
+   */
+  const handleMessageSubmission = (): void => {
+    if (!userTextInputValue.trim()) return;
+    sendNeuralMessage(userTextInputValue);
+    setUserTextInputValue('');
   };
 
   return (
-    <div className="fixed bottom-12 right-12 z-50 flex flex-col items-end font-sans selection:bg-black selection:text-white">
-      {isOpen && (
-        <div className="w-[420px] h-[640px] bg-white dark:bg-black border border-border flex flex-col mb-6 shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-6 duration-500">
+    <div className="fixed bottom-12 right-12 z-50 flex flex-col items-end font-sans selection:bg-foreground selection:text-background transition-all duration-1000">
+      
+      {isWidgetInterfaceOpen && (
+        <div className="w-[420px] h-[640px] bg-background dark:bg-background border border-border flex flex-col mb-6 shadow-[0_0_80px_-20px_rgba(0,0,0,0.15)] animate-in fade-in slide-in-from-bottom-6 duration-500 overflow-hidden">
           
-          {/* Header Minimalista */}
-          <div className="p-8 border-b border-border flex justify-between items-center bg-white dark:bg-black">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{t('header')}</span>
+          {/* Cabecera de Identidad: Status & Control */}
+          <header className="p-8 border-b border-border flex justify-between items-center bg-background">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground">
+                {translations('header')}
+              </span>
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-black dark:bg-white rounded-full animate-pulse" />
-                <span className="text-[9px] uppercase tracking-widest opacity-40">System Active</span>
+                <div className="w-1.5 h-1.5 bg-foreground rounded-full animate-pulse opacity-100" />
+                <span className="text-[9px] uppercase tracking-widest opacity-40 font-bold">
+                  Soberanía Activa
+                </span>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-xs hover:opacity-30 transition-opacity">CLOSE</button>
-          </div>
+            <button 
+              onClick={() => setIsWidgetInterfaceOpen(false)} 
+              className="text-[9px] font-black uppercase tracking-widest hover:opacity-30 transition-opacity"
+            >
+              CLOSE
+            </button>
+          </header>
 
-          {/* Chat Stream */}
-          <div className="flex-1 p-8 overflow-y-auto space-y-8 scrollbar-hide">
-            {messages.length === 0 && (
+          {/* Flujo de Conversación Semántica */}
+          <div className="flex-1 p-8 overflow-y-auto space-y-10 scrollbar-hide">
+            {conversationMessages.length === 0 && (
               <div className="h-full flex items-center justify-center text-center p-12">
-                <p className="text-xs leading-relaxed opacity-40 font-light italic">{t('welcome_message')}</p>
+                <p className="text-[11px] leading-relaxed opacity-40 font-light italic uppercase tracking-widest">
+                  {translations('welcome_message')}
+                </p>
               </div>
             )}
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <span className="text-[8px] uppercase tracking-widest font-bold opacity-30">{msg.role}</span>
-                <p className={`text-[13px] leading-relaxed max-w-[85%] ${msg.role === 'user' ? 'font-medium' : 'font-light'}`}>
-                  {msg.content}
+            
+            {conversationMessages.map((messageEntry, index) => (
+              <div 
+                key={index} 
+                className={`flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700 ${
+                  messageEntry.role === 'user' ? 'items-end' : 'items-start'
+                }`}
+              >
+                <span className="text-[8px] uppercase tracking-widest font-black opacity-20">
+                  {messageEntry.role}
+                </span>
+                <p className={`text-[14px] leading-relaxed max-w-[90%] font-light ${
+                  messageEntry.role === 'user' ? 'text-right' : 'text-left'
+                }`}>
+                  {messageEntry.content}
                 </p>
               </div>
             ))}
-            {isTyping && (
-              <div className="text-[9px] uppercase tracking-[0.3em] animate-pulse opacity-40">{t('ai_typing')}</div>
+
+            {isArtificialIntelligenceProcessing && (
+              <div className="text-[9px] uppercase tracking-[0.4em] animate-pulse opacity-40 font-black">
+                {translations('ai_typing')}
+              </div>
             )}
           </div>
 
-          {/* Neural Input Area */}
-          <div className="p-8 border-t border-border">
-            <div className="flex items-center gap-4">
+          {/* Área de Entrada Neural: Manus.io Style */}
+          <footer className="p-8 border-t border-border bg-neutral-50/50 dark:bg-neutral-900/20">
+            <div className="flex items-center gap-6">
               <input 
                 autoFocus
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                placeholder={t('input_placeholder')}
-                className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-30 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest"
+                value={userTextInputValue}
+                onChange={(event) => setUserTextInputValue(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleMessageSubmission()}
+                placeholder={translations('input_placeholder')}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-20 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-[0.2em] font-light"
               />
               <button 
-                onClick={handleSubmit}
-                className="text-[10px] font-bold uppercase tracking-widest hover:line-through transition-all"
+                onClick={handleMessageSubmission}
+                className="text-[10px] font-black uppercase tracking-[0.2em] hover:line-through transition-all opacity-80 hover:opacity-100"
               >
-                {t('send')}
+                {translations('send')}
               </button>
             </div>
-          </div>
+          </footer>
         </div>
       )}
 
-      {/* Obsidian Trigger */}
+      {/* Disparador de Élite (Obsidian Trigger) */}
       <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="group relative w-14 h-14 bg-black dark:bg-white flex items-center justify-center transition-all duration-500 hover:rotate-90"
+        onClick={() => setIsWidgetInterfaceOpen(!isWidgetInterfaceOpen)}
+        className="group relative w-16 h-16 bg-foreground text-background flex items-center justify-center transition-all duration-700 hover:rotate-180 shadow-2xl active:scale-90"
+        aria-label="Toggle Neural Interface"
       >
-        <div className="w-4 h-[1px] bg-white dark:bg-black absolute" />
-        <div className="w-[1px] h-4 bg-white dark:bg-black absolute" />
+        <div className="w-5 h-[1px] bg-background absolute" />
+        <div className="w-[1px] h-5 bg-background absolute" />
       </button>
     </div>
   );

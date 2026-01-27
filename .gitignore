@@ -8,6 +8,7 @@ dist/
 out-tsc/
 .next/
 bin/
+.docs
 
 # Nx & Cache
 .nx/cache/

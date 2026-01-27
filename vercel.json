@@ -1,10 +1,11 @@
-/** vercel.json */
 {
   "version": 2,
-  "buildCommand": "npx nx build admin-dashboard --prod",
-  "outputDirectory": "dist/apps/admin-dashboard/.next",
   "framework": "nextjs",
+  "buildCommand": "pnpm run internationalization:build && pnpm run persistence:generate && npx nx build admin-dashboard --prod",
+  "outputDirectory": "dist/apps/admin-dashboard/.next",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://tu-api-en-render.onrender.com"
-  }
+    "NEXT_PUBLIC_API_URL": "https://tu-api-en-render.onrender.com",
+    "NEXT_INTL_LOCALE": "es"
+  },
+  "installCommand": "pnpm install"
 }

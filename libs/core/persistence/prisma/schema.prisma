@@ -2,41 +2,33 @@
 
 generator client {
   provider = "prisma-client-js"
+  // NIVELACIÓN: Eliminamos el 'output' personalizado para permitir que Prisma 7
+  // gestione el proxy de tipos de forma nativa en node_modules.
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-// Representa a una empresa cliente (ej: Canal Técnico, Canal Admin)
 model Tenant {
-  id                String   @id @default(uuid())
-  name              String
-  slug              String   @unique
-  status            String   @default("ACTIVE")
-  createdAt         DateTime @default(now())
-  
-  // Configuración Neural (AI, ERP, Contexto)
-  aiProvider        String   @default("GOOGLE_GEMINI")
-  aiModel           String   @default("gemini-1.5-flash")
-  systemPrompt      String   @db.Text
-  
-  sessions          Session[]
+  id               String   @id @default(uuid())
+  organizationName String
+  urlSlug          String   @unique
+  status           String   @default("ACTIVE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("tenants")
 }
 
-// Gestión de hilos de conversación (Persistencia de datos)
-model Session {
-  id                String   @id @default(uuid())
-  externalUserId    String   // ID de WhatsApp o ID de Web Chat
-  tenantId          String
-  tenant            Tenant   @relation(fields: [tenantId], references: [id])
-  
-  // Almacenamos el historial como un JSON estructurado para Gemini
-  history           Json     @default("[]")
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+model SupportThread {
+  id             String   @id @default(uuid())
+  externalUserId String
+  tenantId       String
+  content        String
+  channel        String
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
 
-  @@unique([externalUserId, tenantId])
+  @@map("support_threads")
 }

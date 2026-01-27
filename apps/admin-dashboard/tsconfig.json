@@ -1,8 +1,8 @@
+/** apps/admin-dashboard/tsconfig.json */
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "preserve",
-
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -16,17 +16,27 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+
+    /**
+     * @section Soberanía de Tipado Frontend
+     * Se restringe explícitamente la carga de tipos globales. Al definir solo 'node',
+     * evitamos que el compilador busque definiciones como 'glob' o 'fs' que pertenecen
+     * al ecosistema de herramientas de servidor, eliminando el error de resolución.
+     */
+    "types": ["node"],
+
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     "**/*.js",
     "**/*.jsx",
-
-    "../../apps/admin-dashboard/.next/types/**/*.ts",
-    "../../dist/apps/admin-dashboard/.next/types/**/*.ts",
-
+    ".next/types/**/*.ts",
     "next-env.d.ts"
   ],
   "exclude": [

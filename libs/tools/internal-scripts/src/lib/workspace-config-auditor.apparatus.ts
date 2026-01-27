@@ -1,38 +1,109 @@
 /** libs/tools/internal-scripts/src/lib/workspace-config-auditor.apparatus.ts */
 
-import * as fs from 'node:fs';
+import * as fileSystem from 'node:fs';
 import * as path from 'node:path';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
+interface ITypeScriptBaseConfiguration {
+  readonly compilerOptions: {
+    readonly paths: Record<string, string[]>;
+  };
+}
+
+interface IGlobalAuditReport {
+  readonly timestamp: string;
+  readonly anomalies: string[];
+  readonly operationalStatus: 'SUCCESS' | 'FAILED';
+}
+
 /**
- * @name WorkspaceConfigAuditor
- * @description Audita el archivo tsconfig.base.json y nx.json para asegurar alineación con el algoritmo.
+ * @name WorkspaceConfigurationAuditor
+ * @description Aparato de gobernanza encargado de validar la integridad de la
+ * configuración global del monorepo. Asegura que las rutas LEGO y los alias
+ * de TypeScript cumplan con el estándar institucional @omnisync.
+ *
+ * @protocol OEDP-Level: Elite (Gobernanza de ADN)
  */
-export class WorkspaceConfigAuditor {
-  public static async auditGlobalConfig(): Promise<void> {
-    return await OmnisyncTelemetry.traceExecution('WorkspaceConfigAuditor', 'audit', async () => {
-      const rootDirectory = process.cwd();
-      const tsConfigPath = path.join(rootDirectory, 'tsconfig.base.json');
-      const reportPath = path.join(rootDirectory, 'reports', 'tsconfig', 'global-audit.json');
+export class WorkspaceConfigurationAuditor {
+  private static readonly REPORT_OUTPUT_DIRECTORY = 'reports/tsconfig';
+  private static readonly REPORT_FILE_NAME = 'global-audit.json';
 
-      const config = JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'));
-      const issues: string[] = [];
+  /**
+   * @method executeGlobalWorkspaceConfigurationAudit
+   * @description Realiza un análisis estático del archivo tsconfig.base.json para
+   * detectar alias fuera de estándar o rutas mal configuradas.
+   */
+  public static async executeGlobalWorkspaceConfigurationAudit(): Promise<void> {
+    return await OmnisyncTelemetry.traceExecution(
+      'WorkspaceConfigurationAuditor',
+      'executeAudit',
+      async () => {
+        const workspaceRootDirectory = process.cwd();
+        const typescriptBaseConfigurationPath = path.join(workspaceRootDirectory, 'tsconfig.base.json');
+        const detectedConfigurationAnomalies: string[] = [];
 
-      // Validación de Estándar de Rutas LEGO
-      const paths = config.compilerOptions.paths;
-      Object.keys(paths).forEach(alias => {
-        if (!alias.startsWith('@omnisync/')) {
-          issues.push(`Alias fuera de estándar detectado: ${alias}. Debe usar @omnisync/`);
+        if (!fileSystem.existsSync(typescriptBaseConfigurationPath)) {
+          throw new Error(`OS-CORE-SCRIPT: No se localizó el archivo de configuración base en ${typescriptBaseConfigurationPath}`);
         }
-      });
 
-      this.saveReport(reportPath, { timestamp: new Date().toISOString(), issues, status: issues.length === 0 ? 'SUCCESS' : 'FAILED' });
-    });
+        try {
+          const rawConfigurationContent = fileSystem.readFileSync(typescriptBaseConfigurationPath, 'utf-8');
+          const parsedConfiguration = JSON.parse(rawConfigurationContent) as ITypeScriptBaseConfiguration;
+          const mappedConfigurationPaths = parsedConfiguration.compilerOptions.paths;
+
+          /**
+           * @section Validación de Soberanía de Rutas
+           * Se exige que todo alias inicie con @omnisync o @omnisync-ecosystem
+           * para mantener la jerarquía de marca y evitar colisiones.
+           */
+          Object.keys(mappedConfigurationPaths).forEach((pathAliasIdentifier) => {
+            const isStandardAlias = pathAliasIdentifier.startsWith('@omnisync/') ||
+                                   pathAliasIdentifier.startsWith('@omnisync-ecosystem/');
+
+            if (!isStandardAlias) {
+              detectedConfigurationAnomalies.push(
+                `Alias fuera de estándar detectado: [${pathAliasIdentifier}]. Debe utilizar el prefijo @omnisync.`
+              );
+            }
+          });
+
+          const auditReport: IGlobalAuditReport = {
+            timestamp: new Date().toISOString(),
+            anomalies: detectedConfigurationAnomalies,
+            operationalStatus: detectedConfigurationAnomalies.length === 0 ? 'SUCCESS' : 'FAILED'
+          };
+
+          this.persistAuditAnomaliesReport(auditReport);
+
+          if (detectedConfigurationAnomalies.length > 0) {
+            OmnisyncTelemetry.verbose(
+              'WorkspaceConfigurationAuditor',
+              'anomaly_detected',
+              `Se encontraron ${detectedConfigurationAnomalies.length} violaciones de estándar.`
+            );
+          }
+
+        } catch (parsingError: unknown) {
+          OmnisyncTelemetry.verbose('WorkspaceConfigurationAuditor', 'critical_failure', String(parsingError));
+          throw parsingError;
+        }
+      }
+    );
   }
 
-  private static saveReport(filePath: string, data: unknown): void {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  /**
+   * @method persistAuditAnomaliesReport
+   * @private
+   * @description Vuelca los resultados del análisis en el repositorio de reportes.
+   */
+  private static persistAuditAnomaliesReport(reportData: IGlobalAuditReport): void {
+    const absoluteReportPath = path.join(process.cwd(), this.REPORT_OUTPUT_DIRECTORY, this.REPORT_FILE_NAME);
+    const targetDirectory = path.dirname(absoluteReportPath);
+
+    if (!fileSystem.existsSync(targetDirectory)) {
+      fileSystem.mkdirSync(targetDirectory, { recursive: true });
+    }
+
+    fileSystem.writeFileSync(absoluteReportPath, JSON.stringify(reportData, null, 2), 'utf-8');
   }
 }

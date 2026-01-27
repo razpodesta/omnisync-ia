@@ -9,46 +9,24 @@
     "type": "git",
     "url": "https://github.com/metashark-tech/omnisync-ai-ecosystem.git"
   },
-   "scripts": {
-   
-    /* 🌐 i18n & Integrity: Se ejecutan antes de build/dev */
-    "i18n:build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
-    "guardian:audit": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
-    
-    /* 🗄️ Database DNA (Cloud-First) */
-    "prisma:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
-    "prisma:sync": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
-
-    /* 🚀 Ciclo de Vida: Automatización Total */
-    "prestart": "pnpm run i18n:build",
-    "start": "nx run-many -t serve --all",
-    
-    "predev": "pnpm run i18n:build",
-
-    "prebuild": "pnpm run i18n:build && pnpm run prisma:generate",
-   
-
-    /* 🧪 Calidad & Telemetría */
-    "test": "nx run-many -t test --all --parallel=3",
-    "lint": "nx run-many -t lint --all",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md,scss}\"",
-    "telemetry:check": "nx test core-telemetry",
-
-    /* 🛡️ Seguridad & Git */
-    "prepare": "husky",
-    
-    /* ☁️ Infraestructura (Docker solo si es necesario, priorizamos Cloud) */
-    "infra:up": "docker-compose up -d",
-    "infra:down": "docker-compose down",
-    "dev": "pnpm run internal-internationalization-build && nx run-many --target=serve --all",
-    "build": "pnpm run internal-internationalization-build && pnpm run persistence-database-generate && nx run-many --target=build --all --parallel=3",
-    "internal-internationalization-build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
-    "persistence-database-generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
-    "persistence-database-synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
-    "integrity-guardian-audit": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
-    "infrastructure-check": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-connectivity.ts",
-  "infrastructure-config": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-config-audit.ts",
-  "infrastructure-dump": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-data-snapshot.ts"
+  "scripts": {
+    "dev": "pnpm run internationalization:build && nx run-many --target=serve --all",
+    "build": "pnpm run internationalization:build && pnpm run persistence:generate && nx run-many --target=build --all --parallel=3",
+    "start": "nx run-many --target=serve --all",
+    "system:hydrate": "pnpm install && pnpm run internationalization:build && pnpm run persistence:generate && pnpm run build",
+    "internationalization:build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
+    "persistence:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
+    "persistence:synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
+    "integrity:guardian": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    "infrastructure:check": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-connectivity.ts",
+    "infrastructure:configuration": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-config-audit.ts",
+    "infrastructure:dump": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
+    "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump",
+    "quality:test": "nx run-many --target=test --all --parallel=3",
+    "quality:lint": "nx run-many --target=lint --all",
+    "quality:format": "prettier --write \"**/*.{ts,tsx,json,md,scss}\"",
+    "quality:types": "tsc --noEmit",
+    "audit": "pnpm audit && pnpm run quality:lint && pnpm run quality:types"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -60,6 +38,24 @@
     ],
     "*.md": [
       "prettier --write"
+    ]
+  },
+  "pnpm": {
+    "overrides": {
+      "lodash": "^4.17.23"
+    },
+    "onlyBuiltDependencies": [
+      "@apollo/protobufjs",
+      "@nestjs/core",
+      "@parcel/watcher",
+      "@prisma/engines",
+      "@swc/core",
+      "esbuild",
+      "less",
+      "nx",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
     ]
   },
   "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa",
@@ -92,11 +88,13 @@
     "@testing-library/react": "16.3.0",
     "@types/glob": "^9.0.0",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
-    "autoprefixer": "10.4.13",
+    "autoprefixer": "10.4.23",
     "babel-jest": "^30.0.2",
+    "clsx": "^2.1.1",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-import": "2.31.0",
@@ -114,6 +112,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "prisma": "^7.3.0",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.0.0",
     "ts-jest": "^29.4.6",
     "ts-node": "10.9.1",
@@ -124,6 +123,7 @@
   },
   "dependencies": {
     "@apollo/server": "^5.3.0",
+    "@google/generative-ai": "^0.24.1",
     "@nestjs/apollo": "^13.2.3",
     "@nestjs/common": "^11.1.12",
     "@nestjs/core": "^11.1.12",
@@ -131,18 +131,19 @@
     "@nestjs/platform-express": "^11.0.0",
     "@prisma/client": "^7.3.0",
     "axios": "^1.6.0",
-    "clsx": "^2.1.1",
     "framer-motion": "^12.29.0",
+    "glob": "^13.0.0",
     "graphql": "^16.12.0",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.563.0",
     "next": "^16.1.4",
     "next-intl": "^4.7.0",
     "next-themes": "^0.4.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-world-flags": "^1.6.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
-    "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"
   }
 }
