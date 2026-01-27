@@ -12,7 +12,7 @@ import { OmnisyncVectorEngine } from '@omnisync/vector-engine';
 import { QdrantDriver } from '@omnisync/vector-qdrant';
 import { OmnisyncEnterpriseResourcePlanningOrchestrator } from '@omnisync/erp-engine';
 
-// Adaptadores ERP (Lego Pieces)
+// Adaptadores ERP (Lego Pieces) Sincronizados
 import { MockEnterpriseResourcePlanningAdapter } from '@omnisync/erp-mock';
 import { OdooAdapterApparatus } from '@omnisync/erp-odoo';
 
@@ -35,7 +35,7 @@ import {
  * Coordina la resolución de identidad, recuperación de memoria, contexto RAG
  * e inferencia operativa mediante una tubería de fases atomizadas.
  *
- * @version 2.1 - Dynamic ERP Injection Nivelada
+ * @version 2.3 - Global Identity & Action Alignment
  * @protocol OEDP-Level: Elite (Atomized Pipeline)
  */
 export class NeuralFlowOrchestrator {
@@ -69,7 +69,6 @@ export class NeuralFlowOrchestrator {
           );
 
           // 4. Fase de Acción (Dynamic ERP Execution)
-          // NIVELACIÓN: Ahora se inyecta la configuración para resolución dinámica.
           const erpAction = await this.executeOperationalActionIfNecessary(
             incomingNeuralIntent,
             aiResponse,
@@ -112,15 +111,15 @@ export class NeuralFlowOrchestrator {
    * @private
    */
   private static async resolveTenantSovereignty(tenantId: TenantId): Promise<ITenantConfiguration> {
-    const rawConfig = await OmnisyncDatabase.databaseEngine.tenant.findUnique({
+    const rawConfigurationRecord = await OmnisyncDatabase.databaseEngine.tenant.findUnique({
       where: { id: tenantId }
     });
 
-    if (!rawConfig) {
-      throw new Error(`OS-DOM-404: Node [${tenantId}] missing in infrastructure.`);
+    if (!rawConfigurationRecord) {
+      throw new Error(`OS-DOM-404: Nodo [${tenantId}] no localizado en la infraestructura.`);
     }
 
-    return TenantConfigurationSchema.parse(rawConfig);
+    return TenantConfigurationSchema.parse(rawConfigurationRecord);
   }
 
   /**
@@ -129,26 +128,27 @@ export class NeuralFlowOrchestrator {
    */
   private static async executeCognitiveInference(
     intent: INeuralIntent,
-    config: ITenantConfiguration,
+    tenantConfiguration: ITenantConfiguration,
     history: unknown[]
   ): Promise<IAIResponse> {
-    const aiDriver = ArtificialIntelligenceDriverFactory.getSovereignDriver(config.artificialIntelligence.provider);
+    const aiDriver = ArtificialIntelligenceDriverFactory.getSovereignDriver(tenantConfiguration.artificialIntelligence.provider);
 
-    const queryVector = await OmnisyncArtificialIntelligenceEngine.generateVectorEmbeddings(
+    // Generación de Embeddings para RAG
+    const queryVectorCoordinates = await OmnisyncArtificialIntelligenceEngine.generateVectorEmbeddings(
       aiDriver,
       intent.payload.content
     );
 
     const knowledgeContext = await OmnisyncVectorEngine.retrieveRelevantKnowledgeContext(
       new QdrantDriver(),
-      queryVector,
-      config.id,
-      config.knowledgeRetrieval.maximumChunksToRetrieve,
-      config.knowledgeRetrieval.similarityScoreThreshold
+      queryVectorCoordinates,
+      tenantConfiguration.id,
+      tenantConfiguration.knowledgeRetrieval.maximumChunksToRetrieve,
+      tenantConfiguration.knowledgeRetrieval.similarityScoreThreshold
     );
 
     const enrichedPrompt = NeuralPromptApparatus.buildEnrichedInferencePrompt(
-      config.artificialIntelligence.systemPrompt,
+      tenantConfiguration.artificialIntelligence.systemPrompt,
       knowledgeContext.chunks,
       intent.payload.content,
       history
@@ -157,7 +157,7 @@ export class NeuralFlowOrchestrator {
     return await OmnisyncArtificialIntelligenceEngine.executeGenerativeInference(
       aiDriver,
       enrichedPrompt,
-      config.artificialIntelligence.modelConfiguration,
+      tenantConfiguration.artificialIntelligence.modelConfiguration,
       intent.id
     );
   }
@@ -165,11 +165,9 @@ export class NeuralFlowOrchestrator {
   /**
    * @method executeOperationalActionIfNecessary
    * @private
-   * @description Orquesta la ejecución en el ERP basándose en el ADN del Tenant.
-   * Implementa la fábrica dinámica de adaptadores.
    */
   private static async executeOperationalActionIfNecessary(
-    intent: INeuralIntent,
+    incomingNeuralIntent: INeuralIntent,
     aiResponse: IAIResponse,
     tenantConfiguration: ITenantConfiguration
   ): Promise<IEnterpriseResourcePlanningActionResponse | undefined> {
@@ -179,16 +177,17 @@ export class NeuralFlowOrchestrator {
         'NeuralFlowOrchestrator',
         'resolve_and_execute_erp',
         async () => {
-            const erpAdapter = await this.resolveSovereignErpAdapter(tenantConfiguration);
+            const dynamicErpAdapter = await this.resolveSovereignErpAdapter(tenantConfiguration);
 
             return await OmnisyncEnterpriseResourcePlanningOrchestrator.executeServiceTicketProvisioning(
-                erpAdapter,
-                {
-                    externalUserId: intent.externalUserId,
-                    subject: `Incidencia Neural: ${intent.id.substring(0,8)}`,
-                    description: aiResponse.suggestion,
-                    priority: 'MEDIUM'
-                }
+              dynamicErpAdapter,
+              {
+                userId: incomingNeuralIntent.externalUserId,
+                subject: `Incidencia Neural: ${incomingNeuralIntent.id.substring(0,8)}`,
+                description: aiResponse.suggestion,
+                priority: 'MEDIUM',
+                createdAt: new Date().toISOString()
+              }
             );
         }
     );
@@ -197,25 +196,34 @@ export class NeuralFlowOrchestrator {
   /**
    * @method resolveSovereignErpAdapter
    * @private
-   * @description Factoría interna para la resolución de adaptadores ERP con desencriptación de llaves.
+   * @description Factoría dinámica de adaptadores.
+   * Se utiliza el bloque léxico {} en cada case para cumplir con las leyes de ESLint.
    */
   private static async resolveSovereignErpAdapter(
-      config: ITenantConfiguration
+      tenantConfiguration: ITenantConfiguration
   ): Promise<IEnterpriseResourcePlanningAdapter> {
-      const adapterType = config.enterpriseResourcePlanning.adapterIdentifier;
+      const adapterIdentifier = tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier;
 
-      switch (adapterType) {
-          case 'ODOO_V16': // Mapeo para Odoo Online
-              // En un flujo real, 'secretKey' se recupera de variables de entorno de Render
-              const credentials = await OmnisyncSecurity.decryptSensitiveData(
-                  config.enterpriseResourcePlanning.encryptedCredentials,
-                  process.env['SYSTEM_ENCRYPTION_KEY'] ?? 'fallback_key'
+      switch (adapterIdentifier) {
+          case 'ODOO_V16': {
+              const masterSystemEncryptionKey = process.env['SYSTEM_ENCRYPTION_KEY'];
+
+              if (!masterSystemEncryptionKey) {
+                  throw new Error('OS-SEC-004: Llave maestra ausente en el entorno de ejecución.');
+              }
+
+              const decryptedCredentialsRaw = await OmnisyncSecurity.decryptSensitiveData(
+                tenantConfiguration.enterpriseResourcePlanning.encryptedCredentials,
+                masterSystemEncryptionKey
               );
-              return new OdooAdapterApparatus(JSON.parse(credentials));
+
+              return new OdooAdapterApparatus(JSON.parse(decryptedCredentialsRaw));
+          }
 
           case 'MOCK_SYSTEM':
-          default:
+          default: {
               return new MockEnterpriseResourcePlanningAdapter();
+          }
       }
   }
 

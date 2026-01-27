@@ -3,14 +3,8 @@
 import { z } from 'zod';
 
 /**
- * @name OdooTechnicalIdentifier
- * @description Branded type para identificadores numéricos nativos de Odoo.
- */
-export type OdooTechnicalIdentifier = number & { readonly __brand: 'OdooTechnicalIdentifier' };
-
-/**
  * @name OdooConnectionConfigurationSchema
- * @description Esquema de validación para la infraestructura de conexión con Odoo Online.
+ * @description Define los requisitos de infraestructura para el cluster Odoo Online.
  */
 export const OdooConnectionConfigurationSchema = z.object({
   baseUrl: z.string().url({ message: 'URL de instancia Odoo inválida.' }),
@@ -20,16 +14,17 @@ export const OdooConnectionConfigurationSchema = z.object({
 }).readonly();
 
 /**
- * @name OdooTicketProvisioningSchema
- * @description Estructura para la creación de helpdesk.ticket alineada al ERP.
+ * @name OdooTicketPayloadSchema
+ * @description Contrato inmutable para la estructura 'helpdesk.ticket' en Odoo.
+ * Utiliza los nombres de campos técnicos del ORM de Odoo (v16-v18).
  */
-export const OdooTicketProvisioningSchema = z.object({
-  subject: z.string().min(10),
-  description: z.string().min(20),
-  partnerIdentifier: z.number().int().positive().optional(),
-  priority: z.enum(['0', '1', '2', '3']).default('1'), // 0: Low, 3: Urgent
-  teamIdentifier: z.number().int().optional(),
+export const OdooTicketPayloadSchema = z.object({
+  name: z.string().min(5),
+  description: z.string().min(10),
+  partner_id: z.union([z.number(), z.boolean()]),
+  priority: z.enum(['0', '1', '2', '3']),
+  team_id: z.number().optional(),
 }).readonly();
 
 export type IOdooConnectionConfiguration = z.infer<typeof OdooConnectionConfigurationSchema>;
-export type IOdooTicketProvisioning = z.infer<typeof OdooTicketProvisioningSchema>;
+export type IOdooTicketPayload = z.infer<typeof OdooTicketPayloadSchema>;
