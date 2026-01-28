@@ -1,13 +1,13 @@
 /** libs/integrations/ai-engine/src/index.ts */
 
 /**
- * @section Capa de Orquestación Neural
- * Motor central para la ejecución de inferencias y generación de firmas vectoriales.
+ * @section Capa de Cognición Neural
  */
-export * from './lib/ai-engine.apparatus';
+export { NeuralInferenceApparatus } from './lib/neural-inference.apparatus';
+export { NeuralEmbeddingApparatus } from './lib/neural-embedding.apparatus';
 
 /**
- * @section Capa de Adaptadores de IA (Drivers)
- * Fábrica encargada de instanciar el proveedor específico (Gemini, etc.) según el ADN del Tenant.
+ * @section Capa de Infraestructura & Resolución
  */
-export * from './lib/ai-driver.factory';
+export { ArtificialIntelligenceDriverFactory } from './lib/ai-driver.factory';
+export { AIProviderResolutionSchema } from './lib/schemas/ai-inference.schema';

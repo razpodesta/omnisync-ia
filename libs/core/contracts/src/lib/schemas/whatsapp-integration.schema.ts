@@ -3,8 +3,16 @@
 import { z } from 'zod';
 
 /**
+ * @section Importación de ADN Soberano
+ * Se importan directamente desde los silos para evitar dependencias circulares
+ * con el index.ts de la librería core-contracts.
+ */
+import { TenantId } from './core-contracts.schema';
+import { INeuralIntent } from './omnichannel.schema';
+
+/**
  * @name WhatsAppConversationCategorySchema
- * @description Define las categorías de Meta para la tarificación y prioridad de mensajes.
+ * @description Define las categorías de Meta para la tarificación y prioridad.
  */
 export const WhatsAppConversationCategorySchema = z.enum([
   'UTILITY',
@@ -14,30 +22,46 @@ export const WhatsAppConversationCategorySchema = z.enum([
 ]);
 
 /**
- * @name WhatsAppMessageStatusSchema
- * @description Estados inmutables siguiendo el webhook de WhatsApp Cloud API.
- */
-export const WhatsAppMessageStatusSchema = z.enum([
-  'SENT',
-  'DELIVERED',
-  'READ',
-  'FAILED',
-  'DELETED'
-]);
-
-/**
  * @name IWhatsAppDriver
- * @description Interfaz de contrato que deben implementar ambos drivers (Meta y Evolution).
+ * @description Interfaz de contrato universal para los conectores de WhatsApp.
+ * Garantiza que tanto el Driver de Meta como el de Evolution cumplan con la
+ * inyección de soberanía y la normalización multimodal.
+ *
+ * @protocol OEDP-Level: Elite (Circular-Safe Contract)
  */
 export interface IWhatsAppDriver {
+  /** Nombre técnico del proveedor inyectado */
   readonly providerName: 'META_OFFICIAL' | 'EVOLUTION_COMMUNITY';
 
-  /** Envía un mensaje de texto plano o reactivo */
-  sendMessage(to: string, content: string): Promise<{ messageId: string }>;
+  /**
+   * @method sendMessage
+   * @description Envía un mensaje de texto reactivo validado por el orquestador.
+   */
+  sendMessage(
+    recipientPhoneNumber: string,
+    textualContent: string
+  ): Promise<{ readonly messageId: string }>;
 
-  /** Envía una plantilla aprobada (Requerido para Meta tras ventana de 24h) */
-  sendTemplate(to: string, templateName: string, languageCode: string): Promise<void>;
+  /**
+   * @method sendTemplate
+   * @description Envía plantillas oficiales (HSM) fuera de la ventana de 24h.
+   */
+  sendTemplate(
+    recipientPhoneNumber: string,
+    templateNameIdentifier: string,
+    languageCode: string
+  ): Promise<void>;
 
-  /** Normaliza el webhook entrante al formato INeuralIntent */
-  parseIncomingWebhook(payload: unknown): unknown;
+  /**
+   * @method parseIncomingWebhook
+   * @description Normaliza el flujo de red entrante a un lote de Intenciones Neurales.
+   * NIVELACIÓN: Sanación de Error TS2307 y alineación multi-argumento.
+   *
+   * @param {unknown} networkPayload - Datos brutos de la petición HTTP.
+   * @param {TenantId} tenantOrganizationIdentifier - Sello de soberanía del nodo.
+   */
+  parseIncomingWebhook(
+    networkPayload: unknown,
+    tenantOrganizationIdentifier: TenantId
+  ): INeuralIntent[];
 }

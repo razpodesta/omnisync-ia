@@ -2,14 +2,22 @@
 
 /**
  * @section Capa de Orquestación RAG
- * Motor de recuperación de conocimiento semántico.
+ * Motor central de recuperación y evaluación de relevancia.
  */
-export * from './lib/vector-engine.apparatus';
+export { OmnisyncVectorEngine } from './lib/vector-engine.apparatus';
+export { SemanticRelevanceAssessor } from './lib/semantic-relevance-assessor.apparatus';
 
 /**
- * @section Capa de Ingesta de ADN Técnico
- * Aparatos encargados de la transformación de documentos en vectores.
+ * @section Capa de Contratos (SSOT)
+ * Exportación de interfaces y esquemas de configuración.
+ * NIVELACIÓN: Sanación de Error TS2305.
  */
-export * from './lib/knowledge-ingestor/knowledge-ingestor.orchestrator';
-export * from './lib/knowledge-ingestor/knowledge-classifier.apparatus';
-export * from './lib/knowledge-ingestor/semantic-chunker.apparatus';
+export * from './lib/schemas/vector-engine.schema';
+export * from './lib/schemas/semantic-relevance.schema';
+
+/**
+ * @section Capa de Ingesta
+ */
+export { KnowledgeIngestorOrchestrator } from './lib/knowledge-ingestor/orchestrators/knowledge-ingestor.orchestrator';
+export { KnowledgeClassifierApparatus } from './lib/knowledge-ingestor/knowledge-classifier.apparatus';
+export { SemanticChunkerApparatus } from './lib/knowledge-ingestor/semantic-chunker.apparatus';

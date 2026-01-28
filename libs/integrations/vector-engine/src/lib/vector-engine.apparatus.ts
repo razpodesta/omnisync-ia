@@ -5,70 +5,94 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
   IKnowledgeSemanticChunk,
   IKnowledgeSemanticSearchResult,
-  KnowledgeSemanticSearchResultSchema
+  KnowledgeSemanticSearchResultSchema,
+  TenantId,
+  OmnisyncContracts
 } from '@omnisync/core-contracts';
 import { SemanticRelevanceAssessor } from './semantic-relevance-assessor.apparatus';
-
-/**
- * @interface IVectorDatabaseAgnosticDriver
- * @description Contrato para proveedores de base de datos vectorial.
- */
-export interface IVectorDatabaseAgnosticDriver {
-  readonly providerName: string;
-  executeSemanticSearch(
-    queryVector: number[],
-    tenantId: string,
-    limit: number
-  ): Promise<IKnowledgeSemanticChunk[]>;
-  upsertKnowledgeChunks(knowledgeChunks: IKnowledgeSemanticChunk[]): Promise<void>;
-}
+import {
+  IVectorDatabaseAgnosticDriver,
+  VectorSearchConfigurationSchema
+} from './schemas/vector-engine.schema';
 
 /**
  * @name OmnisyncVectorEngine
  * @description Orquestador de recuperación de conocimiento (RAG).
- * Puente de alta disponibilidad entre los drivers vectoriales y el AI-Engine.
- * 
- * @protocol OEDP-Level: Elite (Clean Orchestration)
+ * Actúa como el puente de alta disponibilidad entre los drivers vectoriales y el
+ * motor de inferencia, garantizando la relevancia del contexto recuperado.
+ *
+ * @protocol OEDP-Level: Elite (Synchronized Orchestration)
  */
 export class OmnisyncVectorEngine {
 
   /**
    * @method retrieveRelevantKnowledgeContext
-   * @description Orquesta la búsqueda semántica y delega la evaluación de relevancia.
+   * @description Orquesta la búsqueda semántica y valida la calidad de los resultados.
+   *
+   * @param {IVectorDatabaseAgnosticDriver} databaseDriver - Implementación vectorial (Lego Piece).
+   * @param {number[]} queryVectorCoordinates - Firma vectorial de la consulta del usuario.
+   * @param {TenantId} tenantOrganizationIdentifier - ID nominal de la organización.
+   * @param {number} maximumResultsToRetrieve - Límite de chunks para el prompt.
+   * @param {number} similarityScoreThreshold - Umbral mínimo de confianza.
+   * @returns {Promise<IKnowledgeSemanticSearchResult>} Resultado consolidado bajo contrato SSOT.
    */
   public static async retrieveRelevantKnowledgeContext(
     databaseDriver: IVectorDatabaseAgnosticDriver,
     queryVectorCoordinates: number[],
-    tenantId: string,
+    tenantOrganizationIdentifier: TenantId,
     maximumResultsToRetrieve = 3,
-    similarityThreshold = 0.7
+    similarityScoreThreshold = 0.7
   ): Promise<IKnowledgeSemanticSearchResult> {
+    const apparatusName = 'OmnisyncVectorEngine';
+    const operationName = `retrieve:${databaseDriver.providerName}`;
+
     return await OmnisyncTelemetry.traceExecution(
-      'OmnisyncVectorEngine',
-      `retrieve:${databaseDriver.providerName}`,
+      apparatusName,
+      operationName,
       async () => {
         const searchStartTime = performance.now();
 
         try {
           /**
-           * 1. Recuperación via Driver (Resiliencia Sentinel)
+           * @section Validación de Configuración
            */
-          const searchResultsFound = await OmnisyncSentinel.executeWithResilience(
-            () => databaseDriver.executeSemanticSearch(
-              queryVectorCoordinates,
-              tenantId,
-              maximumResultsToRetrieve
-            ),
-            'OmnisyncVectorEngine',
-            `search_operation:${databaseDriver.providerName}`
+          const searchConfiguration = OmnisyncContracts.validate(
+            VectorSearchConfigurationSchema,
+            { maximumChunksToRetrieve: maximumResultsToRetrieve, similarityScoreThreshold },
+            apparatusName
           );
 
           /**
-           * 2. Evaluación de Relevancia (Delegación Atómica)
+           * 1. Recuperación via Driver (Resiliencia Sentinel)
            */
-          const { filteredChunks, averageScore } = SemanticRelevanceAssessor.assess(
+          const searchResultsFound: IKnowledgeSemanticChunk[] = await OmnisyncSentinel.executeWithResilience(
+            () => databaseDriver.executeSemanticSearch(
+              queryVectorCoordinates,
+              tenantOrganizationIdentifier,
+              searchConfiguration.maximumChunksToRetrieve
+            ),
+            apparatusName,
+            `vector_search_op:${databaseDriver.providerName}`
+          );
+
+          /**
+           * 2. Evaluación de Relevancia (Cognitive Filtering)
+           * NIVELACIÓN: Sanación de Error TS2339. Se invoca 'evaluateContextRelevance'
+           * y se extraen las métricas de élite.
+           */
+          const {
+            filteredChunks,
+            averageScore,
+            contextReliabilityPulse
+          } = SemanticRelevanceAssessor.evaluateContextRelevance(
             searchResultsFound,
-            similarityThreshold
+            searchConfiguration.similarityScoreThreshold
+          );
+
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'context_audit',
+            `RAG Quality: ${averageScore.toFixed(2)} | Pulse: ${contextReliabilityPulse.toFixed(2)}`
           );
 
           /**
@@ -80,17 +104,20 @@ export class OmnisyncVectorEngine {
             latencyInMilliseconds: performance.now() - searchStartTime
           });
 
-        } catch (criticalError: unknown) {
+        } catch (criticalRetrievalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-601',
             severity: 'HIGH',
-            apparatus: 'OmnisyncVectorEngine',
-            operation: 'retrieveRelevantKnowledgeContext',
-            message: 'integrations.vector_engine.errors.retrieval_failure',
-            context: { tenantId, error: String(criticalError) },
+            apparatus: apparatusName,
+            operation: operationName,
+            message: 'integrations.vector_engine.retrieval_failure',
+            context: {
+                tenantId: tenantOrganizationIdentifier,
+                error: String(criticalRetrievalError)
+            },
             isRecoverable: true
           });
-          throw criticalError;
+          throw criticalRetrievalError;
         }
       }
     );

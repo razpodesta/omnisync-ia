@@ -2,80 +2,89 @@
 
 import {
   IArtificialIntelligenceDriver,
-  KnowledgeOrganizationCategorySchema,
   OmnisyncContracts
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { z } from 'zod';
-
-/**
- * @name ClassificationResponseSchema
- * @description Esquema de integridad para la respuesta de categorización.
- */
-const ClassificationResponseSchema = z.object({
-  category: KnowledgeOrganizationCategorySchema,
-  tags: z.array(z.string()).length(5),
-  confidenceScore: z.number().min(0).max(1)
-}).readonly();
-
-type IClassificationResponse = z.infer<typeof ClassificationResponseSchema>;
+import {
+  KnowledgeClassificationResponseSchema,
+  IKnowledgeClassificationResponse
+} from './schemas/knowledge-classifier.schema';
 
 /**
  * @name KnowledgeClassifierApparatus
- * @description Aparato de cognición encargado de la taxonomía automatizada.
- * Transforma contenido técnico bruto en metadatos clasificados para optimizar el RAG.
+ * @description Aparato de cognición encargado de la taxonomía automatizada de documentos.
+ * Transforma contenido técnico bruto en metadatos clasificados utilizando inferencia
+ * de baja latencia para optimizar el ciclo de vida del ADN vectorial.
  *
- * @protocol OEDP-Level: Elite (Cognitive Sanitization)
+ * @protocol OEDP-Level: Elite (Atomic Cognitive Function)
  */
 export class KnowledgeClassifierApparatus {
 
   /**
    * @method classifyDocumentContent
-   * @description Orquesta el proceso de análisis semántico y validación de contrato.
+   * @description Orquesta el proceso de análisis semántico mediante IA y valida el contrato resultante.
+   *
+   * @param {IArtificialIntelligenceDriver} artificialIntelligenceDriver - Driver del LLM (ej. Gemini Flash).
+   * @param {string} textualContentToAnalyze - El bloque de texto a categorizar.
+   * @returns {Promise<IKnowledgeClassificationResponse>} Resultado validado por el esquema granular.
    */
   public static async classifyDocumentContent(
     artificialIntelligenceDriver: IArtificialIntelligenceDriver,
-    textualContent: string
-  ): Promise<IClassificationResponse> {
+    textualContentToAnalyze: string
+  ): Promise<IKnowledgeClassificationResponse> {
+    const apparatusName = 'KnowledgeClassifierApparatus';
+    const operationName = 'classifyDocumentContent';
+
     return await OmnisyncTelemetry.traceExecution(
-      'KnowledgeClassifierApparatus',
-      'classifyDocumentContent',
+      apparatusName,
+      operationName,
       async () => {
-        const instructionPrompt = this.buildSovereignClassificationPrompt(textualContent);
+        const classificationInstructionPrompt = this.buildSovereignClassificationPrompt(textualContentToAnalyze);
 
         try {
           /**
-           * @section Inferencia de Ejecución
-           * Se utiliza la configuración nivelada para Gemini 3 Flash.
+           * @section Ejecución de Inferencia
+           * Se utiliza una configuración de alta temperatura para permitir
+           * discernimiento semántico, pero limitada en tokens para eficiencia.
            */
-          const rawResponse = await artificialIntelligenceDriver.generateResponse(
-            instructionPrompt,
+          const rawInferenceResponse = await artificialIntelligenceDriver.generateResponse(
+            classificationInstructionPrompt,
             {
               modelName: 'FLASH',
-              temperature: 0.1,
-              maxTokens: 600
+              temperature: 0.2,
+              maxTokens: 500
             }
           );
 
-          const sanitizedJson = this.extractStructuralJson(rawResponse);
+          /**
+           * @section Limpieza de Residuos Cognitivos
+           * Erradicamos cualquier texto, preámbulo o Markdown inyectado por el LLM.
+           */
+          const sanitizedJsonPayload = this.extractPureJsonContent(rawInferenceResponse);
 
+          /**
+           * @section Validación de Soberanía del Dato (SSOT)
+           * Separación física: el esquema se importa de su propio archivo granular.
+           */
           return OmnisyncContracts.validate(
-            ClassificationResponseSchema,
-            JSON.parse(sanitizedJson),
-            'KnowledgeClassifierApparatus'
+            KnowledgeClassificationResponseSchema,
+            JSON.parse(sanitizedJsonPayload),
+            apparatusName
           );
 
-        } catch (criticalError: unknown) {
+        } catch (criticalClassificationError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-604',
             severity: 'MEDIUM',
-            apparatus: 'KnowledgeClassifierApparatus',
+            apparatus: apparatusName,
             operation: 'classify',
-            message: 'integrations.vector_engine.errors.classification_failed',
-            context: { error: String(criticalError) }
+            message: 'integrations.vector_engine.classification_failed',
+            context: { error: String(criticalClassificationError) },
+            isRecoverable: true
           });
 
+          // Fallback institucional para mantener la continuidad del pipeline
           return {
             category: 'TECHNICAL',
             tags: ['general', 'system', 'unclassified', 'data', 'neural'],
@@ -92,41 +101,41 @@ export class KnowledgeClassifierApparatus {
    */
   private static buildSovereignClassificationPrompt(content: string): string {
     return `
-      ACTÚA COMO UN ARQUITECTO DE DATOS DE ELITE.
-      OBJETIVO: Analizar el fragmento de conocimiento y clasificarlo.
+      ACT AS AN ELITE DATA ARCHITECT.
+      OBJECTIVE: Analyze technical content and classify it for a vector database.
 
-      REGLAS DE SALIDA:
-      1. Responde ÚNICAMENTE con un objeto JSON válido.
-      2. No incluyas explicaciones, preámbulos ni Markdown.
-      3. Categorías permitidas: [TECHNICAL, COMMERCIAL, ADMINISTRATIVE, LEGAL].
-      4. Genera exactamente 5 tags técnicos.
+      OUTPUT RULES:
+      1. Respond ONLY with a valid JSON object.
+      2. No explanations, no markdown blocks, no preambles.
+      3. Categories allowed: [TECHNICAL, COMMERCIAL, ADMINISTRATIVE, LEGAL].
+      4. Generate exactly 5 technical tags.
 
-      ESQUEMA REQUERIDO:
+      REQUIRED SCHEMA:
       {
         "category": "string",
         "tags": ["string", "string", "string", "string", "string"],
-        "confidenceScore": number (0.0 a 1.0)
+        "confidenceScore": number (0.0 to 1.0)
       }
 
-      CONTENIDO A PROCESAR:
-      ${content.substring(0, 3000)}
+      CONTENT TO PROCESS:
+      ${content.substring(0, 4000)}
     `.trim();
   }
 
   /**
-   * @method extractStructuralJson
+   * @method extractPureJsonContent
    * @private
-   * @description Implementa un algoritmo de limpieza de residuos del LLM para
-   * garantizar que solo el bloque JSON sea procesado por el parser.
+   * @description Implementa un algoritmo de recorte quirúrgico para aislar el objeto JSON
+   * de posibles residuos textuales del modelo generativo.
    */
-  private static extractStructuralJson(rawAiResponse: string): string {
-    const firstBraceIndex = rawAiResponse.indexOf('{');
-    const lastBraceIndex = rawAiResponse.lastIndexOf('}');
+  private static extractPureJsonContent(rawText: string): string {
+    const firstBraceIdentifier = rawText.indexOf('{');
+    const lastBraceIdentifier = rawText.lastIndexOf('}');
 
-    if (firstBraceIndex === -1 || lastBraceIndex === -1) {
-      throw new Error('No structural JSON found in AI response');
+    if (firstBraceIdentifier === -1 || lastBraceIdentifier === -1) {
+      throw new Error('OS-CORE-JSON: No structural JSON found in AI response.');
     }
 
-    return rawAiResponse.substring(firstBraceIndex, lastBraceIndex + 1);
+    return rawText.substring(firstBraceIdentifier, lastBraceIdentifier + 1);
   }
 }

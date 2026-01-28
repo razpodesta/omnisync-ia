@@ -4,71 +4,70 @@ import { z } from 'zod';
 
 /**
  * @name EnterpriseResourcePlanningSyncStatusSchema
- * @description Define los estados inmutables de sincronización entre el Neural Hub
- * y los sistemas de gestión externos.
+ * @description Define los estados inmutables de consistencia entre el ecosistema
+ * Omnisync y los registros físicos en los sistemas externos (ERP/CRM).
  */
 export const EnterpriseResourcePlanningSyncStatusSchema = z.enum([
-  'SYNCED',
-  'PENDING',
-  'FAILED_RETRYING',
-  'MANUAL_INTERVENTION'
+  'SYNCED',               // Dato idéntico en ambos sistemas.
+  'PENDING',              // Operación aceptada, procesamiento asíncrono en curso.
+  'FAILED_RETRYING',      // Fallo técnico, Sentinel orquestando reintento.
+  'MANUAL_INTERVENTION'   // Error lógico, requiere auditoría por parte del Tenant.
 ]);
+
+export type IEnterpriseResourcePlanningSyncStatus = z.infer<typeof EnterpriseResourcePlanningSyncStatusSchema>;
+
+/**
+ * @name EnterpriseResourcePlanningActionResponseSchema
+ * @description Contrato maestro SSOT para la respuesta de cualquier operación operativa.
+ * Se ha unificado para eliminar la propiedad ambigua 'operationalStatus'.
+ *
+ * @protocol OEDP-Level: Elite (Contract Unification)
+ */
+export const EnterpriseResourcePlanningActionResponseSchema = z.object({
+  /** Indica si la transacción técnica fue completada exitosamente */
+  success: z.boolean(),
+
+  /** Identificador inmutable retornado por el sistema externo */
+  externalIdentifier: z.string().min(1).optional(),
+
+  /** Estado de sincronización actual según la taxonomía institucional */
+  syncStatus: EnterpriseResourcePlanningSyncStatusSchema,
+
+  /** Llave semántica para resolución de internacionalización (i18n) */
+  messageKey: z.string().min(5),
+
+  /** Latencia quirúrgica del sistema externo medida en milisegundos */
+  latencyInMilliseconds: z.number().nonnegative(),
+
+  /** Contexto adicional del ERP (ej: número de factura, status de stock) */
+  operationalMetadata: z.record(z.string(), z.unknown()).default({}),
+}).readonly();
+
+/** @type IEnterpriseResourcePlanningActionResponse */
+export type IEnterpriseResourcePlanningActionResponse = z.infer<typeof EnterpriseResourcePlanningActionResponseSchema>;
 
 /**
  * @name IEnterpriseResourcePlanningAdapter
- * @description Interfaz de contrato de élite que debe implementar cualquier
- * conector de ERP (Lego Piece). Garantiza que el orquestador sea agnóstico
- * al sistema final.
+ * @description Interfaz de contrato de élite para conectores de sistemas externos.
+ * Todos los métodos ahora retornan el contrato unificado IEnterpriseResourcePlanningActionResponse.
  *
- * @protocol OEDP-Standard: No Abbreviations
+ * @protocol OEDP-Standard: Zero Discrepancy
  */
 export interface IEnterpriseResourcePlanningAdapter {
-  /** Identificador comercial del proveedor (ej: 'SAP_S4HANA', 'ODOO_V17') */
+  /** Nombre comercial y versión del conector (ej: 'ODOO_V17_COMMUNITY') */
   readonly providerName: string;
 
   /**
    * @method createOperationTicket
-   * @description Registra una incidencia o requerimiento en el sistema externo.
+   * @description Registra un evento transaccional en el ERP destino.
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Respuesta validada por SSOT.
    */
-  createOperationTicket(data: unknown): Promise<{
-    readonly externalIdentifier: string;
-    readonly operationalStatus: string;
-  }>;
+  createOperationTicket(operationalPayload: unknown): Promise<IEnterpriseResourcePlanningActionResponse>;
 
   /**
    * @method validateCustomerExistence
-   * @description Verifica la presencia del cliente en la base de datos del ERP.
+   * @description Verifica la soberanía de la identidad del cliente en el ERP.
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Resultado con 'success' y 'externalIdentifier'.
    */
-  validateCustomerExistence(phoneNumber: string): Promise<{
-    readonly exists: boolean;
-    readonly externalIdentifier?: string;
-  }>;
+  validateCustomerExistence(customerPhoneNumber: string): Promise<IEnterpriseResourcePlanningActionResponse>;
 }
-
-/**
- * @name EnterpriseResourcePlanningActionResponseSchema
- * @description Estructura Single Source of Truth (SSOT) para la respuesta de
- * cualquier acción ejecutada en el puente ERP.
- */
-export const EnterpriseResourcePlanningActionResponseSchema = z.object({
-  /** Indica si la operación técnica fue exitosa */
-  success: z.boolean(),
-
-  /** Identificador retornado por el sistema externo (opcional) */
-  externalIdentifier: z.string().optional(),
-
-  /** Estado de consistencia del dato tras la acción */
-  syncStatus: EnterpriseResourcePlanningSyncStatusSchema,
-
-  /** Llave de traducción para la interfaz de usuario (i18n) */
-  messageKey: z.string(),
-
-  /** Tiempo de respuesta del sistema externo para telemetría de performance */
-  latencyInMilliseconds: z.number().nonnegative(),
-}).readonly();
-
-/**
- * @type IEnterpriseResourcePlanningActionResponse
- * @description Representación tipada de la respuesta de acción ERP.
- */
-export type IEnterpriseResourcePlanningActionResponse = z.infer<typeof EnterpriseResourcePlanningActionResponseSchema>;

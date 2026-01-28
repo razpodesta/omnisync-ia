@@ -1,51 +1,98 @@
 /** libs/integrations/vector-engine/src/lib/semantic-relevance-assessor.apparatus.ts */
 
-import { IKnowledgeSemanticChunk } from '@omnisync/core-contracts';
+import { IKnowledgeSemanticChunk, OmnisyncContracts } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import {
+  KnowledgeRelevanceAssessmentSchema,
+  IKnowledgeRelevanceAssessment
+} from './schemas/semantic-relevance.schema';
 
 /**
  * @name SemanticRelevanceAssessor
- * @description Aparato especializado en la evaluación de calidad de fragmentos semánticos.
- * Responsable de aplicar filtros de umbral y calcular el pulso de relevancia del contexto.
- * 
- * @protocol OEDP-Level: Elite (Mathematical Atomization)
+ * @description Aparato especializado en la auditoría y filtrado de fragmentos semánticos.
+ * Aplica algoritmos de limpieza y cálculo de pulso de relevancia para garantizar
+ * que el motor de inferencia reciba únicamente ADN técnico de alta fidelidad.
+ *
+ * @protocol OEDP-Level: Elite (Mathematical Optimization)
  */
 export class SemanticRelevanceAssessor {
 
   /**
-   * @method filterAndRankByConfidence
-   * @description Filtra fragmentos que no cumplen con el umbral de similitud y calcula el score promedio.
+   * @method evaluateContextRelevance
+   * @description Realiza una evaluación quirúrgica del lote de fragmentos en una sola pasada.
+   *
+   * @param {IKnowledgeSemanticChunk[]} rawSemanticKnowledgeChunks - Fragmentos crudos de Qdrant.
+   * @param {number} similarityScoreThreshold - Umbral mínimo de aceptación (Default: 0.70).
+   * @returns {IKnowledgeRelevanceAssessment} Auditoría de calidad validada por SSOT.
    */
-  public static assess(
-    rawChunks: IKnowledgeSemanticChunk[],
-    similarityThreshold: number
-  ): { readonly filteredChunks: IKnowledgeSemanticChunk[]; readonly averageScore: number } {
+  public static evaluateContextRelevance(
+    rawSemanticKnowledgeChunks: IKnowledgeSemanticChunk[],
+    similarityScoreThreshold: number
+  ): IKnowledgeRelevanceAssessment {
+    const apparatusName = 'SemanticRelevanceAssessor';
+
     return OmnisyncTelemetry.traceExecutionSync(
-      'SemanticRelevanceAssessor',
-      'assess',
+      apparatusName,
+      'evaluateContextRelevance',
       () => {
-        const filteredChunks = rawChunks.filter((chunk) => {
-          const score = this.extractScoreFromMetadata(chunk);
-          return score >= similarityThreshold;
-        });
+        const totalChunksCaptured = rawSemanticKnowledgeChunks.length;
 
-        const averageScore = filteredChunks.length > 0
-          ? filteredChunks.reduce((acc, curr) => acc + this.extractScoreFromMetadata(curr), 0) / filteredChunks.length
-          : 0;
+        // Inicialización de acumuladores para optimización de Single-Pass
+        const filteredChunks: IKnowledgeSemanticChunk[] = [];
+        let scoreSummation = 0;
+        let hasHighConfidenceAnchor = false;
 
-        return { filteredChunks, averageScore };
+        /**
+         * @section Algoritmo de Flujo Único (Single-Pass)
+         * Reducimos la complejidad computacional de O(2n) a O(n).
+         */
+        for (const currentChunk of rawSemanticKnowledgeChunks) {
+          const individualScore = this.extractTechnicalScore(currentChunk);
+
+          if (individualScore >= similarityScoreThreshold) {
+            filteredChunks.push(currentChunk);
+            scoreSummation += individualScore;
+
+            if (individualScore >= 0.90) {
+              hasHighConfidenceAnchor = true;
+            }
+          }
+        }
+
+        const validChunksCount = filteredChunks.length;
+        const averageScore = validChunksCount > 0 ? (scoreSummation / validChunksCount) : 0;
+        const contextReliabilityPulse = totalChunksCaptured > 0 ? (validChunksCount / totalChunksCaptured) : 0;
+
+        /**
+         * @section Validación de Soberanía del Resultado
+         */
+        return OmnisyncContracts.validate(
+          KnowledgeRelevanceAssessmentSchema,
+          {
+            filteredChunks,
+            averageScore,
+            contextReliabilityPulse,
+            hasHighConfidenceAnchor
+          },
+          apparatusName
+        );
       }
     );
   }
 
   /**
-   * @method extractScoreFromMetadata
+   * @method extractTechnicalScore
    * @private
-   * @description Extrae de forma segura el puntaje de similitud inyectado por el driver.
+   * @description Extrae de forma segura el puntaje de relevancia del mapa de metadatos.
    */
-  private static extractScoreFromMetadata(chunk: IKnowledgeSemanticChunk): number {
-    const metadata = chunk.metadata as Record<string, unknown>;
-    const score = metadata['score'];
-    return typeof score === 'number' ? score : 0;
+  private static extractTechnicalScore(chunk: IKnowledgeSemanticChunk): number {
+    const metadataMap = chunk.metadata as Record<string, unknown>;
+    const scoreValue = metadataMap['score'];
+
+    /**
+     * NIVELACIÓN: Type Guard para asegurar que el dato sea numérico
+     * y no contamine el cálculo del promedio.
+     */
+    return typeof scoreValue === 'number' ? scoreValue : 0;
   }
 }

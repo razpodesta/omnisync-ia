@@ -18,10 +18,9 @@ export const ChannelTypeSchema = z.enum([
 /**
  * @name NeuralIntentSchema
  * @description Contrato maestro inmutable para la normalización de mensajes omnicanal.
- * Este esquema garantiza que cualquier interacción externa sea transformada en una
- * estructura de datos predecible y segura antes de alcanzar el Neural Hub.
+ * Sincronizado V2.0: Soporte expandido para flujos multimodales e interactivos.
  *
- * @protocol OEDP-Level: Elite (SSOT)
+ * @protocol OEDP-Level: Elite (SSOT Master DNA)
  */
 export const NeuralIntentSchema = z.object({
   /** Identificador único universal de la intención capturada */
@@ -44,10 +43,23 @@ export const NeuralIntentSchema = z.object({
    * Define la naturaleza y el contenido de la petición del usuario.
    */
   payload: z.object({
-    /** Clasificación del recurso entrante */
-    type: z.enum(['TEXT', 'AUDIO', 'IMAGE', 'LOCATION']),
+    /** 
+     * Clasificación del recurso entrante.
+     * NIVELACIÓN: Expansión de tipos para soportar la Fase 3 del Roadmap (Acción e Interacción).
+     */
+    type: z.enum([
+      'TEXT', 
+      'AUDIO', 
+      'IMAGE', 
+      'VIDEO', 
+      'DOCUMENT', 
+      'LOCATION', 
+      'INTERACTIVE'
+    ]),
 
-    /** Contenido textual puro o referencia URI al buffer multimedia */
+    /** 
+     * Contenido textual puro, referencia URI o ID de buffer multimedia.
+     */
     content: z.string().min(1),
 
     /** Metadatos del entorno de origen para trazabilidad y telemetría */
