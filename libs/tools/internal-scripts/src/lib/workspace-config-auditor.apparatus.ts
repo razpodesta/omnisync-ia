@@ -39,38 +39,55 @@ export class WorkspaceConfigurationAuditor {
       'executeAudit',
       async () => {
         const workspaceRootDirectory = process.cwd();
-        const typescriptBaseConfigurationPath = path.join(workspaceRootDirectory, 'tsconfig.base.json');
+        const typescriptBaseConfigurationPath = path.join(
+          workspaceRootDirectory,
+          'tsconfig.base.json',
+        );
         const detectedConfigurationAnomalies: string[] = [];
 
         if (!fileSystem.existsSync(typescriptBaseConfigurationPath)) {
-          throw new Error(`OS-CORE-SCRIPT: No se localizó el archivo de configuración base en ${typescriptBaseConfigurationPath}`);
+          throw new Error(
+            `OS-CORE-SCRIPT: No se localizó el archivo de configuración base en ${typescriptBaseConfigurationPath}`,
+          );
         }
 
         try {
-          const rawConfigurationContent = fileSystem.readFileSync(typescriptBaseConfigurationPath, 'utf-8');
-          const parsedConfiguration = JSON.parse(rawConfigurationContent) as ITypeScriptBaseConfiguration;
-          const mappedConfigurationPaths = parsedConfiguration.compilerOptions.paths;
+          const rawConfigurationContent = fileSystem.readFileSync(
+            typescriptBaseConfigurationPath,
+            'utf-8',
+          );
+          const parsedConfiguration = JSON.parse(
+            rawConfigurationContent,
+          ) as ITypeScriptBaseConfiguration;
+          const mappedConfigurationPaths =
+            parsedConfiguration.compilerOptions.paths;
 
           /**
            * @section Validación de Soberanía de Rutas
            * Se exige que todo alias inicie con @omnisync o @omnisync-ecosystem
            * para mantener la jerarquía de marca y evitar colisiones.
            */
-          Object.keys(mappedConfigurationPaths).forEach((pathAliasIdentifier) => {
-            const isStandardAlias = pathAliasIdentifier.startsWith('@omnisync/') ||
-                                   pathAliasIdentifier.startsWith('@omnisync-ecosystem/');
+          Object.keys(mappedConfigurationPaths).forEach(
+            (pathAliasIdentifier) => {
+              const isStandardAlias =
+                pathAliasIdentifier.startsWith('@omnisync/') ||
+                pathAliasIdentifier.startsWith('@omnisync-ecosystem/');
 
-            if (!isStandardAlias) {
-              detectedConfigurationAnomalies.push(
-                `Alias fuera de estándar detectado: [${pathAliasIdentifier}]. Debe utilizar el prefijo @omnisync.`
-              );
-            }
-          });
+              if (!isStandardAlias) {
+                detectedConfigurationAnomalies.push(
+                  `Alias fuera de estándar detectado: [${pathAliasIdentifier}]. Debe utilizar el prefijo @omnisync.`,
+                );
+              }
+            },
+          );
 
           const auditReport: IGlobalAuditReport = {
             timestamp: new Date().toISOString(),
             anomalies: detectedConfigurationAnomalies,
-            operationalStatus: detectedConfigurationAnomalies.length === 0 ? 'SUCCESS' : 'FAILED'
+            operationalStatus:
+              detectedConfigurationAnomalies.length === 0
+                ? 'SUCCESS'
+                : 'FAILED',
           };
 
           this.persistAuditAnomaliesReport(auditReport);
@@ -79,15 +96,18 @@ export class WorkspaceConfigurationAuditor {
             OmnisyncTelemetry.verbose(
               'WorkspaceConfigurationAuditor',
               'anomaly_detected',
-              `Se encontraron ${detectedConfigurationAnomalies.length} violaciones de estándar.`
+              `Se encontraron ${detectedConfigurationAnomalies.length} violaciones de estándar.`,
             );
           }
-
         } catch (parsingError: unknown) {
-          OmnisyncTelemetry.verbose('WorkspaceConfigurationAuditor', 'critical_failure', String(parsingError));
+          OmnisyncTelemetry.verbose(
+            'WorkspaceConfigurationAuditor',
+            'critical_failure',
+            String(parsingError),
+          );
           throw parsingError;
         }
-      }
+      },
     );
   }
 
@@ -96,14 +116,24 @@ export class WorkspaceConfigurationAuditor {
    * @private
    * @description Vuelca los resultados del análisis en el repositorio de reportes.
    */
-  private static persistAuditAnomaliesReport(reportData: IGlobalAuditReport): void {
-    const absoluteReportPath = path.join(process.cwd(), this.REPORT_OUTPUT_DIRECTORY, this.REPORT_FILE_NAME);
+  private static persistAuditAnomaliesReport(
+    reportData: IGlobalAuditReport,
+  ): void {
+    const absoluteReportPath = path.join(
+      process.cwd(),
+      this.REPORT_OUTPUT_DIRECTORY,
+      this.REPORT_FILE_NAME,
+    );
     const targetDirectory = path.dirname(absoluteReportPath);
 
     if (!fileSystem.existsSync(targetDirectory)) {
       fileSystem.mkdirSync(targetDirectory, { recursive: true });
     }
 
-    fileSystem.writeFileSync(absoluteReportPath, JSON.stringify(reportData, null, 2), 'utf-8');
+    fileSystem.writeFileSync(
+      absoluteReportPath,
+      JSON.stringify(reportData, null, 2),
+      'utf-8',
+    );
   }
 }

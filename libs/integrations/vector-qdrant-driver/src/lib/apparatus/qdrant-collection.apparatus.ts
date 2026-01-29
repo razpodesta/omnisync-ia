@@ -19,27 +19,43 @@ export class QdrantCollectionApparatus {
    */
   public static async ensureSovereignCollection(
     config: IQdrantConnectionConfiguration,
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): Promise<string> {
     const collectionAlias = `os_tenant_${tenantOrganizationIdentifier.replace(/-/g, '_')}`;
     const apparatusName = 'QdrantCollectionApparatus';
 
-    const checkResponse = await fetch(`${config.endpoint}/collections/${collectionAlias}`, {
-      method: 'GET',
-      headers: { 'api-key': config.apiKey }
-    });
+    const checkResponse = await fetch(
+      `${config.endpoint}/collections/${collectionAlias}`,
+      {
+        method: 'GET',
+        headers: { 'api-key': config.apiKey },
+      },
+    );
 
     if (checkResponse.ok) return collectionAlias;
 
-    OmnisyncTelemetry.verbose(apparatusName, 'provisioning', `Creando infraestructura para el Tenant: ${tenantOrganizationIdentifier}`);
+    OmnisyncTelemetry.verbose(
+      apparatusName,
+      'provisioning',
+      `Creando infraestructura para el Tenant: ${tenantOrganizationIdentifier}`,
+    );
 
-    const createResponse = await fetch(`${config.endpoint}/collections/${collectionAlias}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'api-key': config.apiKey },
-      body: JSON.stringify({
-        vectors: { size: this.VECTOR_DIMENSIONS, distance: this.DISTANCE_METRIC }
-      })
-    });
+    const createResponse = await fetch(
+      `${config.endpoint}/collections/${collectionAlias}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': config.apiKey,
+        },
+        body: JSON.stringify({
+          vectors: {
+            size: this.VECTOR_DIMENSIONS,
+            distance: this.DISTANCE_METRIC,
+          },
+        }),
+      },
+    );
 
     if (!createResponse.ok) {
       throw new Error(`OS-INFRA-COLLECTION-FAIL: ${createResponse.status}`);

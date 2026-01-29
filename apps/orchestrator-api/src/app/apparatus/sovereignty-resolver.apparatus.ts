@@ -6,7 +6,7 @@ import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
 import {
   ITenantConfiguration,
   TenantConfigurationSchema,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 
 /**
@@ -18,7 +18,6 @@ import {
  * @protocol OEDP-Level: Elite (Identity Governance)
  */
 export class SovereigntyResolverApparatus {
-
   /**
    * @method resolveTenantSovereignty
    * @description Localiza y valida la configuración completa de una organización.
@@ -29,7 +28,7 @@ export class SovereigntyResolverApparatus {
    * @throws {Error} Si el nodo no existe o su ADN es inconsistente.
    */
   public static async resolveTenantSovereignty(
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): Promise<ITenantConfiguration> {
     const apparatusName = 'SovereigntyResolverApparatus';
     const operationName = 'resolveTenantSovereignty';
@@ -43,9 +42,10 @@ export class SovereigntyResolverApparatus {
            * @section Consulta a Persistencia Soberana
            * Utilizamos el motor de base de datos relacional para recuperar el ADN.
            */
-          const rawConfigurationRecord = await OmnisyncDatabase.databaseEngine.tenant.findUnique({
-            where: { id: tenantOrganizationIdentifier }
-          });
+          const rawConfigurationRecord =
+            await OmnisyncDatabase.databaseEngine.tenant.findUnique({
+              where: { id: tenantOrganizationIdentifier },
+            });
 
           /**
            * @section Verificación de Existencia Física
@@ -53,7 +53,9 @@ export class SovereigntyResolverApparatus {
            * ya que una petición llegó con un TenantId no registrado.
            */
           if (!rawConfigurationRecord) {
-            const nodeNotFoundError = new Error(`OS-DOM-404: Nodo [${tenantOrganizationIdentifier}] no localizado en la infraestructura.`);
+            const nodeNotFoundError = new Error(
+              `OS-DOM-404: Nodo [${tenantOrganizationIdentifier}] no localizado en la infraestructura.`,
+            );
 
             await OmnisyncSentinel.report({
               errorCode: 'OS-DOM-404',
@@ -62,7 +64,7 @@ export class SovereigntyResolverApparatus {
               operation: operationName,
               message: 'core.sovereignty.node_not_found',
               context: { tenantId: tenantOrganizationIdentifier },
-              isRecoverable: false
+              isRecoverable: false,
             });
 
             throw nodeNotFoundError;
@@ -72,22 +74,32 @@ export class SovereigntyResolverApparatus {
            * @section Validación de ADN (SSOT)
            * Transformamos el registro bruto en un objeto tipado e inmutable.
            */
-          const validatedConfiguration = TenantConfigurationSchema.parse(rawConfigurationRecord);
+          const validatedConfiguration = TenantConfigurationSchema.parse(
+            rawConfigurationRecord,
+          );
 
           /**
            * @section Auditoría de Estado Operativo
            * Bloqueamos el flujo si el nodo se encuentra suspendido o en mantenimiento.
            */
           if (validatedConfiguration.status !== 'ACTIVE') {
-             OmnisyncTelemetry.verbose(apparatusName, 'status_check', `Nodo [${tenantOrganizationIdentifier}] inactivo: ${validatedConfiguration.status}`);
-             throw new Error(`OS-DOM-403: El servicio para la organización está temporalmente ${validatedConfiguration.status}.`);
+            OmnisyncTelemetry.verbose(
+              apparatusName,
+              'status_check',
+              `Nodo [${tenantOrganizationIdentifier}] inactivo: ${validatedConfiguration.status}`,
+            );
+            throw new Error(
+              `OS-DOM-403: El servicio para la organización está temporalmente ${validatedConfiguration.status}.`,
+            );
           }
 
           return validatedConfiguration;
-
         } catch (criticalResolverError: unknown) {
           // Si es un error de Zod, el Sentinel lo captura mediante el middleware de contratos
-          if (criticalResolverError instanceof Error && !criticalResolverError.message.includes('OS-DOM')) {
+          if (
+            criticalResolverError instanceof Error &&
+            !criticalResolverError.message.includes('OS-DOM')
+          ) {
             await OmnisyncSentinel.report({
               errorCode: 'OS-CORE-503',
               severity: 'CRITICAL',
@@ -95,12 +107,12 @@ export class SovereigntyResolverApparatus {
               operation: 'database_handshake',
               message: 'core.sovereignty.resolution_failed',
               context: { error: String(criticalResolverError) },
-              isRecoverable: true
+              isRecoverable: true,
             });
           }
           throw criticalResolverError;
         }
-      }
+      },
     );
   }
 }

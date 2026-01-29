@@ -4,110 +4,167 @@ import {
   IKnowledgeSemanticChunk,
   KnowledgeSemanticChunkSchema,
   KnowledgeOrganizationCategorySchema,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import {
   SemanticChunkerConfigurationSchema,
-  ISemanticChunkerConfiguration
+  ISemanticChunkerConfiguration,
 } from './schemas/semantic-chunker.schema';
 import { z } from 'zod';
 
 /**
  * @name SemanticChunkerApparatus
- * @description Aparato de alta precisión encargado de la segmentación de texto.
- * Utiliza un algoritmo de ventana deslizante con detección de fronteras semánticas
- * para asegurar que los fragmentos inyectados en la base de datos vectorial
- * mantengan la coherencia lingüística necesaria para un RAG de élite.
+ * @description Aparato de alta precisión encargado de la segmentación de ADN técnico.
+ * Utiliza un algoritmo de ventana deslizante con jerarquía de límites semánticos
+ * para garantizar que el contexto RAG sea coherente y procesable por el AI-Engine.
  *
- * @protocol OEDP-Level: Elite (Semantic Integrity)
+ * @protocol OEDP-Level: Elite (Lint-Sanated & Optimized)
  */
 export class SemanticChunkerApparatus {
-
   /**
    * @method executeSegmentation
-   * @description Orquesta la división del contenido técnico aplicando lógica de "Smart Cut".
-   *
-   * @param {string} rawTextualContent - ADN técnico bruto.
-   * @param {TenantId} tenantOrganizationIdentifier - ID de soberanía del suscriptor.
-   * @param {string} documentTitle - Referencia al origen del conocimiento.
-   * @param {z.infer<typeof KnowledgeOrganizationCategorySchema>} semanticCategory - Clasificación taxonómica.
-   * @param {string[]} semanticTags - Etiquetas de búsqueda.
-   * @param {Partial<ISemanticChunkerConfiguration>} customConfiguration - Parámetros de ajuste fino.
-   * @returns {IKnowledgeSemanticChunk[]} Lista de fragmentos validados por SSOT.
+   * @description Orquesta la fragmentación del contenido aplicando lógica de "Jerarquía de Ruptura".
    */
   public static executeSegmentation(
     rawTextualContent: string,
     tenantOrganizationIdentifier: TenantId,
-    documentTitle: string,
+    documentTitleIdentifier: string,
     semanticCategory: z.infer<typeof KnowledgeOrganizationCategorySchema>,
     semanticTags: string[],
-    customConfiguration: Partial<ISemanticChunkerConfiguration> = {}
+    customConfiguration: Partial<ISemanticChunkerConfiguration> = {},
   ): IKnowledgeSemanticChunk[] {
     const apparatusName = 'SemanticChunkerApparatus';
+    const operationName = 'executeSegmentation';
+
+    if (!rawTextualContent || rawTextualContent.length < 10) {
+      return [];
+    }
 
     return OmnisyncTelemetry.traceExecutionSync(
       apparatusName,
-      'executeSegmentation',
+      operationName,
       () => {
-        // 1. Hidratación de Configuración (ADN de Operación)
-        const config = SemanticChunkerConfigurationSchema.parse(customConfiguration);
+        const chunkerConfiguration =
+          this.hydrateSovereignConfiguration(customConfiguration);
 
-        const documentChunks: IKnowledgeSemanticChunk[] = [];
-        const contentSize = rawTextualContent.length;
+        const semanticChunksCollection: IKnowledgeSemanticChunk[] = [];
+        const totalContentLength = rawTextualContent.length;
         let textTraversalPointer = 0;
 
-        while (textTraversalPointer < contentSize) {
-          /**
-           * @section Cálculo de Punto de Corte Inteligente
-           * Buscamos el final de una palabra o signo de puntuación para evitar cortes bizarros.
-           */
-          let endPointer = Math.min(textTraversalPointer + config.maximumChunkSize, contentSize);
+        while (textTraversalPointer < totalContentLength) {
+          const potentialEndPointer = Math.min(
+            textTraversalPointer + chunkerConfiguration.maximumChunkSize,
+            totalContentLength,
+          );
 
-          if (config.enableSmartBoundaryDetection && endPointer < contentSize) {
-            const nextSpaceIndex = rawTextualContent.indexOf(' ', endPointer);
-            const lastPeriodIndex = rawTextualContent.lastIndexOf('.', endPointer);
+          const finalEndPointer = this.calculateOptimalBoundary(
+            rawTextualContent,
+            textTraversalPointer,
+            potentialEndPointer,
+            chunkerConfiguration,
+          );
 
-            // Si hay un punto cercano (último 10% del chunk), preferimos cortar ahí.
-            if (lastPeriodIndex > textTraversalPointer + (config.maximumChunkSize * 0.8)) {
-                endPointer = lastPeriodIndex + 1;
-            } else if (nextSpaceIndex !== -1 && nextSpaceIndex < endPointer + 20) {
-                // Si hay un espacio justo después, lo incluimos.
-                endPointer = nextSpaceIndex;
-            }
+          const fragmentText = rawTextualContent
+            .substring(textTraversalPointer, finalEndPointer)
+            .trim();
+
+          if (fragmentText.length > 5) {
+            semanticChunksCollection.push(
+              KnowledgeSemanticChunkSchema.parse({
+                id: crypto.randomUUID(),
+                content: fragmentText,
+                sourceName: documentTitleIdentifier,
+                tenantId: tenantOrganizationIdentifier,
+                metadata: {
+                  category: semanticCategory,
+                  tags: semanticTags,
+                  chunkIndex: semanticChunksCollection.length,
+                  isFirstChunk: textTraversalPointer === 0,
+                  isLastChunk: finalEndPointer >= totalContentLength,
+                  processedAt: new Date().toISOString(),
+                  characterCount: fragmentText.length,
+                },
+              }),
+            );
           }
 
-          const fragmentText = rawTextualContent.substring(textTraversalPointer, endPointer).trim();
+          textTraversalPointer =
+            finalEndPointer - chunkerConfiguration.overlapSize;
 
-          /**
-           * @section Validación de ADN de Fragmento (SSOT)
-           */
-          if (fragmentText.length > 10) {
-            documentChunks.push(KnowledgeSemanticChunkSchema.parse({
-              id: crypto.randomUUID(),
-              content: fragmentText,
-              sourceName: documentTitle,
-              tenantId: tenantOrganizationIdentifier,
-              metadata: {
-                category: semanticCategory,
-                tags: semanticTags,
-                chunkIndex: documentChunks.length,
-                processedAt: new Date().toISOString(),
-                characterCount: fragmentText.length
-              }
-            }));
+          if (
+            textTraversalPointer >= totalContentLength ||
+            finalEndPointer >= totalContentLength
+          ) {
+            break;
           }
 
-          // Desplazamiento del puntero restando el solapamiento para mantener el hilo semántico
-          textTraversalPointer = endPointer - config.overlapSize;
-
-          // Blindaje contra bucles infinitos por overlap excesivo
-          if (textTraversalPointer <= 0 && documentChunks.length > 0) break;
-          if (endPointer >= contentSize) break;
+          if (textTraversalPointer < 0) textTraversalPointer = 0;
         }
 
-        return documentChunks;
-      }
+        OmnisyncTelemetry.verbose(
+          apparatusName,
+          'segmentation_result',
+          `Generados ${semanticChunksCollection.length} fragmentos.`,
+        );
+        return semanticChunksCollection;
+      },
     );
+  }
+
+  /**
+   * @method calculateOptimalBoundary
+   * @private
+   */
+  private static calculateOptimalBoundary(
+    content: string,
+    start: number,
+    end: number,
+    config: ISemanticChunkerConfiguration,
+  ): number {
+    if (end >= content.length) return content.length;
+    if (!config.enableSmartBoundaryDetection) return end;
+
+    const searchWindowStart = start + Math.floor(config.maximumChunkSize * 0.7);
+    const windowContext = content.substring(searchWindowStart, end + 30);
+
+    const paragraphIndex = windowContext.lastIndexOf('\n\n');
+    if (paragraphIndex !== -1) return searchWindowStart + paragraphIndex + 2;
+
+    /**
+     * @section Sanación de RegEx (Resolución no-useless-escape)
+     * Erradicamos los backslashes innecesarios dentro de la clase de caracteres.
+     */
+    const sentenceMatch = /[.!?]\s/.exec(
+      windowContext.split('').reverse().join(''),
+    );
+    if (sentenceMatch) {
+      const reverseIndex = sentenceMatch.index;
+      return searchWindowStart + (windowContext.length - reverseIndex);
+    }
+
+    const lastSpace = windowContext.lastIndexOf(' ');
+    if (lastSpace !== -1) return searchWindowStart + lastSpace;
+
+    return end;
+  }
+
+  /**
+   * @method hydrateSovereignConfiguration
+   * @private
+   */
+  private static hydrateSovereignConfiguration(
+    custom: Partial<ISemanticChunkerConfiguration>,
+  ): ISemanticChunkerConfiguration {
+    const validated = SemanticChunkerConfigurationSchema.parse(custom);
+    const safeOverlap = Math.min(
+      validated.overlapSize,
+      Math.floor(validated.maximumChunkSize / 2),
+    );
+
+    return {
+      ...validated,
+      overlapSize: safeOverlap,
+    };
   }
 }

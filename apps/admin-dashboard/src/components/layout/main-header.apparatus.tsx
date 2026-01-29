@@ -20,9 +20,11 @@ export const MainHeader: React.FC = () => {
 
   return (
     <header className="border-b border-border px-10 py-8 flex justify-between items-center bg-background/80 backdrop-blur-2xl sticky top-0 z-50 transition-colors duration-500">
-
       {/* Branding de Identidad Corporativa */}
-      <Link href="/" className="text-xl font-black tracking-tighter uppercase group flex items-center gap-3">
+      <Link
+        href="/"
+        className="text-xl font-black tracking-tighter uppercase group flex items-center gap-3"
+      >
         <div className="w-2.5 h-2.5 bg-foreground rounded-full animate-pulse" />
         <span className="group-hover:tracking-widest transition-all duration-700 font-black">
           OMNISYNC <span className="font-thin opacity-40">AI</span>

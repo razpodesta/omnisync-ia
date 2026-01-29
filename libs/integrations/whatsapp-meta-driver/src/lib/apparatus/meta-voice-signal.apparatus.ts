@@ -5,7 +5,7 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { OmnisyncContracts } from '@omnisync/core-contracts';
 import {
   MetaVoiceCallSignalSchema,
-  IMetaVoiceCallSignal
+  IMetaVoiceCallSignal,
 } from '../schemas/meta-contracts.schema';
 
 /**
@@ -17,7 +17,6 @@ import {
  * @protocol OEDP-Level: Elite (VOIP Signal Orchestration)
  */
 export class MetaVoiceSignalApparatus {
-
   /**
    * @method dispatchVoiceSignal
    * @description Nodo central para el control de señalización telefónica.
@@ -30,7 +29,7 @@ export class MetaVoiceSignalApparatus {
   public static async dispatchVoiceSignal(
     facebookPhoneNumberIdentifier: string,
     permanentAccessToken: string,
-    voiceSignalPayload: IMetaVoiceCallSignal
+    voiceSignalPayload: IMetaVoiceCallSignal,
   ): Promise<void> {
     const apparatusName = 'MetaVoiceSignalApparatus';
     const operationName = `signal:${voiceSignalPayload.signalAction}`;
@@ -46,7 +45,7 @@ export class MetaVoiceSignalApparatus {
         const validatedSignal = OmnisyncContracts.validate(
           MetaVoiceCallSignalSchema,
           voiceSignalPayload,
-          apparatusName
+          apparatusName,
         );
 
         return await OmnisyncSentinel.executeWithResilience(
@@ -54,32 +53,35 @@ export class MetaVoiceSignalApparatus {
             const callManagementUrl = `https://graph.facebook.com/v20.0/${facebookPhoneNumberIdentifier}/calls`;
 
             // Construcción del payload según la acción de señalización
-            const metaRequestBody = this.assembleVoiceSignalBody(validatedSignal);
+            const metaRequestBody =
+              this.assembleVoiceSignalBody(validatedSignal);
 
             const networkResponse = await fetch(callManagementUrl, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${permanentAccessToken}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${permanentAccessToken}`,
+                'Content-Type': 'application/json',
               },
-              body: JSON.stringify(metaRequestBody)
+              body: JSON.stringify(metaRequestBody),
             });
 
             if (!networkResponse.ok) {
               const errorTrace = await networkResponse.json();
-              throw new Error(`META_VOIP_FAILURE: ${networkResponse.status} - ${JSON.stringify(errorTrace)}`);
+              throw new Error(
+                `META_VOIP_FAILURE: ${networkResponse.status} - ${JSON.stringify(errorTrace)}`,
+              );
             }
 
             OmnisyncTelemetry.verbose(
               apparatusName,
               'signal_confirmed',
-              `Llamada [${validatedSignal.callIdentifier}] accionada: ${validatedSignal.signalAction}`
+              `Llamada [${validatedSignal.callIdentifier}] accionada: ${validatedSignal.signalAction}`,
             );
           },
           apparatusName,
-          operationName
+          operationName,
         );
-      }
+      },
     );
   }
 
@@ -88,7 +90,9 @@ export class MetaVoiceSignalApparatus {
    * @private
    * @description Ensamblador de gramática Meta para protocolos de voz.
    */
-  private static assembleVoiceSignalBody(signal: IMetaVoiceCallSignal): unknown {
+  private static assembleVoiceSignalBody(
+    signal: IMetaVoiceCallSignal,
+  ): unknown {
     const base = {
       messaging_product: 'whatsapp',
       call_id: signal.callIdentifier,
@@ -102,15 +106,15 @@ export class MetaVoiceSignalApparatus {
           action: 'initiate',
           config: {
             audio_quality: signal.callMetadata?.quality ?? 'HD',
-            recording_enabled: false // Soberanía de privacidad por defecto
-          }
+            recording_enabled: false, // Soberanía de privacidad por defecto
+          },
         };
 
       case 'TRANSFER':
         return {
           ...base,
           action: 'transfer',
-          transfer_to: 'AGENT_ID_PLACEHOLDER' // Inyectado por el orquestador en Fase 3
+          transfer_to: 'AGENT_ID_PLACEHOLDER', // Inyectado por el orquestador en Fase 3
         };
 
       case 'END_CALL':
@@ -120,7 +124,9 @@ export class MetaVoiceSignalApparatus {
         return { ...base, action: 'reject' };
 
       default:
-        throw new Error(`integrations.meta.unsupported_voice_signal: ${signal.signalAction}`);
+        throw new Error(
+          `integrations.meta.unsupported_voice_signal: ${signal.signalAction}`,
+        );
     }
   }
 }

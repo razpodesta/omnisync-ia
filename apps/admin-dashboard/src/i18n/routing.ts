@@ -11,7 +11,8 @@ export const routing = defineRouting({
   locales: ['es', 'en', 'pt'],
   defaultLocale: 'es',
   localePrefix: 'always', // Fuerza el locale en la URL para SEO y claridad
-  localeDetection: true   // Activa la detección automática por navegador
+  localeDetection: true, // Activa la detección automática por navegador
 });
 
-export const { Link, redirect, usePathname, useRouter } = createNavigation(routing);
+export const { Link, redirect, usePathname, useRouter } =
+  createNavigation(routing);

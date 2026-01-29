@@ -5,7 +5,7 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { TenantId } from './schemas/core-contracts.schema';
 import {
   NeuralBridgeConfigurationSchema,
-  INeuralBridgeConfiguration
+  INeuralBridgeConfiguration,
 } from './schemas/neural-bridge.schema';
 
 /**
@@ -34,7 +34,7 @@ export class NeuralBridge {
     resourceEndpoint: string,
     tenantOrganizationIdentifier: TenantId,
     neuralTransmissionPayload: unknown,
-    protocolMethod: 'POST' | 'GET' | 'PUT' = 'POST'
+    protocolMethod: 'POST' | 'GET' | 'PUT' = 'POST',
   ): Promise<TResponse> {
     this.initializeSovereignConfiguration();
 
@@ -45,7 +45,7 @@ export class NeuralBridge {
         const transmissionController = new AbortController();
         const timeoutReference = setTimeout(
           () => transmissionController.abort(),
-          this.bridgeConfiguration.timeoutInMilliseconds
+          this.bridgeConfiguration.timeoutInMilliseconds,
         );
 
         try {
@@ -58,32 +58,35 @@ export class NeuralBridge {
                 signal: transmissionController.signal,
                 headers: {
                   'Content-Type': 'application/json',
-                  'Accept': 'application/json',
+                  Accept: 'application/json',
                   'x-omnisync-tenant': tenantOrganizationIdentifier,
                 },
-                body: protocolMethod !== 'GET' ? JSON.stringify(neuralTransmissionPayload) : undefined,
+                body:
+                  protocolMethod !== 'GET'
+                    ? JSON.stringify(neuralTransmissionPayload)
+                    : undefined,
               });
 
               if (!networkResponse.ok) {
                 throw new Error(`bridge.status.${networkResponse.status}`);
               }
 
-              return await networkResponse.json() as TResponse;
+              return (await networkResponse.json()) as TResponse;
             },
             'NeuralBridge',
-            `fetch:${resourceEndpoint}`
+            `fetch:${resourceEndpoint}`,
           );
         } catch (criticalError: unknown) {
           await this.handleTransmissionFailure(
             resourceEndpoint,
             tenantOrganizationIdentifier,
-            criticalError
+            criticalError,
           );
           throw criticalError;
         } finally {
           clearTimeout(timeoutReference);
         }
-      }
+      },
     );
   }
 
@@ -96,8 +99,9 @@ export class NeuralBridge {
     if (this.bridgeConfiguration) return;
 
     this.bridgeConfiguration = NeuralBridgeConfigurationSchema.parse({
-      baseUrl: process.env['NEXT_PUBLIC_API_URL'] || 'https://api.omnisync-ai.com',
-      timeoutInMilliseconds: 15000
+      baseUrl:
+        process.env['NEXT_PUBLIC_API_URL'] || 'https://api.omnisync-ai.com',
+      timeoutInMilliseconds: 15000,
     });
   }
 
@@ -108,7 +112,7 @@ export class NeuralBridge {
   private static async handleTransmissionFailure(
     endpoint: string,
     tenantId: string,
-    error: unknown
+    error: unknown,
   ): Promise<void> {
     const isTimeout = error instanceof Error && error.name === 'AbortError';
 
@@ -117,13 +121,15 @@ export class NeuralBridge {
       severity: 'HIGH',
       apparatus: 'NeuralBridge',
       operation: 'execute_request',
-      message: isTimeout ? 'core.bridge.error.timeout' : 'core.bridge.error.connectivity_loss',
+      message: isTimeout
+        ? 'core.bridge.error.timeout'
+        : 'core.bridge.error.connectivity_loss',
       context: {
         resourceEndpoint: endpoint,
         tenantIdentifier: tenantId,
-        originalError: String(error)
+        originalError: String(error),
       },
-      isRecoverable: true
+      isRecoverable: true,
     });
   }
 }

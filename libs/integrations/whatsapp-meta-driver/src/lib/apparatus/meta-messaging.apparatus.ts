@@ -5,7 +5,7 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { OmnisyncContracts } from '@omnisync/core-contracts';
 import {
   MetaOutboundPayloadSchema,
-  IMetaOutboundPayload
+  IMetaOutboundPayload,
 } from '../schemas/messaging/meta-messaging.schema';
 import { MetaInteractiveApparatus } from './meta-interactive.apparatus';
 
@@ -17,7 +17,6 @@ import { MetaInteractiveApparatus } from './meta-interactive.apparatus';
  * @protocol OEDP-Level: Elite (Full Resilient Dispatcher)
  */
 export class MetaMessagingApparatus {
-
   /**
    * @method dispatchSovereignMessage
    * @description Envía cualquier tipo de mensaje (Texto, Media, Interactivo) con blindaje Sentinel.
@@ -25,7 +24,7 @@ export class MetaMessagingApparatus {
   public static async dispatchSovereignMessage(
     facebookPhoneNumberIdentifier: string,
     permanentAccessToken: string,
-    outboundPayload: IMetaOutboundPayload
+    outboundPayload: IMetaOutboundPayload,
   ): Promise<{ readonly messageIdentifier: string }> {
     const apparatusName = 'MetaMessagingApparatus';
     const operationName = `dispatch:${outboundPayload.messageType}`;
@@ -41,7 +40,7 @@ export class MetaMessagingApparatus {
         const validatedPayload = OmnisyncContracts.validate(
           MetaOutboundPayloadSchema,
           outboundPayload,
-          apparatusName
+          apparatusName,
         );
 
         return await OmnisyncSentinel.executeWithResilience(
@@ -52,24 +51,28 @@ export class MetaMessagingApparatus {
             const networkResponse = await fetch(apiUrl, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${permanentAccessToken}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${permanentAccessToken}`,
+                'Content-Type': 'application/json',
               },
-              body: JSON.stringify(body)
+              body: JSON.stringify(body),
             });
 
             if (!networkResponse.ok) {
               const errorBody = await networkResponse.json();
-              throw new Error(`META_API_FAILURE: ${networkResponse.status} - ${JSON.stringify(errorBody)}`);
+              throw new Error(
+                `META_API_FAILURE: ${networkResponse.status} - ${JSON.stringify(errorBody)}`,
+              );
             }
 
-            const data = await networkResponse.json() as { messages: [{ id: string }] };
+            const data = (await networkResponse.json()) as {
+              messages: [{ id: string }];
+            };
             return { messageIdentifier: data.messages[0].id };
           },
           apparatusName,
-          operationName
+          operationName,
         );
-      }
+      },
     );
   }
 
@@ -83,7 +86,7 @@ export class MetaMessagingApparatus {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: data.recipientPhoneNumber,
-      type: data.messageType
+      type: data.messageType,
     };
 
     switch (data.messageType) {
@@ -96,11 +99,13 @@ export class MetaMessagingApparatus {
       case 'interactive':
         return {
           ...base,
-          interactive: MetaInteractiveApparatus.buildInteractivePayload(data)
+          interactive: MetaInteractiveApparatus.buildInteractivePayload(data),
         };
 
       default:
-        throw new Error(`integrations.meta.unsupported_outbound_type: ${data.messageType}`);
+        throw new Error(
+          `integrations.meta.unsupported_outbound_type: ${data.messageType}`,
+        );
     }
   }
 }

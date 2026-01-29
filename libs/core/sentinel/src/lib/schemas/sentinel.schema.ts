@@ -2,7 +2,12 @@
 
 import { z } from 'zod';
 
-export const SentinelSeveritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export const SentinelSeveritySchema = z.enum([
+  'LOW',
+  'MEDIUM',
+  'HIGH',
+  'CRITICAL',
+]);
 
 /**
  * @description Estructura de reporte de error inteligente.

@@ -12,12 +12,12 @@ import { geoFencingSecurityHandler } from './middleware/geofencing.handler';
  * @param {NextRequest} incomingRequest - La petición capturada por el motor de Next.js.
  */
 export default function orchestrateAdministrativeDashboardTraffic(
-  incomingRequest: NextRequest
+  incomingRequest: NextRequest,
 ): NextResponse {
-
   // 1. Fase de Seguridad: Geofencing
   // Bloquea el consumo de tokens si la IP no es de una región autorizada.
-  const securityResponse: NextResponse | null = geoFencingSecurityHandler(incomingRequest);
+  const securityResponse: NextResponse | null =
+    geoFencingSecurityHandler(incomingRequest);
   if (securityResponse) return securityResponse;
 
   // 2. Fase de Localización: Locale Resolution
@@ -30,6 +30,6 @@ export const config = {
     '/',
     '/(es|en|pt)/:path*',
     /* Excluye archivos internos y assets estáticos */
-    '/((?!api|_next|_vercel|[\\w-]+\\.\\w+).*)'
-  ]
+    '/((?!api|_next|_vercel|[\\w-]+\\.\\w+).*)',
+  ],
 };

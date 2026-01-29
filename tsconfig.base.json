@@ -1,19 +1,60 @@
+/** tsconfig.base.json */
 {
   "compileOnSave": false,
   "compilerOptions": {
+    /**
+     * @section Soberanía de Identidad de Archivos
+     */
     "rootDir": ".",
+    "baseUrl": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "importHelpers": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /**
+     * @section Configuración de Lenguaje y Entorno (ES2022+)
+     */
     "target": "es2022",
     "module": "esnext",
-    "lib": ["es2022", "dom"],
+    "lib": ["es2022", "dom", "dom.iterable"],
+
+    /**
+     * @section Integridad de Módulos e Interoperabilidad
+     * RESOLUCIÓN TS1259: Habilita importaciones por defecto para React 19 y bibliotecas CJS.
+     */
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /**
+     * @section Soporte JSX Omnicanal
+     * RESOLUCIÓN TS17004: Permite el uso de sintaxis JSX en librerías compartidas (ui-kit).
+     */
+    "jsx": "preserve",
+
+    /**
+     * @section Reglas de Calidad y Tipado Estricto (Protocolo OEDP)
+     */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    /**
+     * @section Optimización de Infraestructura
+     */
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",
+
+    /**
+     * @section Path Mappings (LEGO Structure)
+     * Mapa de soberanía para la resolución de piezas LEGO en el monorepo.
+     * Toda ruta debe seguir el estándar de marca @omnisync.
+     */
     "paths": {
       "@omnisync/core-telemetry": ["libs/core/telemetry/src/index.ts"],
       "@omnisync/core-security": ["libs/core/security/src/index.ts"],
@@ -49,5 +90,5 @@
       "@omnisync/erp-odoo": ["libs/integrations/erp-odoo/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp", "dist", ".next"]
 }

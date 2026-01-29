@@ -3,7 +3,10 @@
 import * as crypto from 'node:crypto';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { IEncryptedPayload, EncryptedPayloadSchema } from './schemas/security.schema';
+import {
+  IEncryptedPayload,
+  EncryptedPayloadSchema,
+} from './schemas/security.schema';
 
 /**
  * @name OmnisyncSecurity
@@ -27,7 +30,7 @@ export class OmnisyncSecurity {
    */
   public static async encryptSensitiveData(
     plainText: string,
-    encryptionKey: string
+    encryptionKey: string,
   ): Promise<IEncryptedPayload> {
     return await OmnisyncTelemetry.traceExecution(
       'OmnisyncSecurity',
@@ -36,12 +39,16 @@ export class OmnisyncSecurity {
         try {
           const initializationVector = crypto.randomBytes(16);
           // Derivación de llave de alta entropía
-          const derivedKey = crypto.scryptSync(encryptionKey, this.DERIVATION_SALT, 32);
+          const derivedKey = crypto.scryptSync(
+            encryptionKey,
+            this.DERIVATION_SALT,
+            32,
+          );
 
           const cipher = crypto.createCipheriv(
             this.ENCRYPTION_ALGORITHM,
             derivedKey,
-            initializationVector
+            initializationVector,
           );
 
           let encrypted = cipher.update(plainText, 'utf8', 'base64');
@@ -61,11 +68,11 @@ export class OmnisyncSecurity {
             apparatus: 'OmnisyncSecurity',
             operation: 'encrypt',
             message: 'security.encryption.failure',
-            context: { error: String(error) }
+            context: { error: String(error) },
           });
           throw error;
         }
-      }
+      },
     );
   }
 
@@ -80,7 +87,7 @@ export class OmnisyncSecurity {
    */
   public static async decryptSensitiveData(
     encryptedInput: string | IEncryptedPayload,
-    encryptionKey: string
+    encryptionKey: string,
   ): Promise<string> {
     return await OmnisyncTelemetry.traceExecution(
       'OmnisyncSecurity',
@@ -88,23 +95,35 @@ export class OmnisyncSecurity {
       async () => {
         try {
           // Normalización y Validación de ADN
-          const payload: IEncryptedPayload = typeof encryptedInput === 'string'
-            ? EncryptedPayloadSchema.parse(JSON.parse(encryptedInput))
-            : EncryptedPayloadSchema.parse(encryptedInput);
+          const payload: IEncryptedPayload =
+            typeof encryptedInput === 'string'
+              ? EncryptedPayloadSchema.parse(JSON.parse(encryptedInput))
+              : EncryptedPayloadSchema.parse(encryptedInput);
 
-          const derivedKey = crypto.scryptSync(encryptionKey, this.DERIVATION_SALT, 32);
-          const initializationVector = Buffer.from(payload.initializationVector, 'hex');
+          const derivedKey = crypto.scryptSync(
+            encryptionKey,
+            this.DERIVATION_SALT,
+            32,
+          );
+          const initializationVector = Buffer.from(
+            payload.initializationVector,
+            'hex',
+          );
           const authTag = Buffer.from(payload.authTag, 'hex');
 
           const decipher = crypto.createDecipheriv(
             this.ENCRYPTION_ALGORITHM,
             derivedKey,
-            initializationVector
+            initializationVector,
           );
 
           decipher.setAuthTag(authTag);
 
-          let decrypted = decipher.update(payload.encryptedData, 'base64', 'utf8');
+          let decrypted = decipher.update(
+            payload.encryptedData,
+            'base64',
+            'utf8',
+          );
           decrypted += decipher.final('utf8');
 
           return decrypted;
@@ -116,11 +135,13 @@ export class OmnisyncSecurity {
             operation: 'decrypt',
             message: 'security.encryption.integrity_violation',
             context: { error: String(error) },
-            isRecoverable: false
+            isRecoverable: false,
           });
-          throw new Error('OS-SEC-002: Fallo crítico de integridad en desencriptación.');
+          throw new Error(
+            'OS-SEC-002: Fallo crítico de integridad en desencriptación.',
+          );
         }
-      }
+      },
     );
   }
 
@@ -139,7 +160,11 @@ export class OmnisyncSecurity {
     cleanText = cleanText.replace(emailRegex, '[REDACTED_EMAIL]');
     cleanText = cleanText.replace(phoneRegex, '[REDACTED_PHONE]');
 
-    OmnisyncTelemetry.verbose('OmnisyncSecurity', 'anonymizeForAI', 'PII data has been redacted');
+    OmnisyncTelemetry.verbose(
+      'OmnisyncSecurity',
+      'anonymizeForAI',
+      'PII data has been redacted',
+    );
 
     return cleanText;
   }
@@ -158,7 +183,7 @@ export class OmnisyncSecurity {
         apparatus: 'OmnisyncSecurity',
         operation: 'verifyToken',
         message: 'security.auth.invalid_token',
-        context: { tokenPreview: token.substring(0, 10) }
+        context: { tokenPreview: token.substring(0, 10) },
       });
     }
 

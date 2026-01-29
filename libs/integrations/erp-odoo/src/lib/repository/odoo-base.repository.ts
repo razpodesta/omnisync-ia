@@ -8,18 +8,26 @@ export class OdooBaseRepository {
    */
   public static async findPartnerByPhone(
     driver: OdooConnectorDriver,
-    phoneNumber: string
+    phoneNumber: string,
   ): Promise<number | null> {
-    return await OmnisyncTelemetry.traceExecution('OdooBaseRepository', 'findPartnerByPhone', async () => {
-      const domain = [
-        '|',
-        ['phone', 'ilike', phoneNumber],
-        ['mobile', 'ilike', phoneNumber]
-      ];
+    return await OmnisyncTelemetry.traceExecution(
+      'OdooBaseRepository',
+      'findPartnerByPhone',
+      async () => {
+        const domain = [
+          '|',
+          ['phone', 'ilike', phoneNumber],
+          ['mobile', 'ilike', phoneNumber],
+        ];
 
-      const ids = await driver.callModelMethod<number[]>('res.partner', 'search', [domain]);
-      return ids.length > 0 ? ids[0] : null;
-    });
+        const ids = await driver.callModelMethod<number[]>(
+          'res.partner',
+          'search',
+          [domain],
+        );
+        return ids.length > 0 ? ids[0] : null;
+      },
+    );
   }
 
   /**
@@ -28,8 +36,10 @@ export class OdooBaseRepository {
    */
   public static async createTicket(
     driver: OdooConnectorDriver,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
   ): Promise<number> {
-    return await driver.callModelMethod<number>('helpdesk.ticket', 'create', [payload]);
+    return await driver.callModelMethod<number>('helpdesk.ticket', 'create', [
+      payload,
+    ]);
   }
 }

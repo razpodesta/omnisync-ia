@@ -3,7 +3,7 @@
 import {
   ISentinelReport,
   SentinelReportSchema,
-  ISentinelSeverity
+  ISentinelSeverity,
 } from './schemas/sentinel.schema';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
@@ -15,7 +15,6 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
  * @protocol OEDP-Level: Elite (Atomized & i18n Ready)
  */
 export class OmnisyncSentinel {
-
   /**
    * @private
    * Configuración de reintentos por defecto.
@@ -27,21 +26,31 @@ export class OmnisyncSentinel {
    * @description Clasifica y registra una anomalía. Valida la integridad del reporte
    * sin interrumpir el flujo principal (Failsafe).
    */
-  public static async report(errorPayload: Partial<ISentinelReport>): Promise<void> {
+  public static async report(
+    errorPayload: Partial<ISentinelReport>,
+  ): Promise<void> {
     const hydratedReport: ISentinelReport = this.hydrateReport(errorPayload);
 
     // 1. Registro en Telemetría (Observabilidad de Élite)
-    OmnisyncTelemetry.verbose('OmnisyncSentinel', 'report', `sentinel.anomaly_detected`, {
-      errorCode: hydratedReport.errorCode,
-      severity: hydratedReport.severity,
-      apparatus: hydratedReport.apparatus
-    });
+    OmnisyncTelemetry.verbose(
+      'OmnisyncSentinel',
+      'report',
+      `sentinel.anomaly_detected`,
+      {
+        errorCode: hydratedReport.errorCode,
+        severity: hydratedReport.severity,
+        apparatus: hydratedReport.apparatus,
+      },
+    );
 
     // 2. Validación de Contrato con Resiliencia Interna
     const validationResult = SentinelReportSchema.safeParse(hydratedReport);
 
     if (!validationResult.success) {
-      console.error('[SENTINEL-BREACH]: Error report schema violation', validationResult.error.format());
+      console.error(
+        '[SENTINEL-BREACH]: Error report schema violation',
+        validationResult.error.format(),
+      );
       return;
     }
 
@@ -60,7 +69,7 @@ export class OmnisyncSentinel {
     operation: () => Promise<T>,
     apparatusName: string,
     operationName: string,
-    maxRetries: number = this.DEFAULT_MAXIMUM_RETRIES
+    maxRetries: number = this.DEFAULT_MAXIMUM_RETRIES,
   ): Promise<T> {
     let currentAttempt = 0;
 
@@ -78,8 +87,11 @@ export class OmnisyncSentinel {
             apparatus: apparatusName,
             operation: operationName,
             message: 'sentinel.execution.exhausted_retries',
-            context: { error: String(executionError), attempts: currentAttempt },
-            isRecoverable: false
+            context: {
+              error: String(executionError),
+              attempts: currentAttempt,
+            },
+            isRecoverable: false,
           });
           throw executionError;
         }
@@ -112,7 +124,9 @@ export class OmnisyncSentinel {
    * @method hydrateReport
    * @private
    */
-  private static hydrateReport(payload: Partial<ISentinelReport>): ISentinelReport {
+  private static hydrateReport(
+    payload: Partial<ISentinelReport>,
+  ): ISentinelReport {
     return {
       errorCode: payload.errorCode ?? 'OS-CORE-999',
       severity: payload.severity ?? 'LOW',
@@ -123,7 +137,7 @@ export class OmnisyncSentinel {
       timestamp: new Date().toISOString(),
       isRecoverable: payload.isRecoverable ?? false,
       tenantId: payload.tenantId,
-      stackTrace: payload.stackTrace
+      stackTrace: payload.stackTrace,
     };
   }
 
@@ -131,7 +145,9 @@ export class OmnisyncSentinel {
    * @method dispatchCriticalAlert
    * @private
    */
-  private static async dispatchCriticalAlert(report: ISentinelReport): Promise<void> {
+  private static async dispatchCriticalAlert(
+    report: ISentinelReport,
+  ): Promise<void> {
     // Aquí se inyectará el webhook de Vercel/Render en el siguiente ciclo
     console.error(`🚨 [CRITICAL ALERT] ${report.errorCode}: ${report.message}`);
   }

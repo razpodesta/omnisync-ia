@@ -6,7 +6,7 @@ import {
   ICustomerProfile,
   CustomerProfileSchema,
   ICRMAdapter,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 
 /**
@@ -28,7 +28,7 @@ export class IdentityResolver {
   public static async resolveIdentityFromPhoneNumber(
     tenantOrganizationIdentifier: TenantId,
     userPhoneNumber: string,
-    crmSystemAdapter: ICRMAdapter
+    crmSystemAdapter: ICRMAdapter,
   ): Promise<Readonly<ICustomerProfile> | null> {
     return await OmnisyncTelemetry.traceExecution(
       'IdentityResolver',
@@ -39,13 +39,14 @@ export class IdentityResolver {
            * 1. Consulta vía Adaptador
            * El adaptador se encarga de la comunicación técnica (API/SQL).
            */
-          const rawCustomerRecord = await crmSystemAdapter.getCustomerByPhone(userPhoneNumber);
+          const rawCustomerRecord =
+            await crmSystemAdapter.getCustomerByPhone(userPhoneNumber);
 
           if (!rawCustomerRecord) {
             OmnisyncTelemetry.verbose(
               'IdentityResolver',
               'resolve',
-              `Cliente no localizado en ${crmSystemAdapter.providerName}. Continuando flujo como invitado.`
+              `Cliente no localizado en ${crmSystemAdapter.providerName}. Continuando flujo como invitado.`,
             );
             return null;
           }
@@ -55,7 +56,6 @@ export class IdentityResolver {
            * Asegura que los datos del CRM no contaminen el sistema con estructuras inesperadas.
            */
           return CustomerProfileSchema.parse(rawCustomerRecord);
-
         } catch (criticalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-DOM-501',
@@ -66,12 +66,12 @@ export class IdentityResolver {
             context: {
               tenantId: tenantOrganizationIdentifier,
               phone: userPhoneNumber,
-              error: String(criticalError)
-            }
+              error: String(criticalError),
+            },
           });
           return null;
         }
-      }
+      },
     );
   }
 }

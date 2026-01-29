@@ -2,114 +2,207 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
+import { OmnisyncContracts } from '@omnisync/core-contracts';
+
+/**
+ * @section Sincronización de ADN Local
+ */
+import {
+  MemoryInfrastructureConfigurationSchema,
+  UpstashRestResponseSchema,
+  IMemoryInfrastructureConfiguration
+} from './schemas/memory.schema';
 
 /**
  * @name OmnisyncMemory
  * @description Aparato de persistencia volátil para hilos de conversación.
  * Gestiona la memoria semántica temporal y estados de sesión conectando con
- * Upstash Redis mediante protocolo REST/HTTPS, garantizando resiliencia
- * en entornos de ejecución Serverless y Edge.
+ * Upstash Redis mediante protocolo REST/HTTPS.
  *
- * @protocol OEDP-Level: Elite
+ * @protocol OEDP-Level: Elite (Full Resilient & Traceable)
  */
 export class OmnisyncMemory {
   /**
-   * @section Configuración de Infraestructura
-   * Acceso mediante signatura de índice para cumplir con la soberanía territorial de tipos.
+   * @private
+   * @description Cache inmutable de configuración para optimizar el handshake REST.
    */
-  private static readonly CLOUD_REST_URL = process.env['UPSTASH_REDIS_REST_URL'];
-  private static readonly CLOUD_REST_TOKEN = process.env['UPSTASH_REDIS_REST_TOKEN'];
+  private static validatedInfrastructureConfiguration: IMemoryInfrastructureConfiguration | null = null;
 
   /**
    * @method pushHistory
-   * @description Registra un nuevo evento en el historial de la sesión (Derecha de la lista).
+   * @description Registra un nuevo turno de diálogo en el historial de la sesión.
    *
-   * @param {string} sessionId - Identificador único del hilo de conversación.
-   * @param {unknown} messagePayload - Contenido del mensaje a persistir.
+   * @param {string} conversationSessionIdentifier - Identificador único de la sesión.
+   * @param {unknown} messagePayloadContent - El ADN del mensaje a persistir.
    */
-  public static async pushHistory(sessionId: string, messagePayload: unknown): Promise<void> {
+  public static async pushHistory(
+    conversationSessionIdentifier: string,
+    messagePayloadContent: unknown,
+  ): Promise<void> {
+    const apparatusName = 'OmnisyncMemory';
+    const operationName = 'pushHistory';
+
     return await OmnisyncTelemetry.traceExecution(
-      'OmnisyncMemory',
-      'pushHistory',
+      apparatusName,
+      operationName,
       async () => {
         try {
-          const redisCommand = ['RPUSH', `os:session:${sessionId}`, JSON.stringify(messagePayload)];
-          await this.executeRemoteCommand(redisCommand);
+          const redisCommandSequence = [
+            'RPUSH',
+            `os:session:${conversationSessionIdentifier}`,
+            JSON.stringify(messagePayloadContent),
+          ];
+
+          await this.executeRemoteInfrastructureCommand(redisCommandSequence);
 
           OmnisyncTelemetry.verbose(
-            'OmnisyncMemory',
-            'push',
-            `Memoria sincronizada para la sesión: ${sessionId}`
+            apparatusName,
+            'synchronization_success',
+            'persistence.memory.sync_success',
+            { conversationSessionIdentifier }
           );
-        } catch (criticalError: unknown) {
+        } catch (criticalWriteError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-CORE-003',
             severity: 'MEDIUM',
-            apparatus: 'OmnisyncMemory',
-            operation: 'pushHistory',
-            message: 'Fallo de escritura en el cluster de memoria Upstash.',
-            context: { sessionId, error: String(criticalError) }
+            apparatus: apparatusName,
+            operation: operationName,
+            message: 'persistence.memory.error.write_failure',
+            context: {
+              session: conversationSessionIdentifier,
+              errorTrace: String(criticalWriteError)
+            },
+            isRecoverable: true
           });
         }
-      }
+      },
+      { session: conversationSessionIdentifier }
     );
   }
 
   /**
    * @method getHistory
-   * @description Recupera los últimos fragmentos de diálogo para hidratar el contexto de la IA.
+   * @description Recupera los fragmentos de diálogo más recientes para hidratar el contexto de la IA.
+   * NIVELACIÓN V2.1: Ahora incluye trazabilidad de ejecución y manejo de errores proactivo.
    *
-   * @param {string} sessionId - Identificador único de la sesión.
-   * @param {number} messageLimit - Cantidad de mensajes a recuperar (Inferencia trivial removida).
-   * @returns {Promise<unknown[]>} Array de mensajes históricos normalizados.
+   * @param {string} conversationSessionIdentifier - Identificador de la sesión.
+   * @param {number} maximumMessageRetrievalLimit - Límite de mensajes (Ventana de memoria).
+   * @returns {Promise<unknown[]>} Colección de mensajes válidos.
    */
-  public static async getHistory(sessionId: string, messageLimit = 10): Promise<unknown[]> {
-    try {
-      // Recuperación mediante rango inverso para obtener los N mensajes más recientes
-      const redisResponse = await this.executeRemoteCommand([
-        'LRANGE',
-        `os:session:${sessionId}`,
-        `-${messageLimit}`,
-        '-1'
-      ]);
+  public static async getHistory(
+    conversationSessionIdentifier: string,
+    maximumMessageRetrievalLimit = 10,
+  ): Promise<unknown[]> {
+    const apparatusName = 'OmnisyncMemory';
+    const operationName = 'getHistory';
 
-      const executionResult = (redisResponse as { result: string[] }).result;
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        try {
+          const rawInfrastructureResponse = await this.executeRemoteInfrastructureCommand([
+            'LRANGE',
+            `os:session:${conversationSessionIdentifier}`,
+            `-${maximumMessageRetrievalLimit}`,
+            '-1',
+          ]);
 
-      return executionResult ? executionResult.map((serializedItem) => JSON.parse(serializedItem)) : [];
-    } catch {
-      /**
-       * @section Silencio Operativo
-       * En caso de fallo en la recuperación de memoria, retornamos un estado vacío
-       * para permitir que la conversación continúe sin contexto previo (Failsafe).
-       */
-      return [];
-    }
+          const validatedResult = rawInfrastructureResponse.result;
+
+          if (!Array.isArray(validatedResult)) {
+            return [];
+          }
+
+          /**
+           * @section Higiene en Deserialización
+           * Filtramos atómicamente cualquier fragmento que no sea JSON válido.
+           */
+          return validatedResult
+            .map((serializedMessage: string) => {
+              try {
+                return JSON.parse(serializedMessage);
+              } catch {
+                return null;
+              }
+            })
+            .filter((parsedMessage): parsedMessage is unknown => parsedMessage !== null);
+
+        } catch (retrievalError: unknown) {
+          /**
+           * @section Resolución de Anomalía ESLint
+           * El error se inyecta en la telemetría para auditoría sin romper el Failsafe.
+           */
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            operationName,
+            'persistence.memory.error.retrieval_silent_fail',
+            { errorDetail: String(retrievalError) }
+          );
+
+          return [];
+        }
+      },
+      { session: conversationSessionIdentifier }
+    );
   }
 
   /**
-   * @method executeRemoteCommand
+   * @method executeRemoteInfrastructureCommand
    * @private
-   * @description Orquesta la transmisión HTTP hacia el endpoint de Upstash.
-   * Valida la integridad de la infraestructura antes de la ejecución.
+   * @description Orquesta la transmisión HTTPS hacia Upstash con blindaje de resiliencia.
    */
-  private static async executeRemoteCommand(command: string[]): Promise<unknown> {
-    if (!this.CLOUD_REST_URL || !this.CLOUD_REST_TOKEN) {
-      throw new Error('OS-CORE-003: Credenciales de Upstash Redis no localizadas en el entorno.');
+  private static async executeRemoteInfrastructureCommand(
+    commandSequence: string[],
+  ): Promise<{ result: unknown }> {
+    const apparatusName = 'OmnisyncMemory:REST';
+
+    // 1. Hidratación de Soberanía de Configuración
+    if (!this.validatedInfrastructureConfiguration) {
+      this.validatedInfrastructureConfiguration = OmnisyncContracts.validate(
+        MemoryInfrastructureConfigurationSchema,
+        {
+          upstashRedisRestUniversalResourceLocator: process.env['UPSTASH_REDIS_REST_URL'],
+          upstashRedisRestAuthorizationToken: process.env['UPSTASH_REDIS_REST_TOKEN'],
+        },
+        apparatusName
+      );
     }
 
-    const httpResponse = await fetch(this.CLOUD_REST_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.CLOUD_REST_TOKEN}`,
-        'Content-Type': 'application/json'
+    const { upstashRedisRestUniversalResourceLocator, upstashRedisRestAuthorizationToken } = this.validatedInfrastructureConfiguration;
+
+    /**
+     * @section Ejecución con Blindaje Sentinel
+     * Se aplica el patrón Retry con Backoff Exponencial para mitigar latencias de red.
+     */
+    return await OmnisyncSentinel.executeWithResilience(
+      async () => {
+        const infrastructureHttpResponse = await fetch(
+          upstashRedisRestUniversalResourceLocator,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${upstashRedisRestAuthorizationToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(commandSequence),
+          }
+        );
+
+        if (!infrastructureHttpResponse.ok) {
+          throw new Error(`UPSTASH_INFRA_ERROR: ${infrastructureHttpResponse.status}`);
+        }
+
+        const rawJsonResponse = await infrastructureHttpResponse.json();
+
+        return OmnisyncContracts.validate(
+          UpstashRestResponseSchema,
+          rawJsonResponse,
+          apparatusName
+        );
       },
-      body: JSON.stringify(command)
-    });
-
-    if (!httpResponse.ok) {
-      throw new Error(`Upstash REST Failure: ${httpResponse.status} ${httpResponse.statusText}`);
-    }
-
-    return await httpResponse.json();
+      apparatusName,
+      'network_transmission'
+    );
   }
 }

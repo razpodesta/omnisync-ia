@@ -4,70 +4,114 @@ import { z } from 'zod';
 
 /**
  * @name EnterpriseResourcePlanningSyncStatusSchema
- * @description Define los estados inmutables de consistencia entre el ecosistema
- * Omnisync y los registros físicos en los sistemas externos (ERP/CRM).
+ * @description Define la taxonomía inmutable de estados de consistencia entre la
+ * infraestructura neural de Omnisync y los registros físicos en sistemas externos.
  */
 export const EnterpriseResourcePlanningSyncStatusSchema = z.enum([
-  'SYNCED',               // Dato idéntico en ambos sistemas.
-  'PENDING',              // Operación aceptada, procesamiento asíncrono en curso.
-  'FAILED_RETRYING',      // Fallo técnico, Sentinel orquestando reintento.
-  'MANUAL_INTERVENTION'   // Error lógico, requiere auditoría por parte del Tenant.
+  /** Sincronización íntegra: Los datos son idénticos en ambos ecosistemas. */
+  'SYNCED',
+  /** Transacción aceptada: El procesamiento asíncrono está en curso en el sistema remoto. */
+  'PENDING',
+  /** Error transitorio: Fallo técnico detectado; el Sentinel está orquestando el reintento. */
+  'FAILED_RETRYING',
+  /** Violación de lógica: Requiere auditoría manual por parte de un administrador del nodo. */
+  'MANUAL_INTERVENTION',
 ]);
 
-export type IEnterpriseResourcePlanningSyncStatus = z.infer<typeof EnterpriseResourcePlanningSyncStatusSchema>;
+/**
+ * @type IEnterpriseResourcePlanningSyncStatus
+ * @description Representación tipada de los estados de sincronización operativa.
+ */
+export type IEnterpriseResourcePlanningSyncStatus = z.infer<
+  typeof EnterpriseResourcePlanningSyncStatusSchema
+>;
 
 /**
  * @name EnterpriseResourcePlanningActionResponseSchema
- * @description Contrato maestro SSOT para la respuesta de cualquier operación operativa.
- * Se ha unificado para eliminar la propiedad ambigua 'operationalStatus'.
+ * @description Contrato maestro de Única Fuente de Verdad (SSOT) para la respuesta
+ * de cualquier operación operativa despachada hacia un ERP o CRM.
  *
  * @protocol OEDP-Level: Elite (Contract Unification)
  */
-export const EnterpriseResourcePlanningActionResponseSchema = z.object({
-  /** Indica si la transacción técnica fue completada exitosamente */
-  success: z.boolean(),
+export const EnterpriseResourcePlanningActionResponseSchema = z
+  .object({
+    /**
+     * @property success
+     * @description Indica si la transacción técnica fue completada exitosamente en el destino.
+     */
+    success: z.boolean(),
 
-  /** Identificador inmutable retornado por el sistema externo */
-  externalIdentifier: z.string().min(1).optional(),
+    /**
+     * @property externalIdentifier
+     * @description Identificador inmutable (Primary Key) retornado por el sistema externo.
+     */
+    externalIdentifier: z.string().min(1).optional(),
 
-  /** Estado de sincronización actual según la taxonomía institucional */
-  syncStatus: EnterpriseResourcePlanningSyncStatusSchema,
+    /**
+     * @property syncStatus
+     * @description Estado de sincronización actual bajo la taxonomía institucional de Omnisync.
+     */
+    syncStatus: EnterpriseResourcePlanningSyncStatusSchema,
 
-  /** Llave semántica para resolución de internacionalización (i18n) */
-  messageKey: z.string().min(5),
+    /**
+     * @property messageKey
+     * @description Llave semántica para la resolución de internacionalización (i18n) en la interfaz.
+     */
+    messageKey: z.string().min(5),
 
-  /** Latencia quirúrgica del sistema externo medida en milisegundos */
-  latencyInMilliseconds: z.number().nonnegative(),
+    /**
+     * @property latencyInMilliseconds
+     * @description Latencia quirúrgica del sistema externo medida desde el inicio de la petición.
+     */
+    latencyInMilliseconds: z.number().nonnegative(),
 
-  /** Contexto adicional del ERP (ej: número de factura, status de stock) */
-  operationalMetadata: z.record(z.string(), z.unknown()).default({}),
-}).readonly();
+    /**
+     * @property operationalMetadata
+     * @description Diccionario de contexto enriquecido (ej: números de factura, estados de inventario).
+     */
+    operationalMetadata: z.record(z.string(), z.unknown()).default({}),
+  })
+  .readonly();
 
-/** @type IEnterpriseResourcePlanningActionResponse */
-export type IEnterpriseResourcePlanningActionResponse = z.infer<typeof EnterpriseResourcePlanningActionResponseSchema>;
+/**
+ * @type IEnterpriseResourcePlanningActionResponse
+ * @description Representación inmutable de la respuesta operativa.
+ */
+export type IEnterpriseResourcePlanningActionResponse = z.infer<
+  typeof EnterpriseResourcePlanningActionResponseSchema
+>;
 
 /**
  * @name IEnterpriseResourcePlanningAdapter
- * @description Interfaz de contrato de élite para conectores de sistemas externos.
- * Todos los métodos ahora retornan el contrato unificado IEnterpriseResourcePlanningActionResponse.
+ * @description Interfaz de contrato de alta fidelidad para adaptadores de sistemas externos.
+ * Garantiza que cualquier implementación (Odoo, SAP, Salesforce) cumpla con la soberanía de tipos.
  *
  * @protocol OEDP-Standard: Zero Discrepancy
  */
 export interface IEnterpriseResourcePlanningAdapter {
-  /** Nombre comercial y versión del conector (ej: 'ODOO_V17_COMMUNITY') */
+  /**
+   * @property providerName
+   * @description Nombre comercial y versión del conector (ej: 'ODOO_VERSION_17_COMMUNITY').
+   */
   readonly providerName: string;
 
   /**
    * @method createOperationTicket
-   * @description Registra un evento transaccional en el ERP destino.
-   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Respuesta validada por SSOT.
+   * @description Registra una incidencia o evento transaccional en el sistema de gestión.
+   * @param {unknown} operationalPayload - Carga útil de la operación (Validada por el esquema del adaptador).
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Respuesta sellada por contrato SSOT.
    */
-  createOperationTicket(operationalPayload: unknown): Promise<IEnterpriseResourcePlanningActionResponse>;
+  createOperationTicket(
+    operationalPayload: unknown,
+  ): Promise<IEnterpriseResourcePlanningActionResponse>;
 
   /**
    * @method validateCustomerExistence
-   * @description Verifica la soberanía de la identidad del cliente en el ERP.
-   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Resultado con 'success' y 'externalIdentifier'.
+   * @description Verifica la soberanía de la identidad del cliente en la base de datos externa.
+   * @param {string} customerPhoneNumber - Identificador telefónico en formato internacional E.164.
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Resultado con el estado de éxito e identificador remoto.
    */
-  validateCustomerExistence(customerPhoneNumber: string): Promise<IEnterpriseResourcePlanningActionResponse>;
+  validateCustomerExistence(
+    customerPhoneNumber: string,
+  ): Promise<IEnterpriseResourcePlanningActionResponse>;
 }

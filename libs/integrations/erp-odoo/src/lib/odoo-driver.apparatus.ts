@@ -5,226 +5,314 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { IOdooConnectionConfiguration } from './schemas/odoo-integration.schema';
 
 /**
+ * @interface ISovereignOdooSession
+ * @description Estructura de persistencia de sesión técnica con control de caducidad.
+ */
+interface ISovereignOdooSession {
+  readonly userId: number;
+  readonly authenticatedAt: number;
+}
+
+/**
  * @name OdooDriverApparatus
- * @description Motor de comunicación de bajo nivel para Odoo Online (v16, v17, v18).
+ * @description Motor de comunicación de alta disponibilidad para Odoo ERP (v16-v18).
  * Orquesta la serialización de protocolos XML-RPC y el transporte seguro HTTPS.
- * Implementa la visión Zero-Local permitiendo ejecución en el Edge de Vercel.
+ * Implementa un pool de sesiones inteligente para minimizar la latencia de handshake.
  *
- * @protocol OEDP-Level: Elite (Hyper-Holistic & Edge-Ready)
+ * @protocol OEDP-Level: Elite (Session-Aware & Edge-Ready)
  */
 export class OdooDriverApparatus {
   /**
    * @private
-   * Cache de identificación técnica para evitar handshakes redundantes en la misma traza.
+   * Almacén de sesiones por Tenant para evitar re-autenticaciones costosas.
    */
-  private static authenticatedUserIdentifierCache: Map<string, number> = new Map();
+  private static readonly sessionRegistry = new Map<
+    string,
+    ISovereignOdooSession
+  >();
+
+  /**
+   * @private
+   * Umbral de expiración de sesión (1 hora) según el estándar de Odoo Online.
+   */
+  private static readonly SESSION_EXPIRY_THRESHOLD_MILLISECONDS = 3600000;
 
   /**
    * @method executeRemoteProcedureCall
-   * @description Nodo central para la ejecución de 'execute_kw'.
-   * Orquesta la autenticación automática y la transmisión de comandos al modelo.
+   * @description Nodo maestro para la ejecución de comandos 'execute_kw'.
+   * Gestiona el ciclo de vida de la sesión y la resiliencia del transporte.
    *
-   * @template TResponse - Estructura de salida esperada (validada por el llamador).
-   * @param {IOdooConnectionConfiguration} technicalConfiguration - ADN de conexión del Tenant.
-   * @param {string} modelTechnicalName - Modelo de Odoo (ej: 'res.partner', 'helpdesk.ticket').
-   * @param {string} operationMethodName - Método técnico (ej: 'search_read', 'create').
-   * @param {unknown[]} positionalArguments - Parámetros de la función en el ERP.
-   * @param {Record<string, unknown>} keywordArguments - Filtros y parámetros nombrados.
-   * @returns {Promise<TResponse>} Datos normalizados desde el cluster de Odoo.
+   * @template TResponse - Estructura de salida esperada.
+   * @param {IOdooConnectionConfiguration} connectionConfiguration - ADN de conexión del suscriptor.
+   * @param {string} modelTechnicalName - Nombre del objeto en Odoo (ej: 'res.partner').
+   * @param {string} methodTechnicalName - Función a ejecutar (ej: 'create', 'write').
+   * @param {unknown[]} positionalArguments - Argumentos de la función.
+   * @param {Record<string, unknown>} keywordArguments - Diccionario de parámetros nombrados.
+   * @returns {Promise<TResponse>} Datos normalizados desde el cluster remoto.
    */
   public static async executeRemoteProcedureCall<TResponse>(
-    technicalConfiguration: IOdooConnectionConfiguration,
+    connectionConfiguration: IOdooConnectionConfiguration,
     modelTechnicalName: string,
-    operationMethodName: string,
+    methodTechnicalName: string,
     positionalArguments: unknown[],
-    keywordArguments: Record<string, unknown> = {}
+    keywordArguments: Record<string, unknown> = {},
   ): Promise<TResponse> {
-    return await OmnisyncTelemetry.traceExecution(
-      'OdooDriverApparatus',
-      `rpc_call:${modelTechnicalName}:${operationMethodName}`,
-      async () => {
-        // 1. Resolución de Identidad Técnica (UID)
-        const userIdentifier = await this.resolveAuthenticatedUserIdentifier(technicalConfiguration);
+    const apparatusName = 'OdooDriverApparatus';
+    const operationName = `rpc:${modelTechnicalName}:${methodTechnicalName}`;
 
-        // 2. Ejecución de la Tubería XML-RPC con Resiliencia
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        // 1. Resolución de Identidad Técnica con validación de caducidad
+        const authenticatedUserIdentifier =
+          await this.resolveAuthenticatedUserIdentifier(
+            connectionConfiguration,
+          );
+
+        // 2. Ejecución con Blindaje Sentinel
         return await OmnisyncSentinel.executeWithResilience(
           async () => {
-            const endpointUrl = `${technicalConfiguration.baseUrl}/xmlrpc/2/object`;
+            const objectEndpointUrl = `${connectionConfiguration.baseUrl}/xmlrpc/2/object`;
 
             const xmlEnvelope = this.constructXmlRpcEnvelope('execute_kw', [
-              technicalConfiguration.databaseName,
-              userIdentifier,
-              technicalConfiguration.secretApiKey,
+              connectionConfiguration.databaseName,
+              authenticatedUserIdentifier,
+              connectionConfiguration.secretApiKey,
               modelTechnicalName,
-              operationMethodName,
+              methodTechnicalName,
               positionalArguments,
               keywordArguments,
             ]);
 
-            const networkResponse = await fetch(endpointUrl, {
+            const networkResponse = await fetch(objectEndpointUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'text/xml',
-                'User-Agent': 'Omnisync-AI/2.0 (Neural Action Bridge)'
+                'User-Agent': 'Omnisync-AI/3.2 (Action-Bridge-Elite)',
+                Accept: 'text/xml',
               },
               body: xmlEnvelope,
             });
 
             if (!networkResponse.ok) {
-              throw new Error(`OS-INTEG-ODOO-TRANSPORT: ${networkResponse.status}`);
+              throw new Error(
+                `OS-INTEG-ODOO-NETWORK: ${networkResponse.status} ${networkResponse.statusText}`,
+              );
             }
 
-            const responseText = await networkResponse.text();
+            const responseRawText = await networkResponse.text();
 
-            // Detección de anomalías lógicas en el ERP
-            if (responseText.includes('<fault>')) {
-              this.reportOdooLogicFault(responseText, modelTechnicalName);
+            // Auditoría de fallos lógicos internos del ERP
+            if (responseRawText.includes('<fault>')) {
+              this.reportOdooLogicAnomaly(
+                responseRawText,
+                modelTechnicalName,
+                methodTechnicalName,
+              );
             }
 
-            return this.parseXmlRpcResponse<TResponse>(responseText);
+            return this.parseSovereignXmlResponse<TResponse>(responseRawText);
           },
-          'OdooDriverApparatus',
-          `execute_${operationMethodName}`
+          apparatusName,
+          operationName,
         );
-      }
+      },
     );
   }
 
   /**
    * @method resolveAuthenticatedUserIdentifier
    * @private
-   * @description Realiza el handshake con el servicio 'common' de Odoo para obtener el UID.
+   * @description Gestiona el pool de sesiones aplicando lógica de re-autenticación proactiva.
    */
   private static async resolveAuthenticatedUserIdentifier(
-    config: IOdooConnectionConfiguration
+    configuration: IOdooConnectionConfiguration,
   ): Promise<number> {
-    const cacheKey = `${config.baseUrl}:${config.databaseName}:${config.userLoginEmail}`;
-    const cachedUid = this.authenticatedUserIdentifierCache.get(cacheKey);
+    const sessionKey = `${configuration.baseUrl}:${configuration.databaseName}:${configuration.userLoginEmail}`;
+    const cachedSession = this.sessionRegistry.get(sessionKey);
+    const currentTime = Date.now();
 
-    if (cachedUid) return cachedUid;
+    // Verificación de existencia y validez temporal de la sesión
+    if (
+      cachedSession &&
+      currentTime - cachedSession.authenticatedAt <
+        this.SESSION_EXPIRY_THRESHOLD_MILLISECONDS
+    ) {
+      return cachedSession.userId;
+    }
 
     return await OmnisyncTelemetry.traceExecution(
       'OdooDriverApparatus',
-      'authenticate_handshake',
+      'handshake_authentication',
       async () => {
         const authXml = this.constructXmlRpcEnvelope('authenticate', [
-          config.databaseName,
-          config.userLoginEmail,
-          config.secretApiKey,
-          {}, // Argumentos de contexto vacíos
+          configuration.databaseName,
+          configuration.userLoginEmail,
+          configuration.secretApiKey,
+          {}, // Contexto de autenticación vacío
         ]);
 
-        const response = await fetch(`${config.baseUrl}/xmlrpc/2/common`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/xml' },
-          body: authXml,
-        });
+        const networkResponse = await fetch(
+          `${configuration.baseUrl}/xmlrpc/2/common`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/xml' },
+            body: authXml,
+          },
+        );
 
-        const resultXml = await response.text();
-        const uid = this.parseXmlRpcResponse<number>(resultXml);
+        const resultXml = await networkResponse.text();
+        const userId = this.parseSovereignXmlResponse<number>(resultXml);
 
-        if (!uid || typeof uid !== 'number') {
-          throw new Error('integrations.odoo.auth.failed');
+        if (!userId || typeof userId !== 'number') {
+          throw new Error(
+            'OS-INTEG-ODOO-AUTH: Credenciales rechazadas o base de datos inaccesible.',
+          );
         }
 
-        this.authenticatedUserIdentifierCache.set(cacheKey, uid);
-        return uid;
-      }
+        // Registro en el pool soberano
+        this.sessionRegistry.set(sessionKey, {
+          userId,
+          authenticatedAt: currentTime,
+        });
+
+        return userId;
+      },
     );
   }
 
   /**
    * @method constructXmlRpcEnvelope
    * @private
-   * @description Serializador atómico de llamadas XML-RPC.
+   * @description Ensamblador de protocolos XML-RPC.
    */
-  private static constructXmlRpcEnvelope(methodName: string, params: unknown[]): string {
-    const serializedParams = params
-      .map((p) => `<param><value>${this.serializeValueToXml(p)}</value></param>`)
+  private static constructXmlRpcEnvelope(
+    methodName: string,
+    operationalParameters: unknown[],
+  ): string {
+    const serializedParameters = operationalParameters
+      .map(
+        (parameter) =>
+          `<param><value>${this.serializeValueToXml(parameter)}</value></param>`,
+      )
       .join('');
 
-    return `<?xml version="1.0"?>
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <methodCall>
   <methodName>${methodName}</methodName>
-  <params>${serializedParams}</params>
+  <params>${serializedParameters}</params>
 </methodCall>`.trim();
   }
 
   /**
    * @method serializeValueToXml
    * @private
-   * @description Transforma tipos de TypeScript a la gramática XML de Odoo.
+   * @description Transforma tipos nativos de TS a gramática XML compatible con el ORM de Odoo.
    */
-  private static serializeValueToXml(value: unknown): string {
-    if (value === null || value === undefined) return '<nil/>';
-    if (typeof value === 'string') return `<string>${this.escapeXmlChars(value)}</string>`;
-    if (typeof value === 'number') return Number.isInteger(value) ? `<int>${value}</int>` : `<double>${value}</double>`;
-    if (typeof value === 'boolean') return `<boolean>${value ? 1 : 0}</boolean>`;
+  private static serializeValueToXml(dataValue: unknown): string {
+    if (dataValue === null || dataValue === undefined) return '<nil/>';
 
-    if (Array.isArray(value)) {
-      const items = value.map((i) => `<value>${this.serializeValueToXml(i)}</value>`).join('');
+    if (typeof dataValue === 'string') {
+      return `<string>${this.sanitizeXmlPayload(dataValue)}</string>`;
+    }
+
+    if (typeof dataValue === 'number') {
+      return Number.isInteger(dataValue)
+        ? `<int>${dataValue}</int>`
+        : `<double>${dataValue}</double>`;
+    }
+
+    if (typeof dataValue === 'boolean') {
+      return `<boolean>${dataValue ? 1 : 0}</boolean>`;
+    }
+
+    if (Array.isArray(dataValue)) {
+      const items = dataValue
+        .map((item) => `<value>${this.serializeValueToXml(item)}</value>`)
+        .join('');
       return `<array><data>${items}</data></array>`;
     }
 
-    if (typeof value === 'object') {
-      const members = Object.entries(value)
-        .map(([k, v]) => `<member><name>${k}</name><value>${this.serializeValueToXml(v)}</value></member>`)
+    if (typeof dataValue === 'object') {
+      const members = Object.entries(dataValue)
+        .map(
+          ([key, value]) =>
+            `<member><name>${key}</name><value>${this.serializeValueToXml(value)}</value></member>`,
+        )
         .join('');
       return `<struct>${members}</struct>`;
     }
 
-    return `<string>${String(value)}</string>`;
+    return `<string>${String(dataValue)}</string>`;
   }
 
   /**
-   * @method parseXmlRpcResponse
+   * @method parseSovereignXmlResponse
    * @private
-   * @description Parser ligero optimizado para la latencia en el Edge.
+   * @description Parser resiliente optimizado para baja latencia en entornos sin DOM.
    */
-  private static parseXmlRpcResponse<T>(xml: string): T {
-    // Extracción de tipos básicos mediante reconocimiento de tags
-    if (xml.includes('<int>')) {
-      const match = /<int>(\d+)<\/int>/.exec(xml);
-      return (match ? parseInt(match[1], 10) : 0) as unknown as T;
+  private static parseSovereignXmlResponse<T>(xmlContent: string): T {
+    // Extracción determinista de enteros
+    if (xmlContent.includes('<int>')) {
+      const integerMatch = /<int>(\d+)<\/int>/.exec(xmlContent);
+      return (integerMatch ? parseInt(integerMatch[1], 10) : 0) as unknown as T;
     }
 
-    if (xml.includes('<string>')) {
-      const match = /<string>([\s\S]*?)<\/string>/.exec(xml);
-      return (match ? match[1].trim() : '') as unknown as T;
+    // Extracción de cadenas con soporte multilínea
+    if (xmlContent.includes('<string>')) {
+      const stringMatch = /<string>([\s\S]*?)<\/string>/.exec(xmlContent);
+      return (stringMatch ? stringMatch[1].trim() : '') as unknown as T;
     }
 
-    if (xml.includes('<boolean>')) {
-      return xml.includes('<boolean>1</boolean>') as unknown as T;
+    if (xmlContent.includes('<boolean>')) {
+      return xmlContent.includes('<boolean>1</boolean>') as unknown as T;
     }
 
-    // Para arrays y structs se retorna la estructura cruda (Refacturable a Parser SAX)
+    // Fallback para tipos complejos (se recomienda implementar un parser SAX si el volumen crece)
     return [] as unknown as T;
   }
 
   /**
-   * @method reportOdooLogicFault
+   * @method reportOdooLogicAnomaly
    * @private
    */
-  private static reportOdooLogicFault(xml: string, model: string): void {
-    const faultMatch = /<string>([\s\S]*?)<\/string>/.exec(xml);
-    const faultString = faultMatch ? faultMatch[1] : 'Odoo Unknown Logic Error';
+  private static reportOdooLogicAnomaly(
+    xml: string,
+    model: string,
+    method: string,
+  ): void {
+    const anomalyMatch = /<string>([\s\S]*?)<\/string>/.exec(xml);
+    const anomalyDetail = anomalyMatch
+      ? anomalyMatch[1]
+      : 'Odoo Logic Violation';
 
     OmnisyncSentinel.report({
       errorCode: 'OS-INTEG-604',
       severity: 'HIGH',
       apparatus: 'OdooDriverApparatus',
-      operation: 'odoo_logic_validation',
-      message: faultString,
-      context: { affectedModel: model }
+      operation: 'logic_validation',
+      message: anomalyDetail,
+      context: { affectedModel: model, targetMethod: method },
     });
 
-    throw new Error(`ODOO-FAULT: ${faultString}`);
+    throw new Error(`[ODOO_LOGIC_ERROR]: ${anomalyDetail}`);
   }
 
-  private static escapeXmlChars(unsafe: string): string {
-    return unsafe.replace(/[<>&"']/g, (c) => {
-      const map: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' };
-      return map[c];
+  /**
+   * @method sanitizeXmlPayload
+   * @private
+   */
+  private static sanitizeXmlPayload(unsafeText: string): string {
+    return unsafeText.replace(/[<>&"']/g, (character) => {
+      const entityMap: Record<string, string> = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '&': '&amp;',
+        '"': '&quot;',
+        "'": '&apos;',
+      };
+      return entityMap[character] || character;
     });
   }
 }

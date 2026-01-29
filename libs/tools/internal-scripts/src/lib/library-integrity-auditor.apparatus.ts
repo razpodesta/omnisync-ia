@@ -1,117 +1,196 @@
 /** libs/tools/internal-scripts/src/lib/library-integrity-auditor.apparatus.ts */
 
-import * as fs from 'node:fs';
+import * as fileSystem from 'node:fs';
 import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import { glob } from 'glob';
-import { z } from 'zod';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
+import {
+  LibraryIntegritySeedSchema,
+  ILibraryIntegritySeed,
+  ILibraryFinding,
+} from './schemas/library-integrity-auditor.schema';
 
 /**
- * @interface ILibraryFinding
- * @description Estructura para erradicar el uso de 'any' en los hallazgos de auditoría.
+ * @name LibraryIntegrityAuditor
+ * @description Aparato encargado de velar por la consistencia técnica de las piezas LEGO.
+ * Audita los archivos de configuración de TypeScript para asegurar que todas las librerías
+ * operen bajo el mismo estándar de compilación y tipos.
+ *
+ * @protocol OEDP-Level: Elite (Workplace Governance)
  */
-interface ILibraryFinding {
-  libraryPath: string;
-  isCompliant: boolean;
-  anomalies: string[];
-  remediationHint: string;
-}
-
-const LibraryIntegritySeedSchema = z.object({
-  reportId: z.string().uuid(),
-  timestamp: z.string().datetime(),
-  totalLibrariesAudited: z.number(),
-  complianceScore: z.number().min(0).max(100),
-  findings: z.array(z.custom<ILibraryFinding>()),
-  aiContext: z.object({
-    summary: z.string(),
-    criticalViolationsCount: z.number()
-  })
-}).readonly();
-
-export type ILibraryIntegritySeed = z.infer<typeof LibraryIntegritySeedSchema>;
-
 export class LibraryIntegrityAuditor {
-  private static readonly SEED_OUTPUT_PATH = 'reports/infrastructure/library-dna';
-  private static readonly REQUIRED_TARGET = 'es2022';
-  private static readonly REQUIRED_TYPES = 'node';
+  /**
+   * @private
+   * @description Destino institucional para los reportes de DNA.
+   */
+  private static readonly SEED_OUTPUT_PATH =
+    'reports/infrastructure/library-dna';
 
+  // Estándares obligatorios de compilación 2026
+  private static readonly REQUIRED_COMPILATION_TARGET = 'es2022';
+  private static readonly REQUIRED_TYPE_DEFINITIONS = 'node';
+
+  /**
+   * @method executeSovereignDnaAudit
+   * @description Orquesta la inspección profunda de todos los tsconfig.lib.json del monorepo.
+   *
+   * @returns {Promise<ILibraryIntegritySeed>} Semilla de integridad validada por SSOT.
+   */
   public static async executeSovereignDnaAudit(): Promise<ILibraryIntegritySeed> {
-    return await OmnisyncTelemetry.traceExecution('LibraryIntegrityAuditor', 'audit', async () => {
-      const configFiles = await glob('libs/**/tsconfig.lib.json', { ignore: '**/node_modules/**' });
-      const findings: ILibraryFinding[] = [];
+    const apparatusName = 'LibraryIntegrityAuditor';
+    const operationName = 'executeSovereignDnaAudit';
 
-      for (const filePath of configFiles) {
-        findings.push(this.evaluateLibraryConfiguration(filePath));
-      }
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        // Localización de manifiestos de configuración de librerías
+        const libraryConfigurationFiles = await glob(
+          'libs/**/tsconfig.lib.json',
+          {
+            ignore: ['**/node_modules/**', '**/dist/**'],
+          },
+        );
 
-      const compliantCount = findings.filter(f => f.isCompliant).length;
-      const score = findings.length > 0 ? (compliantCount / findings.length) * 100 : 100;
+        const auditFindingsCollection: ILibraryFinding[] = [];
 
-      const seed: ILibraryIntegritySeed = {
-        reportId: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        totalLibrariesAudited: findings.length,
-        complianceScore: Math.round(score),
-        findings,
-        aiContext: {
-          summary: `Audit complete. Compliance: ${score.toFixed(2)}%`,
-          criticalViolationsCount: findings.length - compliantCount
+        for (const configurationPath of libraryConfigurationFiles) {
+          auditFindingsCollection.push(
+            this.evaluateLibraryStandardCompliance(configurationPath),
+          );
         }
-      };
 
-      this.persistSovereignSeed(seed);
-      return LibraryIntegritySeedSchema.parse(seed);
-    });
+        const compliantLibrariesCount = auditFindingsCollection.filter(
+          (finding) => finding.isCompliant,
+        ).length;
+        const totalLibrariesCount = auditFindingsCollection.length;
+
+        const calculatedComplianceScore =
+          totalLibrariesCount > 0
+            ? (compliantLibrariesCount / totalLibrariesCount) * 100
+            : 100;
+
+        const auditSeedPayload: ILibraryIntegritySeed = {
+          reportId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          totalLibrariesAudited: totalLibrariesCount,
+          complianceScore: Math.round(calculatedComplianceScore),
+          findings: auditFindingsCollection,
+          aiContext: {
+            summary: `Audit complete. Ecosistema operando al ${calculatedComplianceScore.toFixed(2)}% de fidelidad técnica.`,
+            criticalViolationsCount:
+              totalLibrariesCount - compliantLibrariesCount,
+          },
+        };
+
+        // Persistencia del hallazgo en el repositorio de infraestructura
+        this.persistSovereignAuditSeed(auditSeedPayload);
+
+        return LibraryIntegritySeedSchema.parse(auditSeedPayload);
+      },
+    );
   }
 
-  private static evaluateLibraryConfiguration(filePath: string): ILibraryFinding {
+  /**
+   * @method evaluateLibraryStandardCompliance
+   * @private
+   * @description Analiza el contenido de un tsconfig para detectar divergencias de ADN.
+   */
+  private static evaluateLibraryStandardCompliance(
+    filePath: string,
+  ): ILibraryFinding {
+    const apparatusName = 'LibraryIntegrityAuditor';
+
     try {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      const json = JSON.parse(raw) as { compilerOptions?: { target?: string; types?: string[] } };
-      const options = json.compilerOptions || {};
+      const rawConfigurationContent = fileSystem.readFileSync(
+        filePath,
+        'utf-8',
+      );
+      const parsedConfiguration = JSON.parse(rawConfigurationContent) as {
+        compilerOptions?: { target?: string; types?: string[] };
+      };
 
-      const anomalies: string[] = [];
-      if (options.target !== this.REQUIRED_TARGET) {
-        anomalies.push(`INVALID_TARGET: ${options.target}`);
-      }
-      if (!options.types?.includes(this.REQUIRED_TYPES)) {
-        anomalies.push(`MISSING_NODE_TYPES`);
+      const compilerOptions = parsedConfiguration.compilerOptions || {};
+      const detectedAnomalies: string[] = [];
+
+      // Validación de Target de Compilación
+      if (compilerOptions.target !== this.REQUIRED_COMPILATION_TARGET) {
+        detectedAnomalies.push(
+          `INVALID_TARGET: ${compilerOptions.target || 'UNDEFINED'}`,
+        );
       }
 
-      const isCompliant = anomalies.length === 0;
+      // Validación de Definiciones de Tipos
+      if (!compilerOptions.types?.includes(this.REQUIRED_TYPE_DEFINITIONS)) {
+        detectedAnomalies.push(
+          `MISSING_CORE_TYPES: ${this.REQUIRED_TYPE_DEFINITIONS}`,
+        );
+      }
+
+      const isCompliant = detectedAnomalies.length === 0;
 
       return {
         libraryPath: filePath,
         isCompliant,
-        anomalies,
-        remediationHint: isCompliant ? 'N/A' : 'Update target to es2022 and add node types.'
+        anomalies: detectedAnomalies,
+        remediationHint: isCompliant
+          ? 'N/A: Estándar óptimo.'
+          : `Update target to ${this.REQUIRED_COMPILATION_TARGET} and include '${this.REQUIRED_TYPE_DEFINITIONS}' types.`,
       };
-    } catch (error: unknown) {
-      // Registro en Sentinel de fallo de lectura de archivo físico
+    } catch (criticalParsingError: unknown) {
+      // Reporte al Sentinel ante fallos físicos de lectura o JSON corrupto
       OmnisyncSentinel.report({
         errorCode: 'OS-CORE-001',
         severity: 'LOW',
-        apparatus: 'LibraryIntegrityAuditor',
+        apparatus: apparatusName,
         operation: 'evaluate_file',
-        message: `Incapacidad de procesar tsconfig: ${filePath}`,
-        context: { error: String(error) }
+        message: `Incapacidad de procesar configuración en: ${filePath}`,
+        context: { errorDetail: String(criticalParsingError) },
       });
 
       return {
         libraryPath: filePath,
         isCompliant: false,
-        anomalies: ['PARSING_ERROR'],
-        remediationHint: 'Check JSON syntax.'
+        anomalies: ['PARSING_FAILURE'],
+        remediationHint: 'Verify JSON syntax and file permissions.',
       };
     }
   }
 
-  private static persistSovereignSeed(seed: ILibraryIntegritySeed): void {
-    const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-library-audit.json`;
-    const fullPath = path.join(process.cwd(), this.SEED_OUTPUT_PATH, fileName);
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-    fs.writeFileSync(fullPath, JSON.stringify(seed, null, 2), 'utf-8');
+  /**
+   * @method persistSovereignAuditSeed
+   * @private
+   */
+  private static persistSovereignAuditSeed(
+    auditSeed: ILibraryIntegritySeed,
+  ): void {
+    const reportFileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-library-audit.json`;
+    const absolutePath = path.join(
+      process.cwd(),
+      this.SEED_OUTPUT_PATH,
+      reportFileName,
+    );
+
+    try {
+      fileSystem.mkdirSync(path.dirname(absolutePath), { recursive: true });
+      fileSystem.writeFileSync(
+        absolutePath,
+        JSON.stringify(auditSeed, null, 2),
+        'utf-8',
+      );
+
+      OmnisyncTelemetry.verbose(
+        'LibraryIntegrityAuditor',
+        'persist_seed',
+        `Hallazgo de DNA persistido: ${reportFileName}`,
+      );
+    } catch (ioError: unknown) {
+      console.error(
+        '[CRITICAL-IO-FAILURE]: No se pudo escribir la semilla de integridad de librerías.',
+        ioError,
+      );
+    }
   }
 }

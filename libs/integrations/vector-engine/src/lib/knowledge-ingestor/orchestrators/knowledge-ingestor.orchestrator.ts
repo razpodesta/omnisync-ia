@@ -7,13 +7,9 @@ import {
   IArtificialIntelligenceDriver,
   IKnowledgeSemanticChunk,
   TenantId,
-  OmnisyncContracts
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 
-/**
- * @section Sincronización de ADN
- * Importación corregida desde el esquema soberano de la capa vectorial.
- */
 import { IVectorDatabaseAgnosticDriver } from '../../schemas/vector-engine.schema';
 import { KnowledgeClassifierApparatus } from '../knowledge-classifier.apparatus';
 import { SemanticChunkerApparatus } from '../semantic-chunker.apparatus';
@@ -22,16 +18,16 @@ import { KnowledgeIngestionPipelineSchema } from '../schemas/knowledge-ingestor.
 /**
  * @name KnowledgeIngestorOrchestrator
  * @description Director de orquesta de alta disponibilidad para la ingesta de conocimiento.
- * Coordina la taxonomía cognitiva, fragmentación semántica y sincronización vectorial.
- * Implementa control de flujo secuencial para garantizar la soberanía de cuotas de IA.
+ * Coordina la taxonomía cognitiva, fragmentación semántica y sincronización vectorial masiva.
+ * Implementa una arquitectura de tubería síncrona con optimización de carga por lotes.
  *
- * @protocol OEDP-Level: Elite (Path-Nivelated & Resilient)
+ * @protocol OEDP-Level: Elite (Batch-Optimized & Forensic)
  */
 export class KnowledgeIngestorOrchestrator {
-
   /**
    * @method executeFullIngestionPipeline
-   * @description Ejecuta el pipeline neural 360° con blindaje de integridad y trazabilidad.
+   * @description Ejecuta el pipeline neural 360°. Transforma texto bruto en vectores
+   * persistidos mediante procesamiento de lotes de alta performance.
    *
    * @param {string} documentRawContent - Texto bruto a procesar.
    * @param {string} documentTitleIdentifier - Nombre del recurso de conocimiento.
@@ -44,7 +40,7 @@ export class KnowledgeIngestorOrchestrator {
     documentTitleIdentifier: string,
     tenantOrganizationIdentifier: TenantId,
     artificialIntelligenceDriver: IArtificialIntelligenceDriver,
-    vectorDatabaseDriver: IVectorDatabaseAgnosticDriver
+    vectorDatabaseDriver: IVectorDatabaseAgnosticDriver,
   ): Promise<void> {
     const apparatusName = 'KnowledgeIngestorOrchestrator';
     const operationName = 'executeFullIngestionPipeline';
@@ -54,68 +50,95 @@ export class KnowledgeIngestorOrchestrator {
       operationName,
       async () => {
         try {
-          // 1. Fase de Validación de Contrato (ADN Preventivo)
-          OmnisyncContracts.validate(KnowledgeIngestionPipelineSchema, {
-            rawContent: documentRawContent,
-            documentTitle: documentTitleIdentifier,
-            tenantOrganizationIdentifier
-          }, apparatusName);
-
-          // 2. Fase de Clasificación Cognitiva (Taxonomía)
-          const { category, tags } = await KnowledgeClassifierApparatus.classifyDocumentContent(
-            artificialIntelligenceDriver,
-            documentRawContent
+          /**
+           * @section 1. Fase de Validación de Soberanía (SSOT)
+           */
+          OmnisyncContracts.validate(
+            KnowledgeIngestionPipelineSchema,
+            {
+              rawContent: documentRawContent,
+              documentTitle: documentTitleIdentifier,
+              tenantOrganizationIdentifier,
+            },
+            apparatusName,
           );
 
-          // 3. Fase de Fragmentación Semántica (Smart Chunks)
+          /**
+           * @section 2. Clasificación y Fragmentación
+           * Determinamos la taxonomía y dividimos el ADN técnico en Smart Chunks.
+           */
+          const { category, tags } =
+            await KnowledgeClassifierApparatus.classifyDocumentContent(
+              artificialIntelligenceDriver,
+              documentRawContent,
+            );
+
           const knowledgeChunks = SemanticChunkerApparatus.executeSegmentation(
             documentRawContent,
             tenantOrganizationIdentifier,
             documentTitleIdentifier,
             category,
-            tags
-          );
-
-          /**
-           * 4. Fase de Vectorización (Sequential Embedding Generation)
-           * NIVELACIÓN: Procesamiento determinista para evitar regresiones por
-           * saturación de sockets o Rate Limits en entornos Serverless.
-           */
-          const enrichedChunks: IKnowledgeSemanticChunk[] = [];
-
-          OmnisyncTelemetry.verbose(apparatusName, 'embedding_cycle_start', `Generando firmas para ${knowledgeChunks.length} fragmentos.`);
-
-          for (const currentChunk of knowledgeChunks) {
-            const vectorCoordinates = await NeuralEmbeddingApparatus.generateVectorEmbeddings(
-              artificialIntelligenceDriver,
-              currentChunk.content
-            );
-
-            enrichedChunks.push({
-              ...currentChunk,
-              metadata: {
-                ...currentChunk.metadata,
-                vectorCoordinates,
-                indexationTimestamp: new Date().toISOString()
-              }
-            });
-          }
-
-          /**
-           * 5. Fase de Persistencia Vectorial
-           */
-          await OmnisyncSentinel.executeWithResilience(
-            () => vectorDatabaseDriver.upsertKnowledgeChunks(enrichedChunks),
-            apparatusName,
-            `upsert:${vectorDatabaseDriver.providerName}`
+            tags,
           );
 
           OmnisyncTelemetry.verbose(
             apparatusName,
-            'pipeline_success',
-            `Conocimiento indexado: ${enrichedChunks.length} vectores sincronizados en ${vectorDatabaseDriver.providerName}.`
+            'segmentation_complete',
+            `Documento fragmentado en ${knowledgeChunks.length} unidades.`,
           );
 
+          /**
+           * @section 3. Fase de Vectorización Masiva (Batch Processing)
+           * NIVELACIÓN V3.0: Erradicamos el bucle secuencial. Enviamos todos los
+           * contenidos al motor de embeddings en una única operación de lote.
+           */
+          const textualContentsToEmbed = knowledgeChunks.map(
+            (chunk) => chunk.content,
+          );
+
+          const vectorMatrix =
+            await NeuralEmbeddingApparatus.generateBatchEmbeddings(
+              artificialIntelligenceDriver,
+              textualContentsToEmbed,
+            );
+
+          /**
+           * @section 4. Hidratación de ADN Vectorial
+           * Vinculamos las coordenadas calculadas con sus respectivos metadatos.
+           */
+          const finalizedEnrichedChunks: IKnowledgeSemanticChunk[] =
+            knowledgeChunks.map((chunk, index) => ({
+              ...chunk,
+              metadata: {
+                ...chunk.metadata,
+                vectorCoordinates: vectorMatrix[index],
+                indexationTimestamp: new Date().toISOString(),
+                pipelineVersion: '3.0.ELITE',
+                // Huella digital para control de integridad
+                contentFingerprint: this.generateContentFingerprint(
+                  chunk.content,
+                ),
+              },
+            }));
+
+          /**
+           * @section 5. Sincronización con Nube Vectorial (Qdrant)
+           * Persistencia atómica de la colección enriquecida.
+           */
+          await OmnisyncSentinel.executeWithResilience(
+            () =>
+              vectorDatabaseDriver.upsertKnowledgeChunks(
+                finalizedEnrichedChunks,
+              ),
+            apparatusName,
+            `bulk_upsert:${vectorDatabaseDriver.providerName}`,
+          );
+
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'ingestion_success',
+            `Pipeline completado: ${finalizedEnrichedChunks.length} vectores sincronizados.`,
+          );
         } catch (criticalPipelineError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-602',
@@ -124,15 +147,31 @@ export class KnowledgeIngestorOrchestrator {
             operation: operationName,
             message: 'integrations.vector_engine.pipeline_failure',
             context: {
-                title: documentTitleIdentifier,
-                tenant: tenantOrganizationIdentifier,
-                error: String(criticalPipelineError)
+              document: documentTitleIdentifier,
+              tenant: tenantOrganizationIdentifier,
+              error: String(criticalPipelineError),
             },
-            isRecoverable: false
+            isRecoverable: false,
           });
           throw criticalPipelineError;
         }
-      }
+      },
     );
+  }
+
+  /**
+   * @method generateContentFingerprint
+   * @private
+   * @description Genera un hash simplificado para identificación de contenido.
+   * En V3.1 se sustituirá por un motor SHA-256 nativo de Node.
+   */
+  private static generateContentFingerprint(content: string): string {
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return `os_hash_${Math.abs(hash)}`;
   }
 }

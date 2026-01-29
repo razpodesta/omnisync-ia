@@ -22,7 +22,7 @@ const nextConfiguration = {
    * Integración con el ecosistema Nx.
    */
   nx: {
-    scalableVectorGraphics: true
+    scalableVectorGraphics: true,
   },
 
   /**

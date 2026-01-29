@@ -22,7 +22,10 @@ export default getRequestConfig(async ({ requestLocale }) => {
   let localeIdentifier = await requestLocale;
 
   // Validación de integridad: Si el locale no está soportado, se degrada al valor por defecto.
-  if (!localeIdentifier || !routing.locales.includes(localeIdentifier as SupportedLocale)) {
+  if (
+    !localeIdentifier ||
+    !routing.locales.includes(localeIdentifier as SupportedLocale)
+  ) {
     localeIdentifier = routing.defaultLocale;
   }
 

@@ -16,7 +16,7 @@ export class OdooConnectorDriver {
   private authenticatedUserIdentifier: number | null = null;
 
   constructor(
-    private readonly technicalConfiguration: IOdooConnectionConfiguration
+    private readonly technicalConfiguration: IOdooConnectionConfiguration,
   ) {}
 
   /**
@@ -34,13 +34,13 @@ export class OdooConnectorDriver {
         OmnisyncTelemetry.verbose(
           'OdooConnectorDriver',
           'handshake',
-          `Iniciando conexión con DB: ${this.technicalConfiguration.databaseName}`
+          `Iniciando conexión con DB: ${this.technicalConfiguration.databaseName}`,
         );
 
         // Simulación de éxito de autenticación (Handshake de Élite)
         this.authenticatedUserIdentifier = 2;
         return this.authenticatedUserIdentifier;
-      }
+      },
     );
   }
 
@@ -57,7 +57,7 @@ export class OdooConnectorDriver {
     modelTechnicalName: string,
     methodTechnicalName: string,
     operationArguments: unknown[],
-    keywordArguments: Record<string, unknown> = {}
+    keywordArguments: Record<string, unknown> = {},
   ): Promise<TResult> {
     if (!this.authenticatedUserIdentifier) {
       await this.authenticate();
@@ -74,14 +74,14 @@ export class OdooConnectorDriver {
           'OdooConnectorDriver',
           'execute_kw',
           `Model: ${modelTechnicalName} | Method: ${methodTechnicalName}`,
-          { keywordArgumentsCount: Object.keys(keywordArguments).length }
+          { keywordArgumentsCount: Object.keys(keywordArguments).length },
         );
 
         // Aquí reside la lógica de transmisión XML-RPC nivelada en el driver apparatus
         return [] as unknown as TResult;
       },
       'OdooConnectorDriver',
-      `call:${modelTechnicalName}:${methodTechnicalName}`
+      `call:${modelTechnicalName}:${methodTechnicalName}`,
     );
   }
 }

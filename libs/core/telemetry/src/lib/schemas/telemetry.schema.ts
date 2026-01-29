@@ -10,7 +10,7 @@ export const OmnisyncTelemetryLevelSchema = z.enum([
   'WARNING',
   'ERROR',
   'PERFORMANCE',
-  'VERBOSE' // Para observabilidad ultra-detallada
+  'VERBOSE', // Para observabilidad ultra-detallada
 ]);
 
 /**
@@ -29,5 +29,9 @@ export const OmnisyncTelemetryEntrySchema = z.object({
   traceId: z.string().uuid().optional(),
 });
 
-export type IOmnisyncTelemetryLevel = z.infer<typeof OmnisyncTelemetryLevelSchema>;
-export type IOmnisyncTelemetryEntry = z.infer<typeof OmnisyncTelemetryEntrySchema>;
+export type IOmnisyncTelemetryLevel = z.infer<
+  typeof OmnisyncTelemetryLevelSchema
+>;
+export type IOmnisyncTelemetryEntry = z.infer<
+  typeof OmnisyncTelemetryEntrySchema
+>;

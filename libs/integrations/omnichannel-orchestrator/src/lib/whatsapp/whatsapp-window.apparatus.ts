@@ -2,7 +2,10 @@
 
 import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
-import { IWhatsAppServiceWindow, WhatsAppServiceWindowSchema } from './schemas/whatsapp-history.schema';
+import {
+  IWhatsAppServiceWindow,
+  WhatsAppServiceWindowSchema,
+} from './schemas/whatsapp-history.schema';
 
 /**
  * @name WhatsAppWindowApparatus
@@ -21,27 +24,28 @@ export class WhatsAppWindowApparatus {
    */
   public static async calculateServiceStatus(
     tenantOrganizationIdentifier: string,
-    externalUserIdentifier: string
+    externalUserIdentifier: string,
   ): Promise<IWhatsAppServiceWindow> {
     return await OmnisyncTelemetry.traceExecution(
       'WhatsAppWindowApparatus',
       'calculateServiceStatus',
       async () => {
-        const lastRecord = await OmnisyncDatabase.databaseEngine.supportThread.findFirst({
-          where: {
-            tenantId: tenantOrganizationIdentifier,
-            externalUserId: externalUserIdentifier,
-            channel: 'WHATSAPP'
-          },
-          orderBy: { createdAt: 'desc' }
-        });
+        const lastRecord =
+          await OmnisyncDatabase.databaseEngine.supportThread.findFirst({
+            where: {
+              tenantId: tenantOrganizationIdentifier,
+              externalUserId: externalUserIdentifier,
+              channel: 'WHATSAPP',
+            },
+            orderBy: { createdAt: 'desc' },
+          });
 
         if (!lastRecord) {
           return WhatsAppServiceWindowSchema.parse({
             isOpen: false,
             remainingHours: 0,
             lastInteractionTimestamp: new Date(0).toISOString(),
-            requiresTemplate: true
+            requiresTemplate: true,
           });
         }
 
@@ -53,11 +57,14 @@ export class WhatsAppWindowApparatus {
 
         return WhatsAppServiceWindowSchema.parse({
           isOpen,
-          remainingHours: Math.max(0, this.META_SERVICE_WINDOW_HOURS - elapsedHours),
+          remainingHours: Math.max(
+            0,
+            this.META_SERVICE_WINDOW_HOURS - elapsedHours,
+          ),
           lastInteractionTimestamp: lastRecord.createdAt.toISOString(),
-          requiresTemplate: !isOpen
+          requiresTemplate: !isOpen,
         });
-      }
+      },
     );
   }
 }

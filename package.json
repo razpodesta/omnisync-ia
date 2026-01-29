@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "pnpm run internationalization:build && nx run-many --target=serve --all",
-    "build": "pnpm run internationalization:build && pnpm run persistence:generate && nx run-many --target=build --all --parallel=3",
+    "build": "pnpm run internationalization:build && pnpm run persistence:generate && nx run-many --target=build --all --parallel=1",
     "start": "nx run-many --target=serve --all",
     "system:hydrate": "pnpm install && pnpm run internationalization:build && pnpm run persistence:generate && pnpm run build",
     "internationalization:build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
@@ -22,11 +22,11 @@
     "infrastructure:configuration": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-config-audit.ts",
     "infrastructure:dump": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
     "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump",
-    "quality:test": "nx run-many --target=test --all --parallel=3",
-    "quality:lint": "nx run-many --target=lint --all",
-    "quality:format": "prettier --write \"**/*.{ts,tsx,json,md,scss}\"",
-    "quality:types": "tsc --noEmit",
-    "audit": "pnpm audit && pnpm run quality:lint && pnpm run quality:types"
+    "quality:test": "nx run-many --target=test --all --parallel=1",
+    "quality:lint": "nx run-many -t lint --all --parallel=1",
+    "quality:format": "prettier --write ",
+    "quality:types": "tsc -p tsconfig.base.json --noEmit",
+    "audit": "pnpm audit && nx run-many -t lint --all --parallel=1 && pnpm run quality:types"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -42,7 +42,11 @@
   },
   "pnpm": {
     "overrides": {
-      "lodash": "^4.17.23"
+      "lodash": "^4.17.23",
+      "hono@<4.11.7": ">=4.11.7",
+      "next@>=15.6.0-canary.0 <16.1.5": ">=16.1.5",
+      "next@>=16.0.0-beta.0 <16.1.5": ">=16.1.5",
+      "next@>=16.1.0-canary.0 <16.1.5": ">=16.1.5"
     },
     "onlyBuiltDependencies": [
       "@apollo/protobufjs",

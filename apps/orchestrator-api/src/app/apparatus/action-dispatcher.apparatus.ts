@@ -5,47 +5,52 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { OmnisyncSecurity } from '@omnisync/core-security';
 import { OmnisyncEnterpriseResourcePlanningOrchestrator } from '@omnisync/erp-engine';
 
-// Adaptadores Autorizados (Lego Pieces)
+/**
+ * @section Adaptadores Autorizados (Lego Pieces)
+ * Se importan las implementaciones específicas para la resolución dinámica.
+ */
 import { MockEnterpriseResourcePlanningAdapter } from '@omnisync/erp-mock';
 import { OdooAdapterApparatus } from '@omnisync/erp-odoo';
 
 import {
   INeuralIntent,
   ITenantConfiguration,
-  IAIResponse,
+  IAIResponse as IArtificialIntelligenceResponse,
   IEnterpriseResourcePlanningActionResponse,
-  IEnterpriseResourcePlanningAdapter
+  IEnterpriseResourcePlanningAdapter,
 } from '@omnisync/core-contracts';
 
 /**
  * @name ActionDispatcherApparatus
  * @description Aparato especializado en la orquestación y despacho de acciones operativas.
  * Centraliza la resolución dinámica de adaptadores ERP/CRM, la desencriptación de
- * credenciales soberanas y el aprovisionamiento de servicios externos.
+ * credenciales soberanas y el aprovisionamiento de servicios en sistemas externos.
  *
- * @protocol OEDP-Level: Elite (Atomic Dispatcher)
+ * @protocol OEDP-Level: Elite (Atomic Action Dispatcher)
  */
 export class ActionDispatcherApparatus {
-
   /**
    * @method dispatchOperationalAction
-   * @description Evalúa la intención neural y, si requiere intervención operativa,
-   * resuelve el adaptador y ejecuta la acción en el sistema externo.
+   * @description Evalúa el estado de la inferencia neural y, si el sistema determina la necesidad
+   * de una acción en el mundo real, resuelve el adaptador del suscriptor y ejecuta la petición.
    *
-   * @param {INeuralIntent} incomingNeuralIntent - Intención original del usuario.
-   * @param {IAIResponse} artificialIntelligenceResponse - Inferencia del modelo de IA.
-   * @param {ITenantConfiguration} tenantConfiguration - ADN técnico del nodo suscriptor.
-   * @returns {Promise<IEnterpriseResourcePlanningActionResponse | undefined>} Resultado de la acción o undefined.
+   * @param {INeuralIntent} incomingNeuralIntent - Intención original normalizada.
+   * @param {IArtificialIntelligenceResponse} artificialIntelligenceResponse - Inferencia del cerebro neural.
+   * @param {ITenantConfiguration} tenantConfiguration - ADN técnico del nodo organizacional.
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse | undefined>} Resultado sellado por SSOT o undefined.
    */
   public static async dispatchOperationalAction(
     incomingNeuralIntent: INeuralIntent,
-    artificialIntelligenceResponse: IAIResponse,
-    tenantConfiguration: ITenantConfiguration
+    artificialIntelligenceResponse: IArtificialIntelligenceResponse,
+    tenantConfiguration: ITenantConfiguration,
   ): Promise<IEnterpriseResourcePlanningActionResponse | undefined> {
     const apparatusName = 'ActionDispatcherApparatus';
     const operationName = 'dispatchOperationalAction';
 
-    // Evaluación de necesidad: Solo despachamos si el estado de la IA es ESCALATED_TO_ERP
+    /**
+     * @section Triaje de Acción
+     * El despacho solo ocurre si la IA ha clasificado explícitamente el flujo como 'ESCALATED_TO_ERP'.
+     */
     if (artificialIntelligenceResponse.status !== 'ESCALATED_TO_ERP') {
       return undefined;
     }
@@ -56,26 +61,26 @@ export class ActionDispatcherApparatus {
       async () => {
         try {
           /**
-           * @section Fase de Resolución de Adaptador
-           * El dispatcher aísla la lógica de instanciación del flujo principal.
+           * 1. Fase de Resolución de Soberanía Técnica
+           * Instanciamos el adaptador específico y desciframos sus secretos de conexión.
            */
-          const sovereignAdapter = await this.resolveSovereignAdapter(tenantConfiguration);
+          const sovereignEnterpriseResourcePlanningAdapter =
+            await this.resolveSovereignAdapter(tenantConfiguration);
 
           /**
-           * @section Fase de Ejecución Operativa
-           * Delega al orquestador de motor ERP la creación del ticket técnico.
+           * 2. Fase de Ejecución y Aprovisionamiento
+           * Delegamos al orquestador de motor ERP la creación del ticket o registro transaccional.
            */
           return await OmnisyncEnterpriseResourcePlanningOrchestrator.executeServiceTicketProvisioning(
-            sovereignAdapter,
+            sovereignEnterpriseResourcePlanningAdapter,
             {
               userId: incomingNeuralIntent.externalUserId,
               subject: `Incidencia Neural: ${incomingNeuralIntent.id.substring(0, 8)}`,
               description: artificialIntelligenceResponse.suggestion,
               priority: 'MEDIUM',
-              createdAt: new Date().toISOString()
-            }
+              createdAt: new Date().toISOString(),
+            },
           );
-
         } catch (criticalDispatchError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-404',
@@ -85,49 +90,66 @@ export class ActionDispatcherApparatus {
             message: 'core.action_dispatcher.dispatch_failed',
             context: {
               tenantId: tenantConfiguration.id,
-              error: String(criticalDispatchError)
+              error: String(criticalDispatchError),
+              intentId: incomingNeuralIntent.id,
             },
-            isRecoverable: true
+            isRecoverable: true,
           });
 
           throw criticalDispatchError;
         }
-      }
+      },
+      {
+        targetAdapter:
+          tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier,
+      },
     );
   }
 
   /**
    * @method resolveSovereignAdapter
    * @private
-   * @description Factoría interna para la resolución de adaptadores y secretos.
+   * @description Factoría interna para la resolución de adaptadores y gestión de secretos.
+   * Implementa el protocolo de seguridad AES-256-GCM para la recuperación de credenciales.
    */
   private static async resolveSovereignAdapter(
-    tenantConfiguration: ITenantConfiguration
+    tenantConfiguration: ITenantConfiguration,
   ): Promise<IEnterpriseResourcePlanningAdapter> {
-    const adapterIdentifier = tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier;
+    const enterpriseResourcePlanningAdapterIdentifier =
+      tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier;
 
-    switch (adapterIdentifier) {
+    switch (enterpriseResourcePlanningAdapterIdentifier) {
       case 'ODOO_V16': {
-        const systemEncryptionKey = process.env['SYSTEM_ENCRYPTION_KEY'];
+        const masterSystemEncryptionKey = process.env['SYSTEM_ENCRYPTION_KEY'];
 
-        if (!systemEncryptionKey) {
-          throw new Error('OS-SEC-004: Master System Encryption Key is missing in the environment.');
+        if (!masterSystemEncryptionKey) {
+          throw new Error(
+            'OS-SEC-004: Master System Encryption Key is missing in the environment infrastructure.',
+          );
         }
 
         /**
-         * @section Seguridad de Élite
-         * Desencriptación atómica del ADN de conexión de Odoo.
+         * @section Descifrado de ADN de Conexión
+         * Recuperamos el JSON de credenciales de la organización mediante el Security Apparatus.
          */
-        const decryptedCredentialsJson = await OmnisyncSecurity.decryptSensitiveData(
-          tenantConfiguration.enterpriseResourcePlanning.encryptedCredentials,
-          systemEncryptionKey
-        );
+        const decryptedCredentialsJsonString =
+          await OmnisyncSecurity.decryptSensitiveData(
+            tenantConfiguration.enterpriseResourcePlanning.encryptedCredentials,
+            masterSystemEncryptionKey,
+          );
 
-        return new OdooAdapterApparatus(JSON.parse(decryptedCredentialsJson));
+        return new OdooAdapterApparatus(
+          JSON.parse(decryptedCredentialsJsonString),
+        );
       }
 
       case 'MOCK_SYSTEM':
       default: {
+        OmnisyncTelemetry.verbose(
+          'ActionDispatcherApparatus',
+          'adapter_resolution',
+          'Instanciando Mock Adapter para entorno de pruebas.',
+        );
         return new MockEnterpriseResourcePlanningAdapter();
       }
     }

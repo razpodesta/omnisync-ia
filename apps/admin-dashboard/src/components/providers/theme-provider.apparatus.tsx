@@ -7,9 +7,12 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 /**
  * @name ThemeProvider
- * @description Aparato de nivel de infraestructura visual. Envuelve el árbol 
+ * @description Aparato de nivel de infraestructura visual. Envuelve el árbol
  * de componentes para habilitar el cambio dinámico entre modos Obsidian (#000) y Milk (#FFF).
  */
-export function ThemeProvider({ children, ...properties }: React.ComponentProps<typeof NextThemesProvider>) {
+export function ThemeProvider({
+  children,
+  ...properties
+}: React.ComponentProps<typeof NextThemesProvider>) {
   return <NextThemesProvider {...properties}>{children}</NextThemesProvider>;
 }

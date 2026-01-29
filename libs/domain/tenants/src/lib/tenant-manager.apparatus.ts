@@ -6,7 +6,7 @@ import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
 import {
   ITenantConfiguration,
   TenantConfigurationSchema,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 
 /**
@@ -17,7 +17,6 @@ import {
  * @protocol OEDP-Level: Elite (Database-Driven & SSOT-Compliant)
  */
 export class OmnisyncTenantManager {
-
   /**
    * @method getSovereignConfiguration
    * @description Recupera el ADN técnico de una organización mediante su identificador único.
@@ -26,7 +25,7 @@ export class OmnisyncTenantManager {
    * @returns {Promise<ITenantConfiguration>} Configuración validada y lista para la acción.
    */
   public static async getSovereignConfiguration(
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): Promise<ITenantConfiguration> {
     return await OmnisyncTelemetry.traceExecution(
       'OmnisyncTenantManager',
@@ -37,9 +36,10 @@ export class OmnisyncTenantManager {
            * @section Acceso a Persistencia
            * Se utiliza el motor nivelado OmnisyncDatabase para consultar Supabase.
            */
-          const rawConfigurationRecord = await OmnisyncDatabase.databaseEngine.tenant.findUnique({
-            where: { id: tenantOrganizationIdentifier }
-          });
+          const rawConfigurationRecord =
+            await OmnisyncDatabase.databaseEngine.tenant.findUnique({
+              where: { id: tenantOrganizationIdentifier },
+            });
 
           if (!rawConfigurationRecord) {
             throw new Error('domain.tenants.errors.not_found');
@@ -50,7 +50,6 @@ export class OmnisyncTenantManager {
            * Asegura que el registro de la DB cumpla con las leyes del monorepo.
            */
           return TenantConfigurationSchema.parse(rawConfigurationRecord);
-
         } catch (criticalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-DOM-404',
@@ -58,12 +57,15 @@ export class OmnisyncTenantManager {
             apparatus: 'OmnisyncTenantManager',
             operation: 'resolve_by_id',
             message: 'domain.tenants.errors.resolution_failure',
-            context: { tenantId: tenantOrganizationIdentifier, error: String(criticalError) },
-            isRecoverable: true
+            context: {
+              tenantId: tenantOrganizationIdentifier,
+              error: String(criticalError),
+            },
+            isRecoverable: true,
           });
           throw criticalError;
         }
-      }
+      },
     );
   }
 
@@ -73,22 +75,23 @@ export class OmnisyncTenantManager {
    * Esencial para la personalización de la interfaz administrativa y Web Chat.
    */
   public static async resolveConfigurationByUrlSlug(
-    urlIdentifierSlug: string
+    urlIdentifierSlug: string,
   ): Promise<ITenantConfiguration> {
     return await OmnisyncTelemetry.traceExecution(
       'OmnisyncTenantManager',
       'resolveConfigurationByUrlSlug',
       async () => {
-        const rawConfigurationRecord = await OmnisyncDatabase.databaseEngine.tenant.findFirst({
-          where: { urlSlug: urlIdentifierSlug.toLowerCase().trim() }
-        });
+        const rawConfigurationRecord =
+          await OmnisyncDatabase.databaseEngine.tenant.findFirst({
+            where: { urlSlug: urlIdentifierSlug.toLowerCase().trim() },
+          });
 
         if (!rawConfigurationRecord) {
           throw new Error('domain.tenants.errors.slug_not_found');
         }
 
         return TenantConfigurationSchema.parse(rawConfigurationRecord);
-      }
+      },
     );
   }
 
@@ -96,13 +99,20 @@ export class OmnisyncTenantManager {
    * @method validateTenantOperationalStatus
    * @description Verifica si una organización tiene permitido el consumo de recursos de IA.
    */
-  public static async validateTenantOperationalStatus(tenantId: TenantId): Promise<boolean> {
+  public static async validateTenantOperationalStatus(
+    tenantId: TenantId,
+  ): Promise<boolean> {
     const configuration = await this.getSovereignConfiguration(tenantId);
 
     const isNodeActive = configuration.status === 'ACTIVE';
 
     if (!isNodeActive) {
-      OmnisyncTelemetry.verbose('OmnisyncTenantManager', 'status_check', 'domain.tenants.errors.inactive', { tenantId });
+      OmnisyncTelemetry.verbose(
+        'OmnisyncTenantManager',
+        'status_check',
+        'domain.tenants.errors.inactive',
+        { tenantId },
+      );
     }
 
     return isNodeActive;

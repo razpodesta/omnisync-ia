@@ -1,10 +1,13 @@
 /** libs/integrations/vector-engine/src/lib/semantic-relevance-assessor.apparatus.ts */
 
-import { IKnowledgeSemanticChunk, OmnisyncContracts } from '@omnisync/core-contracts';
+import {
+  IKnowledgeSemanticChunk,
+  OmnisyncContracts,
+} from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import {
   KnowledgeRelevanceAssessmentSchema,
-  IKnowledgeRelevanceAssessment
+  IKnowledgeRelevanceAssessment,
 } from './schemas/semantic-relevance.schema';
 
 /**
@@ -16,7 +19,6 @@ import {
  * @protocol OEDP-Level: Elite (Mathematical Optimization)
  */
 export class SemanticRelevanceAssessor {
-
   /**
    * @method evaluateContextRelevance
    * @description Realiza una evaluación quirúrgica del lote de fragmentos en una sola pasada.
@@ -27,7 +29,7 @@ export class SemanticRelevanceAssessor {
    */
   public static evaluateContextRelevance(
     rawSemanticKnowledgeChunks: IKnowledgeSemanticChunk[],
-    similarityScoreThreshold: number
+    similarityScoreThreshold: number,
   ): IKnowledgeRelevanceAssessment {
     const apparatusName = 'SemanticRelevanceAssessor';
 
@@ -53,15 +55,17 @@ export class SemanticRelevanceAssessor {
             filteredChunks.push(currentChunk);
             scoreSummation += individualScore;
 
-            if (individualScore >= 0.90) {
+            if (individualScore >= 0.9) {
               hasHighConfidenceAnchor = true;
             }
           }
         }
 
         const validChunksCount = filteredChunks.length;
-        const averageScore = validChunksCount > 0 ? (scoreSummation / validChunksCount) : 0;
-        const contextReliabilityPulse = totalChunksCaptured > 0 ? (validChunksCount / totalChunksCaptured) : 0;
+        const averageScore =
+          validChunksCount > 0 ? scoreSummation / validChunksCount : 0;
+        const contextReliabilityPulse =
+          totalChunksCaptured > 0 ? validChunksCount / totalChunksCaptured : 0;
 
         /**
          * @section Validación de Soberanía del Resultado
@@ -72,11 +76,11 @@ export class SemanticRelevanceAssessor {
             filteredChunks,
             averageScore,
             contextReliabilityPulse,
-            hasHighConfidenceAnchor
+            hasHighConfidenceAnchor,
           },
-          apparatusName
+          apparatusName,
         );
-      }
+      },
     );
   }
 

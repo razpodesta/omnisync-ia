@@ -2,7 +2,10 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { IMetaPresenceAction, MetaPresenceActionSchema } from '../schemas/meta-contracts.schema';
+import {
+  IMetaPresenceAction,
+  MetaPresenceActionSchema,
+} from '../schemas/meta-contracts.schema';
 
 /**
  * @name MetaPresenceApparatus
@@ -13,7 +16,6 @@ import { IMetaPresenceAction, MetaPresenceActionSchema } from '../schemas/meta-c
  * @protocol OEDP-Level: Elite (UI/UX Real-time)
  */
 export class MetaPresenceApparatus {
-
   /**
    * @method emitTypingIndicator
    * @description Activa o desactiva los indicadores de escritura en la app de WhatsApp.
@@ -21,7 +23,7 @@ export class MetaPresenceApparatus {
   public static async emitTypingIndicator(
     facebookBusinessId: string,
     accessToken: string,
-    presenceAction: IMetaPresenceAction
+    presenceAction: IMetaPresenceAction,
   ): Promise<void> {
     const apparatusName = 'MetaPresenceApparatus';
     const operationName = 'emitTypingIndicator';
@@ -31,7 +33,8 @@ export class MetaPresenceApparatus {
       operationName,
       async () => {
         // Validación de ADN de entrada
-        const validatedPresence = MetaPresenceActionSchema.parse(presenceAction);
+        const validatedPresence =
+          MetaPresenceActionSchema.parse(presenceAction);
 
         try {
           const metaApiUrl = `https://graph.facebook.com/v20.0/${facebookBusinessId}/messages`;
@@ -39,8 +42,8 @@ export class MetaPresenceApparatus {
           await fetch(metaApiUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               messaging_product: 'whatsapp',
@@ -50,12 +53,15 @@ export class MetaPresenceApparatus {
                * @note Protocolo de Presencia Meta 2026
                * 'composing' activa la animación de escritura.
                */
-              sender_action: validatedPresence.action
-            })
+              sender_action: validatedPresence.action,
+            }),
           });
 
-          OmnisyncTelemetry.verbose(apparatusName, 'signal_sent', `Status ${validatedPresence.action} enviado a ${validatedPresence.recipientPhoneNumber}`);
-
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'signal_sent',
+            `Status ${validatedPresence.action} enviado a ${validatedPresence.recipientPhoneNumber}`,
+          );
         } catch (signalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-404',
@@ -63,10 +69,10 @@ export class MetaPresenceApparatus {
             apparatus: apparatusName,
             operation: operationName,
             message: 'integrations.meta.presence_failed',
-            context: { error: String(signalError) }
+            context: { error: String(signalError) },
           });
         }
-      }
+      },
     );
   }
 }

@@ -1,4 +1,3 @@
-
 {
   "name": "@omnisync-ecosystem/ai-google-driver",
   "version": "1.0.0",
@@ -8,7 +7,7 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@google/generative-ai": "^0.21.0",
+    "@google/generative-ai": "^0.24.1",
     "@omnisync-ecosystem/contracts": "workspace:*",
     "@omnisync-ecosystem/telemetry": "workspace:*",
     "@omnisync-ecosystem/sentinel": "workspace:*"

@@ -3,7 +3,7 @@
 import {
   IKnowledgeSemanticChunk,
   KnowledgeSemanticChunkSchema,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 import { IQdrantInternalPoint } from '../schemas/qdrant-driver.schema';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
@@ -14,27 +14,30 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
  * Erradica la ambigüedad de tipos mediante mapeo determinista.
  */
 export class QdrantMapperApparatus {
-
   /**
    * @method mapToOmnisyncChunk
    * @description Transforma un punto de Qdrant en un fragmento semántico validado.
    */
   public static mapToOmnisyncChunk(
     point: IQdrantInternalPoint,
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): IKnowledgeSemanticChunk {
-    return OmnisyncTelemetry.traceExecutionSync('QdrantMapper', 'mapToOmnisync', () => {
-      return KnowledgeSemanticChunkSchema.parse({
-        id: point.id,
-        content: point.payload['content'],
-        sourceName: point.payload['sourceName'],
-        tenantId: tenantOrganizationIdentifier,
-        metadata: {
-          ...(point.payload['metadata'] as Record<string, unknown>),
-          score: point.score
-        }
-      });
-    });
+    return OmnisyncTelemetry.traceExecutionSync(
+      'QdrantMapper',
+      'mapToOmnisync',
+      () => {
+        return KnowledgeSemanticChunkSchema.parse({
+          id: point.id,
+          content: point.payload['content'],
+          sourceName: point.payload['sourceName'],
+          tenantId: tenantOrganizationIdentifier,
+          metadata: {
+            ...(point.payload['metadata'] as Record<string, unknown>),
+            score: point.score,
+          },
+        });
+      },
+    );
   }
 
   /**
@@ -42,10 +45,14 @@ export class QdrantMapperApparatus {
    * @description Transforma un fragmento Omnisync en la gramática de inserción de Qdrant.
    */
   public static mapToQdrantPoint(chunk: IKnowledgeSemanticChunk): unknown {
-    const vectorCoordinates = (chunk.metadata as Record<string, unknown>)['vectorCoordinates'];
+    const vectorCoordinates = (chunk.metadata as Record<string, unknown>)[
+      'vectorCoordinates'
+    ];
 
     if (!Array.isArray(vectorCoordinates)) {
-      throw new Error(`[MAPPER-FAIL]: The chunk [${chunk.id}] is missing its vector footprint.`);
+      throw new Error(
+        `[MAPPER-FAIL]: The chunk [${chunk.id}] is missing its vector footprint.`,
+      );
     }
 
     return {
@@ -54,8 +61,8 @@ export class QdrantMapperApparatus {
       payload: {
         content: chunk.content,
         sourceName: chunk.sourceName,
-        metadata: chunk.metadata
-      }
+        metadata: chunk.metadata,
+      },
     };
   }
 }

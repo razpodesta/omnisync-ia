@@ -11,7 +11,6 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
  * @protocol OEDP-Level: Elite (Index-Signature Safe)
  */
 export class ConfigurationSpecification {
-
   /**
    * @method extractGranularConfiguration
    * @description Recopila el ADN técnico de la infraestructura Cloud.
@@ -26,10 +25,10 @@ export class ConfigurationSpecification {
             persistenceDatabase: {
               engine: 'PostgreSQL 15+ (Supabase)',
               pooling: 'Prisma Accelerated',
-              schemaPath: 'libs/core/persistence/prisma/schema.prisma'
+              schemaPath: 'libs/core/persistence/prisma/schema.prisma',
             },
             volatileMemory: await this.getUpstashMetrics(),
-            vectorKnowledge: await this.getQdrantCollections()
+            vectorKnowledge: await this.getQdrantCollections(),
           };
         } catch (error: unknown) {
           await OmnisyncSentinel.report({
@@ -38,11 +37,11 @@ export class ConfigurationSpecification {
             apparatus: 'ConfigurationSpecification',
             operation: 'extract',
             message: 'tools.config.extraction_failed',
-            context: { error: String(error) }
+            context: { error: String(error) },
           });
           throw error;
         }
-      }
+      },
     );
   }
 
@@ -58,9 +57,9 @@ export class ConfigurationSpecification {
     if (!url || !token) return { status: 'MISSING_CREDENTIALS' };
 
     const response = await fetch(`${url}/info`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
-    const metrics = await response.json() as { result: unknown };
+    const metrics = (await response.json()) as { result: unknown };
     return { provider: 'Upstash', verboseOutput: metrics.result };
   }
 
@@ -75,9 +74,9 @@ export class ConfigurationSpecification {
     if (!url) return { status: 'URL_NOT_CONFIGURED' };
 
     const response = await fetch(`${url}/collections`, {
-      headers: { 'api-key': apiKey }
+      headers: { 'api-key': apiKey },
     });
-    const data = await response.json() as { result: unknown };
+    const data = (await response.json()) as { result: unknown };
     return { provider: 'Qdrant Cloud', existingCollections: data.result };
   }
 }

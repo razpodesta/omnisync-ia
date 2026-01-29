@@ -2,36 +2,36 @@
 
 import {
   IArtificialIntelligenceDriver,
-  OmnisyncContracts
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
   KnowledgeClassificationResponseSchema,
-  IKnowledgeClassificationResponse
+  IKnowledgeClassificationResponse,
 } from './schemas/knowledge-classifier.schema';
 
 /**
  * @name KnowledgeClassifierApparatus
- * @description Aparato de cognición encargado de la taxonomía automatizada de documentos.
- * Transforma contenido técnico bruto en metadatos clasificados utilizando inferencia
- * de baja latencia para optimizar el ciclo de vida del ADN vectorial.
+ * @description Aparato de élite encargado de la taxonomía automatizada de ADN técnico.
+ * Actúa como el "Bibliotecario Neural" que analiza, categoriza y etiqueta el conocimiento
+ * antes de su fragmentación y vectorización.
  *
- * @protocol OEDP-Level: Elite (Atomic Cognitive Function)
+ * @protocol OEDP-Level: Elite (Resilient Cognitive Extraction)
  */
 export class KnowledgeClassifierApparatus {
-
   /**
    * @method classifyDocumentContent
-   * @description Orquesta el proceso de análisis semántico mediante IA y valida el contrato resultante.
+   * @description Orquesta el proceso de triaje semántico. Transforma texto amorfo
+   * en metadatos estructurados validados por contrato SSOT.
    *
-   * @param {IArtificialIntelligenceDriver} artificialIntelligenceDriver - Driver del LLM (ej. Gemini Flash).
-   * @param {string} textualContentToAnalyze - El bloque de texto a categorizar.
-   * @returns {Promise<IKnowledgeClassificationResponse>} Resultado validado por el esquema granular.
+   * @param {IArtificialIntelligenceDriver} driver - Driver de IA (Se recomienda Tier: FLASH).
+   * @param {string} rawContent - El bloque de texto técnico a inspeccionar.
+   * @returns {Promise<IKnowledgeClassificationResponse>} Resultado validado y categorizado.
    */
   public static async classifyDocumentContent(
-    artificialIntelligenceDriver: IArtificialIntelligenceDriver,
-    textualContentToAnalyze: string
+    driver: IArtificialIntelligenceDriver,
+    rawContent: string,
   ): Promise<IKnowledgeClassificationResponse> {
     const apparatusName = 'KnowledgeClassifierApparatus';
     const operationName = 'classifyDocumentContent';
@@ -40,102 +40,136 @@ export class KnowledgeClassifierApparatus {
       apparatusName,
       operationName,
       async () => {
-        const classificationInstructionPrompt = this.buildSovereignClassificationPrompt(textualContentToAnalyze);
+        /**
+         * @section Fase 1: Construcción de Directiva Soberana
+         */
+        const cognitiveInstruction =
+          this.buildSovereignTaxonomyPrompt(rawContent);
 
         try {
-          /**
-           * @section Ejecución de Inferencia
-           * Se utiliza una configuración de alta temperatura para permitir
-           * discernimiento semántico, pero limitada en tokens para eficiencia.
-           */
-          const rawInferenceResponse = await artificialIntelligenceDriver.generateResponse(
-            classificationInstructionPrompt,
+          const rawInferenceResult = await driver.generateResponse(
+            cognitiveInstruction,
             {
               modelName: 'FLASH',
-              temperature: 0.2,
-              maxTokens: 500
-            }
+              temperature: 0.1, // Baja temperatura para máxima precisión estructural
+              maxTokens: 600,
+            },
           );
 
           /**
-           * @section Limpieza de Residuos Cognitivos
-           * Erradicamos cualquier texto, preámbulo o Markdown inyectado por el LLM.
+           * @section Fase 2: Extracción y Saneamiento
+           * Erradicamos el ruido visual y explicativo del LLM mediante RegEx.
            */
-          const sanitizedJsonPayload = this.extractPureJsonContent(rawInferenceResponse);
+          const cleanedJsonString =
+            this.isolateSovereignJsonObject(rawInferenceResult);
+          const parsedResult = JSON.parse(cleanedJsonString);
+
+          // Registro de fidelidad para auditoría
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'classification_audit',
+            `Confianza: ${parsedResult.confidenceScore}`,
+          );
 
           /**
-           * @section Validación de Soberanía del Dato (SSOT)
-           * Separación física: el esquema se importa de su propio archivo granular.
+           * @section Fase 3: Validación de Contrato SSOT
            */
           return OmnisyncContracts.validate(
             KnowledgeClassificationResponseSchema,
-            JSON.parse(sanitizedJsonPayload),
-            apparatusName
+            parsedResult,
+            apparatusName,
           );
-
         } catch (criticalClassificationError: unknown) {
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-INTEG-604',
-            severity: 'MEDIUM',
-            apparatus: apparatusName,
-            operation: 'classify',
-            message: 'integrations.vector_engine.classification_failed',
-            context: { error: String(criticalClassificationError) },
-            isRecoverable: true
-          });
-
-          // Fallback institucional para mantener la continuidad del pipeline
-          return {
-            category: 'TECHNICAL',
-            tags: ['general', 'system', 'unclassified', 'data', 'neural'],
-            confidenceScore: 0
-          };
+          return await this.handleClassificationAnomalies(
+            apparatusName,
+            operationName,
+            criticalClassificationError,
+          );
         }
-      }
+      },
     );
   }
 
   /**
-   * @method buildSovereignClassificationPrompt
+   * @method buildSovereignTaxonomyPrompt
    * @private
+   * @description Ensambla una directiva de ingeniería de prompts de grado arquitectónico.
    */
-  private static buildSovereignClassificationPrompt(content: string): string {
+  private static buildSovereignTaxonomyPrompt(content: string): string {
     return `
-      ACT AS AN ELITE DATA ARCHITECT.
-      OBJECTIVE: Analyze technical content and classify it for a vector database.
+      [SYSTEM_ROLE]: ELITE NEURAL LIBRARIAN.
+      [OBJECTIVE]: Perform semantic triage on technical content for a high-performance vector database.
 
-      OUTPUT RULES:
-      1. Respond ONLY with a valid JSON object.
-      2. No explanations, no markdown blocks, no preambles.
-      3. Categories allowed: [TECHNICAL, COMMERCIAL, ADMINISTRATIVE, LEGAL].
-      4. Generate exactly 5 technical tags.
+      [RULES]:
+      1. Analyze the context and language.
+      2. Categorize into ONLY ONE: [TECHNICAL, COMMERCIAL, ADMINISTRATIVE, LEGAL].
+      3. Generate exactly 5 technical keywords (tags).
+      4. Output MUST BE a single valid JSON object. No preambles.
 
-      REQUIRED SCHEMA:
+      [SCHEMA_DEFINITION]:
       {
-        "category": "string",
-        "tags": ["string", "string", "string", "string", "string"],
-        "confidenceScore": number (0.0 to 1.0)
+        "category": "TECHNICAL" | "COMMERCIAL" | "ADMINISTRATIVE" | "LEGAL",
+        "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+        "confidenceScore": float (0.0 to 1.0)
       }
 
-      CONTENT TO PROCESS:
-      ${content.substring(0, 4000)}
+      [CONTENT_TO_TRIAGE]:
+      ${content.substring(0, 5000)}
     `.trim();
   }
 
   /**
-   * @method extractPureJsonContent
+   * @method isolateSovereignJsonObject
    * @private
-   * @description Implementa un algoritmo de recorte quirúrgico para aislar el objeto JSON
-   * de posibles residuos textuales del modelo generativo.
+   * @description Algoritmo de aislamiento mediante RegEx para extraer JSON puro
+   * ignorando bloques de markdown o texto explicativo (Resiliencia 2026).
    */
-  private static extractPureJsonContent(rawText: string): string {
-    const firstBraceIdentifier = rawText.indexOf('{');
-    const lastBraceIdentifier = rawText.lastIndexOf('}');
+  private static isolateSovereignJsonObject(rawText: string): string {
+    const jsonRegexPattern = /\{[\s\S]*\}/;
+    const regexMatch = jsonRegexPattern.exec(rawText);
 
-    if (firstBraceIdentifier === -1 || lastBraceIdentifier === -1) {
-      throw new Error('OS-CORE-JSON: No structural JSON found in AI response.');
+    if (!regexMatch) {
+      throw new Error(
+        'OS-CORE-604: No structural DNA detected in AI response.',
+      );
     }
 
-    return rawText.substring(firstBraceIdentifier, lastBraceIdentifier + 1);
+    return regexMatch[0].trim();
+  }
+
+  /**
+   * @method handleClassificationAnomalies
+   * @private
+   */
+  private static async handleClassificationAnomalies(
+    apparatus: string,
+    operation: string,
+    error: unknown,
+  ): Promise<IKnowledgeClassificationResponse> {
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-INTEG-604',
+      severity: 'MEDIUM',
+      apparatus,
+      operation,
+      message: 'integrations.vector_engine.classification_failed',
+      context: { originalError: String(error) },
+      isRecoverable: true,
+    });
+
+    /**
+     * @section Protocolo de Fallback
+     * Retorna una clasificación neutra de "Seguridad" para no detener el pipeline de ingesta.
+     */
+    return {
+      category: 'TECHNICAL',
+      tags: [
+        'system_fallback',
+        'unclassified',
+        'pending_review',
+        'neural',
+        'triage_fail',
+      ],
+      confidenceScore: 0,
+    };
   }
 }

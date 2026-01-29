@@ -11,15 +11,19 @@ export type AuthToken = z.infer<typeof AuthTokenSchema>;
 /**
  * @section Encryption Contracts
  */
-export const EncryptedPayloadSchema = z.object({
-  encryptedData: z.string(), // Base64
-  initializationVector: z.string(), // Hex
-  authTag: z.string(), // Hex (Para GCM)
-}).readonly();
+export const EncryptedPayloadSchema = z
+  .object({
+    encryptedData: z.string(), // Base64
+    initializationVector: z.string(), // Hex
+    authTag: z.string(), // Hex (Para GCM)
+  })
+  .readonly();
 
 export type IEncryptedPayload = z.infer<typeof EncryptedPayloadSchema>;
 
 /**
  * @section Anonymization Context
  */
-export const AnonymizationMapSchema = z.record(z.string(), z.string()).readonly();
+export const AnonymizationMapSchema = z
+  .record(z.string(), z.string())
+  .readonly();

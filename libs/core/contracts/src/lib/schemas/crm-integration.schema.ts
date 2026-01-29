@@ -6,15 +6,17 @@ import { z } from 'zod';
  * @name CustomerProfileSchema
  * @description Esquema de validación para el perfil normalizado del cliente.
  */
-export const CustomerProfileSchema = z.object({
-  externalId: z.string(),
-  name: z.string(),
-  email: z.string().email().optional(),
-  phone: z.string(),
-  tier: z.enum(['BASIC', 'GOLD', 'PLATINUM']).default('BASIC'),
-  activeTickets: z.number().default(0),
-  metadata: z.record(z.string(), z.unknown()),
-}).readonly();
+export const CustomerProfileSchema = z
+  .object({
+    externalId: z.string(),
+    name: z.string(),
+    email: z.string().email().optional(),
+    phone: z.string(),
+    tier: z.enum(['BASIC', 'GOLD', 'PLATINUM']).default('BASIC'),
+    activeTickets: z.number().default(0),
+    metadata: z.record(z.string(), z.unknown()),
+  })
+  .readonly();
 
 /** @type ICustomerProfile */
 export type ICustomerProfile = z.infer<typeof CustomerProfileSchema>;

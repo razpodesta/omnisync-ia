@@ -22,9 +22,9 @@ export default async function HomePage(): Promise<React.ReactNode> {
 
         {/* Espacio para el Widget de Prueba Interactivo */}
         <section className="w-full max-w-5xl px-10 pb-32">
-           <div className="border border-border p-20 text-center italic opacity-20 text-xs tracking-widest uppercase">
-             [ Neural Interface Placeholder ]
-           </div>
+          <div className="border border-border p-20 text-center italic opacity-20 text-xs tracking-widest uppercase">
+            [ Neural Interface Placeholder ]
+          </div>
         </section>
 
         {/* Decorativos de Grid Manus.io */}
@@ -32,7 +32,9 @@ export default async function HomePage(): Promise<React.ReactNode> {
         <div className="absolute top-1/2 left-0 w-full h-[1px] bg-border/40 -z-10" />
       </main>
 
-      <WebChatWidget tenantId={'00000000-0000-0000-0000-000000000000' as TenantId} />
+      <WebChatWidget
+        tenantId={'00000000-0000-0000-0000-000000000000' as TenantId}
+      />
       <NeuralFooter />
     </div>
   );

@@ -1,6 +1,6 @@
 /** apps/admin-dashboard/src/app/global.css */
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /**
  * @name GlobalDesignSystem
@@ -39,7 +39,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
-    transition: background-color 0.5s ease, color 0.5s ease;
+    transition:
+      background-color 0.5s ease,
+      color 0.5s ease;
   }
 }
 

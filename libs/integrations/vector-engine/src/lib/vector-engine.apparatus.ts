@@ -7,12 +7,12 @@ import {
   IKnowledgeSemanticSearchResult,
   KnowledgeSemanticSearchResultSchema,
   TenantId,
-  OmnisyncContracts
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 import { SemanticRelevanceAssessor } from './semantic-relevance-assessor.apparatus';
 import {
   IVectorDatabaseAgnosticDriver,
-  VectorSearchConfigurationSchema
+  VectorSearchConfigurationSchema,
 } from './schemas/vector-engine.schema';
 
 /**
@@ -24,7 +24,6 @@ import {
  * @protocol OEDP-Level: Elite (Synchronized Orchestration)
  */
 export class OmnisyncVectorEngine {
-
   /**
    * @method retrieveRelevantKnowledgeContext
    * @description Orquesta la búsqueda semántica y valida la calidad de los resultados.
@@ -41,7 +40,7 @@ export class OmnisyncVectorEngine {
     queryVectorCoordinates: number[],
     tenantOrganizationIdentifier: TenantId,
     maximumResultsToRetrieve = 3,
-    similarityScoreThreshold = 0.7
+    similarityScoreThreshold = 0.7,
   ): Promise<IKnowledgeSemanticSearchResult> {
     const apparatusName = 'OmnisyncVectorEngine';
     const operationName = `retrieve:${databaseDriver.providerName}`;
@@ -58,41 +57,43 @@ export class OmnisyncVectorEngine {
            */
           const searchConfiguration = OmnisyncContracts.validate(
             VectorSearchConfigurationSchema,
-            { maximumChunksToRetrieve: maximumResultsToRetrieve, similarityScoreThreshold },
-            apparatusName
+            {
+              maximumChunksToRetrieve: maximumResultsToRetrieve,
+              similarityScoreThreshold,
+            },
+            apparatusName,
           );
 
           /**
            * 1. Recuperación via Driver (Resiliencia Sentinel)
            */
-          const searchResultsFound: IKnowledgeSemanticChunk[] = await OmnisyncSentinel.executeWithResilience(
-            () => databaseDriver.executeSemanticSearch(
-              queryVectorCoordinates,
-              tenantOrganizationIdentifier,
-              searchConfiguration.maximumChunksToRetrieve
-            ),
-            apparatusName,
-            `vector_search_op:${databaseDriver.providerName}`
-          );
+          const searchResultsFound: IKnowledgeSemanticChunk[] =
+            await OmnisyncSentinel.executeWithResilience(
+              () =>
+                databaseDriver.executeSemanticSearch(
+                  queryVectorCoordinates,
+                  tenantOrganizationIdentifier,
+                  searchConfiguration.maximumChunksToRetrieve,
+                ),
+              apparatusName,
+              `vector_search_op:${databaseDriver.providerName}`,
+            );
 
           /**
            * 2. Evaluación de Relevancia (Cognitive Filtering)
            * NIVELACIÓN: Sanación de Error TS2339. Se invoca 'evaluateContextRelevance'
            * y se extraen las métricas de élite.
            */
-          const {
-            filteredChunks,
-            averageScore,
-            contextReliabilityPulse
-          } = SemanticRelevanceAssessor.evaluateContextRelevance(
-            searchResultsFound,
-            searchConfiguration.similarityScoreThreshold
-          );
+          const { filteredChunks, averageScore, contextReliabilityPulse } =
+            SemanticRelevanceAssessor.evaluateContextRelevance(
+              searchResultsFound,
+              searchConfiguration.similarityScoreThreshold,
+            );
 
           OmnisyncTelemetry.verbose(
             apparatusName,
             'context_audit',
-            `RAG Quality: ${averageScore.toFixed(2)} | Pulse: ${contextReliabilityPulse.toFixed(2)}`
+            `RAG Quality: ${averageScore.toFixed(2)} | Pulse: ${contextReliabilityPulse.toFixed(2)}`,
           );
 
           /**
@@ -101,9 +102,8 @@ export class OmnisyncVectorEngine {
           return KnowledgeSemanticSearchResultSchema.parse({
             chunks: filteredChunks,
             relevanceScore: averageScore,
-            latencyInMilliseconds: performance.now() - searchStartTime
+            latencyInMilliseconds: performance.now() - searchStartTime,
           });
-
         } catch (criticalRetrievalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-601',
@@ -112,14 +112,14 @@ export class OmnisyncVectorEngine {
             operation: operationName,
             message: 'integrations.vector_engine.retrieval_failure',
             context: {
-                tenantId: tenantOrganizationIdentifier,
-                error: String(criticalRetrievalError)
+              tenantId: tenantOrganizationIdentifier,
+              error: String(criticalRetrievalError),
             },
-            isRecoverable: true
+            isRecoverable: true,
           });
           throw criticalRetrievalError;
         }
-      }
+      },
     );
   }
 }

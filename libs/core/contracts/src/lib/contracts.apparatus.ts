@@ -27,7 +27,7 @@ export class OmnisyncContracts {
   public static validate<T>(
     schema: ZodSchema<T>,
     data: unknown,
-    contextName: string
+    contextName: string,
   ): Readonly<T> {
     return OmnisyncTelemetry.traceExecutionSync(
       'OmnisyncContracts',
@@ -39,7 +39,7 @@ export class OmnisyncContracts {
           this.reportViolation(error, data, contextName);
           throw error;
         }
-      }
+      },
     );
   }
 
@@ -51,7 +51,7 @@ export class OmnisyncContracts {
   public static validateCollection<T>(
     schema: ZodSchema<T>,
     dataCollection: unknown[],
-    contextName: string
+    contextName: string,
   ): ReadonlyArray<T> {
     return OmnisyncTelemetry.traceExecutionSync(
       'OmnisyncContracts',
@@ -61,10 +61,14 @@ export class OmnisyncContracts {
         try {
           return collectionSchema.parse(dataCollection) as ReadonlyArray<T>;
         } catch (error: unknown) {
-          this.reportViolation(error, `Collection[${dataCollection.length}]`, contextName);
+          this.reportViolation(
+            error,
+            `Collection[${dataCollection.length}]`,
+            contextName,
+          );
           throw error;
         }
-      }
+      },
     );
   }
 
@@ -75,8 +79,12 @@ export class OmnisyncContracts {
    */
   public static safeValidate<T>(
     schema: ZodSchema<T>,
-    data: unknown
-  ): { readonly success: boolean; readonly data?: Readonly<T>; readonly error?: z.ZodError } {
+    data: unknown,
+  ): {
+    readonly success: boolean;
+    readonly data?: Readonly<T>;
+    readonly error?: z.ZodError;
+  } {
     const result = schema.safeParse(data);
 
     if (!result.success) {
@@ -91,7 +99,11 @@ export class OmnisyncContracts {
    * @private
    * @description Centraliza la comunicación con el Sentinel ante fallos de integridad.
    */
-  private static reportViolation(error: unknown, data: unknown, context: string): void {
+  private static reportViolation(
+    error: unknown,
+    data: unknown,
+    context: string,
+  ): void {
     if (error instanceof z.ZodError) {
       OmnisyncSentinel.report({
         errorCode: 'OS-CORE-400',
@@ -102,9 +114,9 @@ export class OmnisyncContracts {
         context: {
           apparatusContext: context,
           validationIssues: error.issues,
-          payloadSnapshot: String(data).substring(0, 250)
+          payloadSnapshot: String(data).substring(0, 250),
         },
-        isRecoverable: false
+        isRecoverable: false,
       });
     }
   }

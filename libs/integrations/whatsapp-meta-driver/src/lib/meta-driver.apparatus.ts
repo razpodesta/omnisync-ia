@@ -36,7 +36,7 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
    */
   constructor(
     private readonly facebookPhoneNumberIdentifier: string,
-    private readonly permanentAccessToken: string
+    private readonly permanentAccessToken: string,
   ) {}
 
   /**
@@ -45,7 +45,7 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
    */
   public async sendMessage(
     recipientPhoneNumber: string,
-    textualContent: string
+    textualContent: string,
   ): Promise<{ readonly messageId: string }> {
     const apparatusName = 'MetaDriverApparatus';
 
@@ -57,29 +57,30 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
         await MetaPresenceApparatus.emitTypingIndicator(
           this.facebookPhoneNumberIdentifier,
           this.permanentAccessToken,
-          { recipientPhoneNumber, action: 'composing' }
+          { recipientPhoneNumber, action: 'composing' },
         );
 
         // 2. Despacho mediante el aparato de mensajería nivelado
-        const transmissionResult = await MetaMessagingApparatus.dispatchSovereignMessage(
-          this.facebookPhoneNumberIdentifier,
-          this.permanentAccessToken,
-          {
-            recipientPhoneNumber,
-            messageType: 'text',
-            content: textualContent
-          }
-        );
+        const transmissionResult =
+          await MetaMessagingApparatus.dispatchSovereignMessage(
+            this.facebookPhoneNumberIdentifier,
+            this.permanentAccessToken,
+            {
+              recipientPhoneNumber,
+              messageType: 'text',
+              content: textualContent,
+            },
+          );
 
         // 3. Finalización de Presencia
         await MetaPresenceApparatus.emitTypingIndicator(
           this.facebookPhoneNumberIdentifier,
           this.permanentAccessToken,
-          { recipientPhoneNumber, action: 'paused' }
+          { recipientPhoneNumber, action: 'paused' },
         );
 
         return { messageId: transmissionResult.messageIdentifier };
-      }
+      },
     );
   }
 
@@ -87,15 +88,18 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
    * @method sendVoiceNote
    * @description Envía una respuesta mediante audio de voz.
    */
-  public async sendVoiceNote(recipientPhoneNumber: string, mediaId: string): Promise<void> {
+  public async sendVoiceNote(
+    recipientPhoneNumber: string,
+    mediaId: string,
+  ): Promise<void> {
     await MetaMessagingApparatus.dispatchSovereignMessage(
       this.facebookPhoneNumberIdentifier,
       this.permanentAccessToken,
       {
         recipientPhoneNumber,
         messageType: 'audio',
-        content: mediaId
-      }
+        content: mediaId,
+      },
     );
   }
 
@@ -105,7 +109,7 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
    */
   public async orchestrateVoiceCallSignal(
     recipientPhoneNumber: string,
-    callAction: 'START_CALL' | 'END_CALL' | 'TRANSFER' | 'REJECT'
+    callAction: 'START_CALL' | 'END_CALL' | 'TRANSFER' | 'REJECT',
   ): Promise<void> {
     await MetaVoiceSignalApparatus.dispatchVoiceSignal(
       this.facebookPhoneNumberIdentifier,
@@ -113,8 +117,8 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
       {
         callIdentifier: crypto.randomUUID(),
         recipientPhoneNumber,
-        signalAction: callAction
-      }
+        signalAction: callAction,
+      },
     );
   }
 
@@ -125,11 +129,11 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
    */
   public parseIncomingWebhook(
     rawPayload: unknown,
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): INeuralIntent[] {
     return MetaWebhookParserApparatus.parseToNeuralIntents(
-        rawPayload as IMetaWebhookPayload,
-        tenantOrganizationIdentifier
+      rawPayload as IMetaWebhookPayload,
+      tenantOrganizationIdentifier,
     );
   }
 
@@ -140,29 +144,33 @@ export class MetaDriverApparatus implements IWhatsAppDriver {
   public async sendTemplate(
     recipientPhoneNumber: string,
     templateName: string,
-    _languageCode: string // Nivelación ESLint: unused-vars
+    _languageCode: string, // Nivelación ESLint: unused-vars
   ): Promise<void> {
-    return await OmnisyncTelemetry.traceExecution('MetaDriver', 'sendTemplate', async () => {
+    return await OmnisyncTelemetry.traceExecution(
+      'MetaDriver',
+      'sendTemplate',
+      async () => {
         try {
-            await MetaMessagingApparatus.dispatchSovereignMessage(
-                this.facebookPhoneNumberIdentifier,
-                this.permanentAccessToken,
-                {
-                    recipientPhoneNumber,
-                    messageType: 'template',
-                    content: templateName
-                }
-            );
+          await MetaMessagingApparatus.dispatchSovereignMessage(
+            this.facebookPhoneNumberIdentifier,
+            this.permanentAccessToken,
+            {
+              recipientPhoneNumber,
+              messageType: 'template',
+              content: templateName,
+            },
+          );
         } catch (templateError: unknown) {
-            await OmnisyncSentinel.report({
-                errorCode: 'OS-INTEG-604',
-                severity: 'HIGH',
-                apparatus: 'MetaDriver',
-                operation: 'sendTemplate',
-                message: 'integrations.meta.template_failed',
-                context: { templateName, error: String(templateError) }
-            });
+          await OmnisyncSentinel.report({
+            errorCode: 'OS-INTEG-604',
+            severity: 'HIGH',
+            apparatus: 'MetaDriver',
+            operation: 'sendTemplate',
+            message: 'integrations.meta.template_failed',
+            context: { templateName, error: String(templateError) },
+          });
         }
-    });
+      },
+    );
   }
 }

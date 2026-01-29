@@ -8,21 +8,17 @@ import { INeuralIntent } from '@omnisync/core-contracts';
  * @section Importación Modular (Lego Style)
  * Consumimos los aparatos de persistencia interna nivelados bajo OEDP V2.2.
  */
-import {
-  ContextMemoryApparatus,
-  ThreadAuditApparatus
-} from '../persistence';
+import { ContextMemoryApparatus, ThreadAuditApparatus } from '../persistence';
 
 /**
  * @name WhatsAppHistoryApparatus
  * @description Orquestador de sincronización de datos para el canal de WhatsApp.
- * Coordina el flujo de información entre la memoria neural (Redis) y la auditoría 
+ * Coordina el flujo de información entre la memoria neural (Redis) y la auditoría
  * relacional (SQL) asegurando integridad y trazabilidad forense en cada interacción.
  *
  * @protocol OEDP-Level: Elite (Contract-Aligned & Forensic Ready)
  */
 export class WhatsAppHistoryApparatus {
-
   /**
    * @method synchronizeIncomingMessage
    * @description Orquesta el volcado paralelo de la intención hacia Redis y SQL.
@@ -31,7 +27,7 @@ export class WhatsAppHistoryApparatus {
    * @param {INeuralIntent} incomingNeuralIntent - ADN de la consulta del usuario.
    */
   public static async synchronizeIncomingMessage(
-    incomingNeuralIntent: INeuralIntent
+    incomingNeuralIntent: INeuralIntent,
   ): Promise<void> {
     const apparatusName = 'WhatsAppHistoryApparatus';
     const operationName = 'synchronizeIncomingMessage';
@@ -56,7 +52,7 @@ export class WhatsAppHistoryApparatus {
             ContextMemoryApparatus.pushConversationFragment(
               sessionIdentifierKey,
               'user',
-              incomingNeuralIntent.payload.content
+              incomingNeuralIntent.payload.content,
             ),
 
             /**
@@ -77,17 +73,16 @@ export class WhatsAppHistoryApparatus {
                  */
                 ...incomingNeuralIntent.payload.metadata,
                 synchronizedAt: new Date().toISOString(),
-                platformAgent: 'Omnisync-WhatsApp-Orchestrator-V2'
-              }
-            })
+                platformAgent: 'Omnisync-WhatsApp-Orchestrator-V2',
+              },
+            }),
           ]);
 
           OmnisyncTelemetry.verbose(
             apparatusName,
             'sync_confirmed',
-            `Sincronización forense completada para intención: ${incomingNeuralIntent.id}`
+            `Sincronización forense completada para intención: ${incomingNeuralIntent.id}`,
           );
-
         } catch (criticalSynchronizationError: unknown) {
           /**
            * @section Resiliencia y Failsafe
@@ -102,12 +97,12 @@ export class WhatsAppHistoryApparatus {
             message: 'integrations.omnichannel.history_sync_failed',
             context: {
               intentId: incomingNeuralIntent.id,
-              error: String(criticalSynchronizationError)
+              error: String(criticalSynchronizationError),
             },
-            isRecoverable: true
+            isRecoverable: true,
           });
         }
-      }
+      },
     );
   }
 }

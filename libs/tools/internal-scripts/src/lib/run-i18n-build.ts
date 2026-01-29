@@ -19,12 +19,19 @@ async function runInternationalizationBuild(): Promise<void> {
     const duration = (performance.now() - processStartTime).toFixed(2);
 
     // CORRECCIÓN LINT: Uso proactivo de Telemetry para registrar el éxito del build
-    OmnisyncTelemetry.verbose('I18nRunner', 'build_success', `Aggregation completed in ${duration}ms`);
+    OmnisyncTelemetry.verbose(
+      'I18nRunner',
+      'build_success',
+      `Aggregation completed in ${duration}ms`,
+    );
 
     console.log(`--- ✅ I18N SYNC COMPLETE [${duration}ms] ---`);
     process.exit(0);
   } catch (criticalError: unknown) {
-    console.error('--- ❌ I18N AGGREGATION CRITICAL FAILURE ---', criticalError);
+    console.error(
+      '--- ❌ I18N AGGREGATION CRITICAL FAILURE ---',
+      criticalError,
+    );
     process.exit(1);
   }
 }

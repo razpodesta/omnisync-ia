@@ -26,7 +26,7 @@ export default [
       '**/node_modules',
       '.nx',
       'snapshot-reports',
-      'internal-backups'
+      'internal-backups',
     ],
   },
   {
@@ -48,7 +48,7 @@ export default [
                * Solo puede depender de sí misma para evitar acoplamientos circulares.
                */
               sourceTag: 'scope:core',
-              onlyDependOnLibsWithTags: ['scope:core']
+              onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
               /**
@@ -56,7 +56,7 @@ export default [
                * Depende exclusivamente de los contratos y utilidades del núcleo.
                */
               sourceTag: 'type:infrastructure',
-              onlyDependOnLibsWithTags: ['scope:core', 'type:infrastructure']
+              onlyDependOnLibsWithTags: ['scope:core', 'type:infrastructure'],
             },
             {
               /**
@@ -64,7 +64,7 @@ export default [
                * Consumen el núcleo y su propia lógica de integración.
                */
               sourceTag: 'scope:integrations',
-              onlyDependOnLibsWithTags: ['scope:core', 'scope:integrations']
+              onlyDependOnLibsWithTags: ['scope:core', 'scope:integrations'],
             },
             {
               /**
@@ -72,7 +72,11 @@ export default [
                * Orquesta contratos e integraciones específicas de la industria.
                */
               sourceTag: 'scope:domain',
-              onlyDependOnLibsWithTags: ['scope:core', 'scope:integrations', 'scope:domain']
+              onlyDependOnLibsWithTags: [
+                'scope:core',
+                'scope:integrations',
+                'scope:domain',
+              ],
             },
             {
               /**
@@ -80,7 +84,7 @@ export default [
                * Blindaje estricto: Solo consume contratos y utilidades, prohibido acceder a base de datos.
                */
               sourceTag: 'type:ui',
-              onlyDependOnLibsWithTags: ['scope:core', 'type:ui']
+              onlyDependOnLibsWithTags: ['scope:core', 'type:ui'],
             },
             {
               /**
@@ -93,8 +97,8 @@ export default [
                 'scope:integrations',
                 'scope:domain',
                 'type:ui',
-                'type:infrastructure'
-              ]
+                'type:infrastructure',
+              ],
             },
             {
               /**
@@ -106,9 +110,9 @@ export default [
               onlyDependOnLibsWithTags: [
                 'scope:core',
                 'type:infrastructure',
-                'scope:tools'
-              ]
-            }
+                'scope:tools',
+              ],
+            },
           ],
         },
       ],
@@ -121,11 +125,11 @@ export default [
         'error',
         {
           argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_'
-        }
+          varsIgnorePattern: '^_',
+        },
       ],
       '@typescript-eslint/no-inferrable-types': 'error',
-      'prefer-const': 'error'
+      'prefer-const': 'error',
     },
   },
 ];

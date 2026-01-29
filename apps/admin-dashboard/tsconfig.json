@@ -2,7 +2,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    /**
+     * @section Configuración de Renderizado JSX
+     * Se mantiene 'preserve' ya que Next.js y el motor SWC/Turbopack
+     * asumen la responsabilidad de la transformación final.
+     */
     "jsx": "preserve",
+
+    /**
+     * @section Estándares de Tipado Estricto (Protocolo OEDP)
+     */
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -11,19 +20,29 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+
+    /**
+     * @section Soberanía de Entorno
+     * Definición de librerías de tiempo de ejecución para capacidades de DOM y ESModern.
+     */
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+
+    /**
+     * @property allowSyntheticDefaultImports
+     * @description Necesario para la interoperabilidad de módulos de React 19
+     * y bibliotecas de terceros que no exportan un default nativo.
+     */
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
 
     /**
-     * @section Soberanía de Tipado Frontend
-     * Se restringe explícitamente la carga de tipos globales. Al definir solo 'node',
-     * evitamos que el compilador busque definiciones como 'glob' o 'fs' que pertenecen
-     * al ecosistema de herramientas de servidor, eliminando el error de resolución.
+     * @section Soberanía de Tipado de Frontera
+     * Se añaden 'react' y 'react-dom' para resolver la discrepancia del namespace JSX.
+     * Al incluir 'node', garantizamos que los scripts de infraestructura sigan siendo válidos.
      */
-    "types": ["node"],
+    "types": ["node", "react", "react-dom"],
 
     "plugins": [
       {
@@ -32,12 +51,13 @@
     ]
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
     ".next/types/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    "../../libs/ui-kit/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

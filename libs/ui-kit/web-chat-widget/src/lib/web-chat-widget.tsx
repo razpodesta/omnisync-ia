@@ -2,80 +2,76 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { TenantId } from '@omnisync/core-contracts';
 import { useNeuralChat } from './hooks/use-neural-chat';
 
 /**
  * @interface WebChatWidgetProperties
- * @description Definición de propiedades para la instancia del widget neural.
+ * @description Atributos inmutables para la inicialización del componente.
  */
 interface WebChatWidgetProperties {
-  /** Identificador de élite de la organización suscriptora */
+  /** Identificador nominal de la organización para aislamiento RLS */
   readonly tenantId: TenantId;
 }
 
 /**
  * @name WebChatWidget
- * @description Aparato de interfaz de usuario encargado de la interacción omnicanal. 
- * Implementa una estética de alta gama basada en los principios de Manus.io: 
- * paleta Obsidian & Milk, tipografía técnica, bordes de 1px y espaciado institucional.
- * 
- * @param {WebChatWidgetProperties} properties - Configuración del componente.
- * @returns {React.ReactNode} El nodo del widget renderizado.
+ * @description Aparato de interfaz de usuario para soporte neural omnicanal.
+ * Implementa la estética Obsidian & Milk con micro-interacciones de alta gama.
+ *
+ * @protocol OEDP-Level: Elite (Visual Sovereignty)
  */
-export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({ tenantId }) => {
-  /**
-   * @section Internacionalización de Élite
-   * Centraliza la comunicación lingüística a través del namespace 'widget'.
-   */
+export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({
+  tenantId,
+}) => {
   const translations = useTranslations('widget');
-  
-  const [isWidgetInterfaceOpen, setIsWidgetInterfaceOpen] = useState<boolean>(false);
+
+  const [isWidgetInterfaceOpen, setIsWidgetInterfaceOpen] =
+    useState<boolean>(false);
   const [userTextInputValue, setUserTextInputValue] = useState<string>('');
-  
-  /** 
-   * Consumo de lógica reactiva pura desde el Hook de Aparato.
-   * Se extrae el stream de conversación y el estado de inferencia.
+
+  /**
+   * @section Inyección de Lógica Cognitiva
    */
-  const { 
-    conversationMessages, 
-    isTyping: isArtificialIntelligenceProcessing, 
-    sendNeuralMessage 
+  const {
+    conversationMessages,
+    isArtificialIntelligenceTyping,
+    dispatchNeuralInquiry,
   } = useNeuralChat(tenantId);
 
   /**
    * @method handleMessageSubmission
-   * @description Procesa el envío del mensaje y limpia el estado local del input.
+   * @description Captura y procesa la entrada del usuario.
    */
-  const handleMessageSubmission = (): void => {
-    if (!userTextInputValue.trim()) return;
-    sendNeuralMessage(userTextInputValue);
+  const handleMessageSubmission = useCallback((): void => {
+    const cleanInquiry = userTextInputValue.trim();
+    if (!cleanInquiry) return;
+
+    dispatchNeuralInquiry(cleanInquiry);
     setUserTextInputValue('');
-  };
+  }, [userTextInputValue, dispatchNeuralInquiry]);
 
   return (
     <div className="fixed bottom-12 right-12 z-50 flex flex-col items-end font-sans selection:bg-foreground selection:text-background transition-all duration-1000">
-      
       {isWidgetInterfaceOpen && (
         <div className="w-[420px] h-[640px] bg-background dark:bg-background border border-border flex flex-col mb-6 shadow-[0_0_80px_-20px_rgba(0,0,0,0.15)] animate-in fade-in slide-in-from-bottom-6 duration-500 overflow-hidden">
-          
           {/* Cabecera de Identidad: Status & Control */}
-          <header className="p-8 border-b border-border flex justify-between items-center bg-background">
+          <header className="p-8 border-b border-border flex justify-between items-center bg-background/50 backdrop-blur-md">
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground">
                 {translations('header')}
               </span>
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-foreground rounded-full animate-pulse opacity-100" />
-                <span className="text-[9px] uppercase tracking-widest opacity-40 font-bold">
+                <div className="w-1.5 h-1.5 bg-foreground rounded-full animate-pulse" />
+                <span className="text-[9px] uppercase tracking-widest opacity-40 font-bold italic">
                   Soberanía Activa
                 </span>
               </div>
             </div>
-            <button 
-              onClick={() => setIsWidgetInterfaceOpen(false)} 
+            <button
+              onClick={() => setIsWidgetInterfaceOpen(false)}
               className="text-[9px] font-black uppercase tracking-widest hover:opacity-30 transition-opacity"
             >
               CLOSE
@@ -91,27 +87,33 @@ export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({ tenantId }) =
                 </p>
               </div>
             )}
-            
-            {conversationMessages.map((messageEntry, index) => (
-              <div 
-                key={index} 
+
+            {conversationMessages.map((conversationMessageEntry, index) => (
+              <div
+                key={`${index}-${conversationMessageEntry.role}`}
                 className={`flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700 ${
-                  messageEntry.role === 'user' ? 'items-end' : 'items-start'
+                  conversationMessageEntry.role === 'user'
+                    ? 'items-end'
+                    : 'items-start'
                 }`}
               >
                 <span className="text-[8px] uppercase tracking-widest font-black opacity-20">
-                  {messageEntry.role}
+                  {conversationMessageEntry.role}
                 </span>
-                <p className={`text-[14px] leading-relaxed max-w-[90%] font-light ${
-                  messageEntry.role === 'user' ? 'text-right' : 'text-left'
-                }`}>
-                  {messageEntry.content}
+                <p
+                  className={`text-[14px] leading-relaxed max-w-[90%] font-light ${
+                    conversationMessageEntry.role === 'user'
+                      ? 'text-right'
+                      : 'text-left'
+                  }`}
+                >
+                  {conversationMessageEntry.content}
                 </p>
               </div>
             ))}
 
-            {isArtificialIntelligenceProcessing && (
-              <div className="text-[9px] uppercase tracking-[0.4em] animate-pulse opacity-40 font-black">
+            {isArtificialIntelligenceTyping && (
+              <div className="text-[9px] uppercase tracking-[0.4em] animate-pulse opacity-40 font-black italic">
                 {translations('ai_typing')}
               </div>
             )}
@@ -120,17 +122,20 @@ export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({ tenantId }) =
           {/* Área de Entrada Neural: Manus.io Style */}
           <footer className="p-8 border-t border-border bg-neutral-50/50 dark:bg-neutral-900/20">
             <div className="flex items-center gap-6">
-              <input 
+              <input
                 autoFocus
                 value={userTextInputValue}
                 onChange={(event) => setUserTextInputValue(event.target.value)}
-                onKeyDown={(event) => event.key === 'Enter' && handleMessageSubmission()}
+                onKeyDown={(event) =>
+                  event.key === 'Enter' && handleMessageSubmission()
+                }
                 placeholder={translations('input_placeholder')}
                 className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-20 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-[0.2em] font-light"
               />
-              <button 
+              <button
                 onClick={handleMessageSubmission}
-                className="text-[10px] font-black uppercase tracking-[0.2em] hover:line-through transition-all opacity-80 hover:opacity-100"
+                disabled={isArtificialIntelligenceTyping}
+                className="text-[10px] font-black uppercase tracking-[0.2em] hover:line-through transition-all opacity-80 hover:opacity-100 disabled:opacity-10"
               >
                 {translations('send')}
               </button>
@@ -140,7 +145,7 @@ export const WebChatWidget: React.FC<WebChatWidgetProperties> = ({ tenantId }) =
       )}
 
       {/* Disparador de Élite (Obsidian Trigger) */}
-      <button 
+      <button
         onClick={() => setIsWidgetInterfaceOpen(!isWidgetInterfaceOpen)}
         className="group relative w-16 h-16 bg-foreground text-background flex items-center justify-center transition-all duration-700 hover:rotate-180 shadow-2xl active:scale-90"
         aria-label="Toggle Neural Interface"

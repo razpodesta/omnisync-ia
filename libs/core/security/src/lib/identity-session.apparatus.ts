@@ -1,6 +1,9 @@
 /** libs/core/security/src/lib/identity-session.apparatus.ts */
 
-import { IIdentitySession, IdentitySessionSchema } from '@omnisync/core-contracts';
+import {
+  IIdentitySession,
+  IdentitySessionSchema,
+} from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 /**
@@ -17,17 +20,21 @@ export class IdentitySessionApparatus {
    * @description Registra la huella de identidad en el navegador.
    */
   public static initializeNewSession(session: IIdentitySession): void {
-    OmnisyncTelemetry.traceExecutionSync('IdentitySession', 'initialize', () => {
-      if (typeof window === 'undefined') return;
+    OmnisyncTelemetry.traceExecutionSync(
+      'IdentitySession',
+      'initialize',
+      () => {
+        if (typeof window === 'undefined') return;
 
-      // 1. Persistencia Local (Preferencias)
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(session));
+        // 1. Persistencia Local (Preferencias)
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(session));
 
-      // 2. Persistencia en Cookie (Autorización SSR)
-      // Expira en 7 días, segura y con política SameSite estricta.
-      const cookieOptions = 'path=/; max-age=604800; SameSite=Strict; Secure';
-      document.cookie = `${this.COOKIE_NAME}=${encodeURIComponent(session.sessionToken)}; ${cookieOptions}`;
-    });
+        // 2. Persistencia en Cookie (Autorización SSR)
+        // Expira en 7 días, segura y con política SameSite estricta.
+        const cookieOptions = 'path=/; max-age=604800; SameSite=Strict; Secure';
+        document.cookie = `${this.COOKIE_NAME}=${encodeURIComponent(session.sessionToken)}; ${cookieOptions}`;
+      },
+    );
   }
 
   /**

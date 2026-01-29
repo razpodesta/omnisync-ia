@@ -18,7 +18,7 @@ export const WhatsAppConversationCategorySchema = z.enum([
   'UTILITY',
   'MARKETING',
   'AUTHENTICATION',
-  'SERVICE'
+  'SERVICE',
 ]);
 
 /**
@@ -39,7 +39,7 @@ export interface IWhatsAppDriver {
    */
   sendMessage(
     recipientPhoneNumber: string,
-    textualContent: string
+    textualContent: string,
   ): Promise<{ readonly messageId: string }>;
 
   /**
@@ -49,7 +49,7 @@ export interface IWhatsAppDriver {
   sendTemplate(
     recipientPhoneNumber: string,
     templateNameIdentifier: string,
-    languageCode: string
+    languageCode: string,
   ): Promise<void>;
 
   /**
@@ -62,6 +62,6 @@ export interface IWhatsAppDriver {
    */
   parseIncomingWebhook(
     networkPayload: unknown,
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): INeuralIntent[];
 }

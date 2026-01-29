@@ -3,7 +3,7 @@
 import {
   IEnterpriseResourcePlanningAdapter,
   IEnterpriseResourcePlanningActionResponse,
-  EnterpriseResourcePlanningActionResponseSchema
+  EnterpriseResourcePlanningActionResponseSchema,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
@@ -25,7 +25,7 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
    * @description Simula la creación de un ticket retornando el esquema institucional.
    */
   public async createOperationTicket(
-    _operationalPayload: unknown
+    _operationalPayload: unknown,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
     return await OmnisyncTelemetry.traceExecution(
       'MockEnterpriseResourcePlanningAdapter',
@@ -38,10 +38,11 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
           externalIdentifier: `MOCK-TICKET-${crypto.randomUUID().substring(0, 8)}`,
           syncStatus: 'SYNCED',
           messageKey: 'integrations.erp_mock.ticket_provisioned',
-          latencyInMilliseconds: MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
-          operationalMetadata: { simulated: true }
+          latencyInMilliseconds:
+            MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
+          operationalMetadata: { simulated: true },
         });
-      }
+      },
     );
   }
 
@@ -50,7 +51,7 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
    * @description Simula validación de identidad basada en patrones de prueba.
    */
   public async validateCustomerExistence(
-    customerPhoneNumber: string
+    customerPhoneNumber: string,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
     return await OmnisyncTelemetry.traceExecution(
       'MockEnterpriseResourcePlanningAdapter',
@@ -64,10 +65,13 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
           success: isKnownCustomer,
           externalIdentifier: isKnownCustomer ? 'MOCK-USER-001' : undefined,
           syncStatus: 'SYNCED',
-          messageKey: isKnownCustomer ? 'integrations.erp_mock.user_found' : 'integrations.erp_mock.user_not_found',
-          latencyInMilliseconds: MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS
+          messageKey: isKnownCustomer
+            ? 'integrations.erp_mock.user_found'
+            : 'integrations.erp_mock.user_not_found',
+          latencyInMilliseconds:
+            MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
         });
-      }
+      },
     );
   }
 
@@ -77,7 +81,10 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
    */
   private async injectNetworkLatency(): Promise<void> {
     return new Promise((resolve) =>
-      setTimeout(resolve, MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS)
+      setTimeout(
+        resolve,
+        MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
+      ),
     );
   }
 }

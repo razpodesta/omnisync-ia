@@ -8,14 +8,18 @@ import { IKnowledgeSemanticChunk, TenantId } from '@omnisync/core-contracts';
  * @description Define los parámetros de precisión para la recuperación de
  * conocimiento en el espacio vectorial.
  */
-export const VectorSearchConfigurationSchema = z.object({
-  /** Cantidad máxima de fragmentos a recuperar para el contexto de la IA */
-  maximumChunksToRetrieve: z.number().int().min(1).max(15).default(3),
-  /** Umbral de similitud de coseno (0.0 a 1.0) para filtrar ruido */
-  similarityScoreThreshold: z.number().min(0).max(1).default(0.7),
-}).readonly();
+export const VectorSearchConfigurationSchema = z
+  .object({
+    /** Cantidad máxima de fragmentos a recuperar para el contexto de la IA */
+    maximumChunksToRetrieve: z.number().int().min(1).max(15).default(3),
+    /** Umbral de similitud de coseno (0.0 a 1.0) para filtrar ruido */
+    similarityScoreThreshold: z.number().min(0).max(1).default(0.7),
+  })
+  .readonly();
 
-export type IVectorSearchConfiguration = z.infer<typeof VectorSearchConfigurationSchema>;
+export type IVectorSearchConfiguration = z.infer<
+  typeof VectorSearchConfigurationSchema
+>;
 
 /**
  * @name IVectorDatabaseAgnosticDriver
@@ -31,12 +35,14 @@ export interface IVectorDatabaseAgnosticDriver {
   executeSemanticSearch(
     queryVectorCoordinates: number[],
     tenantOrganizationIdentifier: TenantId,
-    maximumResultsLimit: number
+    maximumResultsLimit: number,
   ): Promise<IKnowledgeSemanticChunk[]>;
 
   /**
    * @method upsertKnowledgeChunks
    * @description Sincroniza fragmentos de ADN técnico con la nube vectorial.
    */
-  upsertKnowledgeChunks(knowledgeChunks: IKnowledgeSemanticChunk[]): Promise<void>;
+  upsertKnowledgeChunks(
+    knowledgeChunks: IKnowledgeSemanticChunk[],
+  ): Promise<void>;
 }

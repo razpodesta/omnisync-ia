@@ -19,10 +19,8 @@ export default async function AdministrativeUnauthorizedPage(): Promise<React.Re
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 animate-in fade-in duration-1000">
-
       {/* Contenedor de Alerta Obsidian & Milk */}
       <section className="max-w-2xl w-full border border-border p-16 space-y-12 bg-white dark:bg-black shadow-[0_0_80px_-15px_rgba(0,0,0,0.05)]">
-
         {/* Identificador de Error de Élite */}
         <header className="flex justify-between items-start">
           <div className="space-y-2">
@@ -30,7 +28,8 @@ export default async function AdministrativeUnauthorizedPage(): Promise<React.Re
               Security Breach Prevention
             </span>
             <h1 className="text-4xl font-light tracking-tighter italic">
-              Acceso <span className="font-bold not-italic">No Autorizado.</span>
+              Acceso{' '}
+              <span className="font-bold not-italic">No Autorizado.</span>
             </h1>
           </div>
           <div className="text-[10px] font-mono border border-border px-3 py-1 opacity-40">
@@ -45,9 +44,10 @@ export default async function AdministrativeUnauthorizedPage(): Promise<React.Re
           </p>
           <div className="h-[1px] w-full bg-border opacity-50" />
           <p className="text-[12px] leading-relaxed opacity-50 italic">
-            El consumo de recursos de inteligencia artificial y orquestación neural
-            está limitado a regiones geográficas autorizadas para garantizar el
-            cumplimiento de las normativas de soberanía de datos y protección de tokens.
+            El consumo de recursos de inteligencia artificial y orquestación
+            neural está limitado a regiones geográficas autorizadas para
+            garantizar el cumplimiento de las normativas de soberanía de datos y
+            protección de tokens.
           </p>
         </article>
 
@@ -60,7 +60,6 @@ export default async function AdministrativeUnauthorizedPage(): Promise<React.Re
             Volver al Inicio Seguro
           </a>
         </footer>
-
       </section>
 
       {/* Decoración de Grado Arquitectónico */}

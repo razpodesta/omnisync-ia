@@ -4,11 +4,11 @@ import {
   GoogleGenerativeAI,
   Content,
   GenerativeModel,
-  Part
+  Part,
 } from '@google/generative-ai';
 import {
   IArtificialIntelligenceDriver,
-  IArtificialIntelligenceModelConfiguration
+  IArtificialIntelligenceModelConfiguration,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
@@ -36,7 +36,7 @@ export class GoogleGeminiDriver implements IArtificialIntelligenceDriver {
     PRO: 'gemini-3-pro-latest',
     FLASH: 'gemini-3-flash-latest',
     DEEP_THINK: 'gemini-3-deep-think-experimental',
-    EMBEDDING: 'text-embedding-004'
+    EMBEDDING: 'text-embedding-004',
   } as const;
 
   private readonly googleGenerativeAIClient: GoogleGenerativeAI;
@@ -51,7 +51,7 @@ export class GoogleGeminiDriver implements IArtificialIntelligenceDriver {
         severity: 'CRITICAL',
         apparatus: 'GoogleGeminiDriver',
         operation: 'instantiation',
-        message: 'integrations.google_gemini.errors.missing_api_key'
+        message: 'integrations.google_gemini.errors.missing_api_key',
       });
       throw new Error('OS-INTEG-401: Google AI API Key missing.');
     }
@@ -63,29 +63,32 @@ export class GoogleGeminiDriver implements IArtificialIntelligenceDriver {
   public async generateResponse(
     inferencePrompt: string,
     modelConfiguration: IArtificialIntelligenceModelConfiguration,
-    conversationHistoryContext: unknown[] = []
+    conversationHistoryContext: unknown[] = [],
   ): Promise<string> {
     return await OmnisyncTelemetry.traceExecution(
       'GoogleGeminiDriver',
       'generateResponse',
       async () => {
         try {
-          const generativeModel: GenerativeModel = this.googleGenerativeAIClient.getGenerativeModel({
-            model: this.activeModelIdentifier
-          });
+          const generativeModel: GenerativeModel =
+            this.googleGenerativeAIClient.getGenerativeModel({
+              model: this.activeModelIdentifier,
+            });
 
           const chatSession = generativeModel.startChat({
-            history: this.mapToGoogleSovereignHistory(conversationHistoryContext),
+            history: this.mapToGoogleSovereignHistory(
+              conversationHistoryContext,
+            ),
             generationConfig: {
               temperature: modelConfiguration.temperature,
               maxOutputTokens: modelConfiguration.maxTokens,
-              topP: modelConfiguration.topP
+              topP: modelConfiguration.topP,
             },
           });
 
-          const executionResult = await chatSession.sendMessage(inferencePrompt);
+          const executionResult =
+            await chatSession.sendMessage(inferencePrompt);
           return executionResult.response.text();
-
         } catch (executionError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-001',
@@ -93,17 +96,22 @@ export class GoogleGeminiDriver implements IArtificialIntelligenceDriver {
             apparatus: 'GoogleGeminiDriver',
             operation: 'generateResponse',
             message: 'integrations.google_gemini.errors.inference_failure',
-            context: { model: this.activeModelIdentifier, error: String(executionError) }
+            context: {
+              model: this.activeModelIdentifier,
+              error: String(executionError),
+            },
           });
           throw executionError;
         }
-      }
+      },
     );
   }
 
-  public async calculateVectorEmbeddings(textualContent: string): Promise<number[]> {
+  public async calculateVectorEmbeddings(
+    textualContent: string,
+  ): Promise<number[]> {
     const model = this.googleGenerativeAIClient.getGenerativeModel({
-      model: GoogleGeminiDriver.MODEL_MAP.EMBEDDING
+      model: GoogleGeminiDriver.MODEL_MAP.EMBEDDING,
     });
     const result = await model.embedContent(textualContent);
     return result.embedding.values;
@@ -120,11 +128,12 @@ export class GoogleGeminiDriver implements IArtificialIntelligenceDriver {
    */
   private mapToGoogleSovereignHistory(rawHistory: unknown[]): Content[] {
     // Cast seguro mediante la interfaz de contrato interna
-    const validatedHistory = rawHistory as readonly ISovereignConversationEntry[];
+    const validatedHistory =
+      rawHistory as readonly ISovereignConversationEntry[];
 
     return validatedHistory.map((entry) => ({
       role: entry.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: entry.content }] as Part[]
+      parts: [{ text: entry.content }] as Part[],
     }));
   }
 }

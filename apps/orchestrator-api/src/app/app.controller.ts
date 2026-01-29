@@ -1,6 +1,12 @@
 /** apps/orchestrator-api/src/app/app.controller.ts */
 
-import { Controller, Post, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { INeuralIntent, INeuralFlowResult } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
@@ -20,7 +26,6 @@ import { NeuralFlowOrchestrator } from './apparatus';
  */
 @Controller('v1/neural')
 export class AppController {
-
   /**
    * @endpoint ingestNeuralIntent
    * @description Recibe y procesa una intención neural desde el Widget Web o Gateways de mensajería.
@@ -34,7 +39,7 @@ export class AppController {
   @Post('chat')
   public async ingestNeuralIntent(
     @Body() incomingNeuralIntent: INeuralIntent,
-    @Headers('x-omnisync-tenant') tenantOrganizationIdentifier: string
+    @Headers('x-omnisync-tenant') tenantOrganizationIdentifier: string,
   ): Promise<INeuralFlowResult> {
     const apparatusName = 'AppController';
 
@@ -42,22 +47,29 @@ export class AppController {
       apparatusName,
       'ingestNeuralIntent',
       async () => {
-
         /**
          * @section Validación de Soberanía de Entrada
          * El sistema bloquea físicamente cualquier petición que no declare su nodo de origen.
          */
         if (!tenantOrganizationIdentifier) {
-          OmnisyncTelemetry.verbose(apparatusName, 'security_alert', 'Acceso denegado: Cabecera x-omnisync-tenant ausente');
-          throw new UnauthorizedException('OS-SEC-401: Identificador de organización requerido para la orquestación.');
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'security_alert',
+            'Acceso denegado: Cabecera x-omnisync-tenant ausente',
+          );
+          throw new UnauthorizedException(
+            'OS-SEC-401: Identificador de organización requerido para la orquestación.',
+          );
         }
 
         /**
          * @section Delegación al Cerebro de Orquestación
          * Se invoca el método estático del NeuralFlowOrchestrator nivelado.
          */
-        return await NeuralFlowOrchestrator.processNeuralIntentMessage(incomingNeuralIntent);
-      }
+        return await NeuralFlowOrchestrator.processNeuralIntentMessage(
+          incomingNeuralIntent,
+        );
+      },
     );
   }
 }

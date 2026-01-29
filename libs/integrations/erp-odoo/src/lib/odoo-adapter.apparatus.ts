@@ -17,33 +17,33 @@ import { IOdooConnectionConfiguration } from './schemas/odoo-integration.schema'
 /**
  * @name OdooAdapterApparatus
  * @description Adaptador de infraestructura de élite para la orquestación operativa en Odoo ERP.
- * Implementa el contrato universal de ERP asegurando que toda respuesta sea validada
- * contra el esquema de acción soberano antes de su retorno al Neural Hub.
+ * Implementa el contrato universal de ERP asegurando la persistencia atómica de tickets
+ * y el auto-aprovisionamiento de identidades de clientes (Partners).
  *
- * @protocol OEDP-Level: Elite (Full Observability)
+ * @protocol OEDP-Level: Elite (Atomic Provisioning & Full-Observability)
  */
 export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter {
-  /** Identificador técnico para el ecosistema ERP Engine */
-  public readonly providerName = 'ODOO_ENTERPRISE_CLOUD_V2';
+  /** Identificador técnico para la fábrica de orquestación ERP */
+  public readonly providerName = 'ODOO_ENTERPRISE_CLOUD_V3';
 
   /**
    * @constructor
-   * @param {IOdooConnectionConfiguration} technicalConfiguration - ADN de conexión validado.
+   * @param {IOdooConnectionConfiguration} technicalConfiguration - ADN de conexión validado del suscriptor.
    */
   constructor(
-    private readonly technicalConfiguration: IOdooConnectionConfiguration
+    private readonly technicalConfiguration: IOdooConnectionConfiguration,
   ) {}
 
   /**
    * @method createOperationTicket
-   * @description Registra una incidencia en Odoo vinculándola automáticamente al Partner.
-   * Notifica al Sentinel ante fallos operativos para auditoría en el Dashboard.
+   * @description Registra una incidencia en Odoo. Implementa un flujo de dos fases:
+   * 1. Resolución/Creación de Partner. 2. Creación de Ticket vinculado.
    *
-   * @param {unknown} operationalPayload - Carga útil de la operación (Validada internamente).
-   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Resultado validado de la acción.
+   * @param {unknown} operationalPayload - Carga útil de la operación (Validada por ERPTicketSchema).
+   * @returns {Promise<IEnterpriseResourcePlanningActionResponse>} Respuesta validada bajo estándar SSOT.
    */
   public async createOperationTicket(
-    operationalPayload: unknown
+    operationalPayload: unknown,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
     const apparatusName = 'OdooAdapterApparatus';
     const operationName = 'createOperationTicket';
@@ -53,28 +53,50 @@ export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter 
       operationName,
       async () => {
         const executionStartTime = performance.now();
+        let wasPartnerProvisioned = false;
 
         try {
-          // 1. Validación de ADN de Entrada
+          // 1. Validación de Integridad de Entrada
           const validatedTicketData: IERPTicket = OmnisyncContracts.validate(
             ERPTicketSchema,
             operationalPayload,
-            apparatusName
+            apparatusName,
           );
 
-          // 2. Resolución de Identidad
-          const partnerIdentifier = await this.resolvePartnerIdentifier(validatedTicketData.userId);
-
-          // 3. Mapeo a Gramática Odoo
-          const odooPayload = OdooModelMapper.mapToOdooTicketPayload(validatedTicketData, partnerIdentifier);
-
-          // 4. Ejecución de Transacción
-          const createdTicketIdentifier = await OdooDriverApparatus.executeRemoteProcedureCall<number>(
-            this.technicalConfiguration,
-            'helpdesk.ticket',
-            'create',
-            [odooPayload]
+          /**
+           * @section 2. Gestión de Identidad Soberana
+           * Intentamos localizar al Partner. Si no existe, lo creamos atómicamente.
+           */
+          let partnerIdentifier = await this.resolvePartnerIdentifier(
+            validatedTicketData.userId,
           );
+
+          if (!partnerIdentifier) {
+            OmnisyncTelemetry.verbose(
+              apparatusName,
+              'identity_gap',
+              `Iniciando auto-aprovisionamiento para: ${validatedTicketData.userId}`,
+            );
+            partnerIdentifier = await this.provisionSovereignPartner(
+              validatedTicketData.userId,
+            );
+            wasPartnerProvisioned = true;
+          }
+
+          // 3. Mapeo Semántico a la gramática Helpdesk de Odoo
+          const odooFormattedPayload = OdooModelMapper.mapToOdooTicketPayload(
+            validatedTicketData,
+            partnerIdentifier,
+          );
+
+          // 4. Ejecución de Transacción vía Driver de Alta Disponibilidad
+          const createdTicketIdentifier =
+            await OdooDriverApparatus.executeRemoteProcedureCall<number>(
+              this.technicalConfiguration,
+              'helpdesk.ticket',
+              'create',
+              [odooFormattedPayload],
+            );
 
           return EnterpriseResourcePlanningActionResponseSchema.parse({
             success: true,
@@ -82,23 +104,24 @@ export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter 
             syncStatus: 'SYNCED',
             messageKey: 'integrations.odoo.operation.ticket_created',
             latencyInMilliseconds: performance.now() - executionStartTime,
-            operationalMetadata: { odooModel: 'helpdesk.ticket' }
+            operationalMetadata: {
+              odooModel: 'helpdesk.ticket',
+              partnerIdentifier,
+              wasPartnerProvisioned,
+            },
           });
-
         } catch (criticalOperationalError: unknown) {
-          /**
-           * @section Resiliencia y Notificación
-           * Inyectamos el uso de OmnisyncSentinel para registrar por qué falló la
-           * operación a nivel de Adaptador (ej: fallo de mapeo o Partner no encontrado).
-           */
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-604',
             severity: 'HIGH',
             apparatus: apparatusName,
             operation: operationName,
             message: 'integrations.odoo.errors.ticket_sync_error',
-            context: { error: String(criticalOperationalError) },
-            isRecoverable: true
+            context: {
+              errorDetail: String(criticalOperationalError),
+              wasPartnerProvisioned,
+            },
+            isRecoverable: true,
           });
 
           return EnterpriseResourcePlanningActionResponseSchema.parse({
@@ -106,19 +129,21 @@ export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter 
             syncStatus: 'FAILED_RETRYING',
             messageKey: 'integrations.odoo.errors.ticket_sync_error',
             latencyInMilliseconds: performance.now() - executionStartTime,
-            operationalMetadata: { lastError: String(criticalOperationalError) }
+            operationalMetadata: {
+              errorTrace: String(criticalOperationalError),
+            },
           });
         }
-      }
+      },
     );
   }
 
   /**
    * @method validateCustomerExistence
-   * @description Verifica la presencia del cliente en el ERP.
+   * @description Verifica la soberanía de la identidad del cliente en el ERP remoto.
    */
   public async validateCustomerExistence(
-    customerPhoneNumber: string
+    customerPhoneNumber: string,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
     const apparatusName = 'OdooAdapterApparatus';
     const operationName = 'validateCustomerExistence';
@@ -129,18 +154,21 @@ export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter 
       operationName,
       async () => {
         try {
-          const partnerIdentifier = await this.resolvePartnerIdentifier(customerPhoneNumber);
-          const exists = partnerIdentifier !== null;
+          const partnerIdentifier =
+            await this.resolvePartnerIdentifier(customerPhoneNumber);
+          const doesIdentityExist = partnerIdentifier !== null;
 
           return EnterpriseResourcePlanningActionResponseSchema.parse({
-            success: exists,
-            externalIdentifier: partnerIdentifier ? String(partnerIdentifier) : undefined,
+            success: doesIdentityExist,
+            externalIdentifier: partnerIdentifier
+              ? String(partnerIdentifier)
+              : undefined,
             syncStatus: 'SYNCED',
-            messageKey: exists
+            messageKey: doesIdentityExist
               ? 'integrations.odoo.operation.partner_found'
               : 'integrations.odoo.operation.partner_not_found',
             latencyInMilliseconds: performance.now() - executionStartTime,
-            operationalMetadata: { searchField: 'phone_ilike' }
+            operationalMetadata: { lookupMethod: 'multimodal_phone_search' },
           });
         } catch (lookupError: unknown) {
           await OmnisyncSentinel.report({
@@ -149,29 +177,59 @@ export class OdooAdapterApparatus implements IEnterpriseResourcePlanningAdapter 
             apparatus: apparatusName,
             operation: operationName,
             message: 'integrations.odoo.errors.partner_lookup_failed',
-            context: { phone: customerPhoneNumber, error: String(lookupError) }
+            context: {
+              phoneNumber: customerPhoneNumber,
+              error: String(lookupError),
+            },
           });
 
           throw lookupError;
         }
-      }
+      },
     );
   }
 
   /**
    * @method resolvePartnerIdentifier
    * @private
+   * @description Localiza un contacto en Odoo utilizando un dominio de búsqueda multimodal.
    */
-  private async resolvePartnerIdentifier(phoneNumber: string): Promise<number | null> {
-    const searchDomain = [['phone', 'ilike', phoneNumber]];
+  private async resolvePartnerIdentifier(
+    phoneNumber: string,
+  ): Promise<number | null> {
+    // Búsqueda en campos de teléfono y móvil para mayor precisión geográfica
+    const searchDomain = [
+      '|',
+      ['phone', 'ilike', phoneNumber],
+      ['mobile', 'ilike', phoneNumber],
+    ];
 
-    const results = await OdooDriverApparatus.executeRemoteProcedureCall<number[]>(
+    const searchResults = await OdooDriverApparatus.executeRemoteProcedureCall<
+      number[]
+    >(this.technicalConfiguration, 'res.partner', 'search', [searchDomain]);
+
+    return searchResults && searchResults.length > 0 ? searchResults[0] : null;
+  }
+
+  /**
+   * @method provisionSovereignPartner
+   * @private
+   * @description Crea un nuevo registro en res.partner cuando el cliente no existe.
+   */
+  private async provisionSovereignPartner(
+    phoneNumber: string,
+  ): Promise<number> {
+    const partnerPayload = {
+      name: `Omnisync Lead (${phoneNumber})`,
+      mobile: phoneNumber,
+      comment: 'Generado automáticamente por el adaptador Omnisync-AI V3.2',
+    };
+
+    return await OdooDriverApparatus.executeRemoteProcedureCall<number>(
       this.technicalConfiguration,
       'res.partner',
-      'search',
-      [searchDomain]
+      'create',
+      [partnerPayload],
     );
-
-    return (results && results.length > 0) ? results[0] : null;
   }
 }

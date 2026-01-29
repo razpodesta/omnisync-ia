@@ -1,5 +1,37 @@
-# Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
-/.nx/workspace-data
+/** .prettierignore */
+
+# 📦 Dependencias y Gestores
+node_modules
+pnpm-lock.yaml
+.pnpm-store
+
+# 🏗️ Artefactos de Compilación (Build Outputs)
+dist
+.next
+out-tsc
+build
+coverage
+.nx
+
+# 🛡️ Secretos y Entorno
+.env
+.env.*
+*.pem
+*.key
+
+# 📔 Reportes e Infraestructura Omnisync (Audit SSOT)
+snapshot-reports
+reports
+internal-backups
+prisma/generated
+
+# 🛠️ Herramientas y Configuración de Sistema
+.husky
+.git
+.vscode
+.idea
+*.log
+.eslintcache
+
+# 📜 Archivos de Documentación que no requieren auto-formato
+.docs/manifests copy/

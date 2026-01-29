@@ -6,7 +6,7 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // CONFIGURACIÓN HOLÍSTICA DE CORS
   // Permite que el Dashboard en Vercel y el Widget en cualquier web hablen con el core.
   app.enableCors({
@@ -17,7 +17,11 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
-  OmnisyncTelemetry.verbose('System', 'bootstrap', `Neural Core online on port ${port}`);
+
+  OmnisyncTelemetry.verbose(
+    'System',
+    'bootstrap',
+    `Neural Core online on port ${port}`,
+  );
 }
 bootstrap();

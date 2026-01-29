@@ -31,4 +31,4 @@ services:
 
       # Configuración de Monorepo
       - key: SKIP_INSTALL_DEPS_CHECK
-        value: "true"
+        value: 'true'

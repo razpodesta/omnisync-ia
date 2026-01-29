@@ -2,7 +2,7 @@
 
 import {
   IOmnisyncTelemetryEntry,
-  OmnisyncTelemetryEntrySchema
+  OmnisyncTelemetryEntrySchema,
 } from './schemas/telemetry.schema';
 
 /**
@@ -37,16 +37,27 @@ export class OmnisyncTelemetry {
     apparatusName: string,
     operationName: string,
     operation: () => Promise<TReturn>,
-    initialMetadata: Record<string, unknown> = {}
+    initialMetadata: Record<string, unknown> = {},
   ): Promise<TReturn> {
     const startTimeInMilliseconds = performance.now();
 
     try {
       const result: TReturn = await operation();
-      this.logCompletion(apparatusName, operationName, startTimeInMilliseconds, initialMetadata);
+      this.logCompletion(
+        apparatusName,
+        operationName,
+        startTimeInMilliseconds,
+        initialMetadata,
+      );
       return result;
     } catch (error: unknown) {
-      this.logFailure(apparatusName, operationName, startTimeInMilliseconds, error, initialMetadata);
+      this.logFailure(
+        apparatusName,
+        operationName,
+        startTimeInMilliseconds,
+        error,
+        initialMetadata,
+      );
       throw error;
     }
   }
@@ -61,16 +72,27 @@ export class OmnisyncTelemetry {
     apparatusName: string,
     operationName: string,
     operation: () => TReturn,
-    initialMetadata: Record<string, unknown> = {}
+    initialMetadata: Record<string, unknown> = {},
   ): TReturn {
     const startTimeInMilliseconds = performance.now();
 
     try {
       const result: TReturn = operation();
-      this.logCompletion(apparatusName, operationName, startTimeInMilliseconds, initialMetadata);
+      this.logCompletion(
+        apparatusName,
+        operationName,
+        startTimeInMilliseconds,
+        initialMetadata,
+      );
       return result;
     } catch (error: unknown) {
-      this.logFailure(apparatusName, operationName, startTimeInMilliseconds, error, initialMetadata);
+      this.logFailure(
+        apparatusName,
+        operationName,
+        startTimeInMilliseconds,
+        error,
+        initialMetadata,
+      );
       throw error;
     }
   }
@@ -83,7 +105,7 @@ export class OmnisyncTelemetry {
     apparatusName: string,
     operationName: string,
     messageKey: string,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
   ): void {
     if (!this.IS_VERBOSE_ENABLED) return;
 
@@ -93,7 +115,7 @@ export class OmnisyncTelemetry {
       operation: operationName,
       level: 'VERBOSE',
       messageKey,
-      metadata
+      metadata,
     });
   }
 
@@ -105,7 +127,7 @@ export class OmnisyncTelemetry {
     apparatus: string,
     operation: string,
     start: number,
-    meta: Record<string, unknown>
+    meta: Record<string, unknown>,
   ): void {
     // NIVELACIÓN: Inferencia implícita de string para mayor limpieza
     const duration = `${(performance.now() - start).toFixed(4)}ms`;
@@ -117,7 +139,7 @@ export class OmnisyncTelemetry {
       level: 'PERFORMANCE',
       messageKey: 'core.telemetry.execution.success',
       durationInMilliseconds: duration,
-      metadata: { ...meta, status: 'COMPLETED' }
+      metadata: { ...meta, status: 'COMPLETED' },
     });
   }
 
@@ -126,7 +148,7 @@ export class OmnisyncTelemetry {
     operation: string,
     start: number,
     error: unknown,
-    meta: Record<string, unknown>
+    meta: Record<string, unknown>,
   ): void {
     // NIVELACIÓN: Inferencia implícita de string
     const duration = `${(performance.now() - start).toFixed(4)}ms`;
@@ -141,8 +163,8 @@ export class OmnisyncTelemetry {
       metadata: {
         ...meta,
         status: 'FAILED',
-        errorMessage: error instanceof Error ? error.message : String(error)
-      }
+        errorMessage: error instanceof Error ? error.message : String(error),
+      },
     });
   }
 
@@ -167,7 +189,10 @@ export class OmnisyncTelemetry {
         console.log(outputLine);
       }
     } catch (validationError) {
-      console.error('[CRITICAL-TELEMETRY-FAILURE] Violación de esquema detectada:', validationError);
+      console.error(
+        '[CRITICAL-TELEMETRY-FAILURE] Violación de esquema detectada:',
+        validationError,
+      );
     }
   }
 }

@@ -4,14 +4,14 @@ import {
   INeuralIntent,
   NeuralIntentSchema,
   TenantId,
-  OmnisyncContracts
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
   MetaWebhookPayloadSchema,
   IMetaWebhookPayload,
-  IMetaWebhookMessage
+  IMetaWebhookMessage,
 } from '../schemas/meta-contracts.schema';
 
 /**
@@ -23,7 +23,6 @@ import {
  * @protocol OEDP-Level: Elite (Zero Any Strategy)
  */
 export class MetaWebhookParserApparatus {
-
   /**
    * @method parseToNeuralIntents
    * @description Procesa un payload de Webhook y extrae todas las intenciones válidas.
@@ -35,7 +34,7 @@ export class MetaWebhookParserApparatus {
    */
   public static parseToNeuralIntents(
     incomingWebhookPayload: unknown,
-    tenantOrganizationIdentifier: TenantId
+    tenantOrganizationIdentifier: TenantId,
   ): INeuralIntent[] {
     const apparatusName = 'MetaWebhookParserApparatus';
 
@@ -48,11 +47,12 @@ export class MetaWebhookParserApparatus {
            * @section Validación de ADN de Entrada
            * Erradicamos el 'any' mediante validación estricta contra el esquema expandido.
            */
-          const validatedWebhook: IMetaWebhookPayload = OmnisyncContracts.validate(
-            MetaWebhookPayloadSchema,
-            incomingWebhookPayload,
-            apparatusName
-          );
+          const validatedWebhook: IMetaWebhookPayload =
+            OmnisyncContracts.validate(
+              MetaWebhookPayloadSchema,
+              incomingWebhookPayload,
+              apparatusName,
+            );
 
           const extractedNeuralIntents: INeuralIntent[] = [];
 
@@ -70,7 +70,7 @@ export class MetaWebhookParserApparatus {
                 const intent = this.mapMetaMessageToNeuralIntent(
                   message,
                   tenantOrganizationIdentifier,
-                  change.value.contacts?.[0]?.profile?.name ?? 'Anonymous User'
+                  change.value.contacts?.[0]?.profile?.name ?? 'Anonymous User',
                 );
 
                 if (intent) extractedNeuralIntents.push(intent);
@@ -79,7 +79,6 @@ export class MetaWebhookParserApparatus {
           }
 
           return extractedNeuralIntents;
-
         } catch (criticalParseError: unknown) {
           OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-500',
@@ -88,11 +87,11 @@ export class MetaWebhookParserApparatus {
             operation: 'parse_payload',
             message: 'integrations.meta.parsing_failed',
             context: { error: String(criticalParseError) },
-            isRecoverable: true
+            isRecoverable: true,
           });
           return [];
         }
-      }
+      },
     );
   }
 
@@ -104,7 +103,7 @@ export class MetaWebhookParserApparatus {
   private static mapMetaMessageToNeuralIntent(
     metaMessage: IMetaWebhookMessage,
     tenantId: TenantId,
-    senderDisplayName: string
+    senderDisplayName: string,
   ): INeuralIntent | null {
     const messageType = metaMessage.type;
 
@@ -112,7 +111,7 @@ export class MetaWebhookParserApparatus {
     const baseMetadata = {
       meta_message_id: metaMessage.id,
       sender_name: senderDisplayName,
-      platform: 'WHATSAPP_META_CLOUD'
+      platform: 'WHATSAPP_META_CLOUD',
     };
 
     /**
@@ -166,8 +165,8 @@ export class MetaWebhookParserApparatus {
         content: contentValue,
         metadata: {
           ...baseMetadata,
-          raw_type: messageType
-        }
+          raw_type: messageType,
+        },
       },
       timestamp: new Date(Number(metaMessage.timestamp) * 1000).toISOString(),
     });

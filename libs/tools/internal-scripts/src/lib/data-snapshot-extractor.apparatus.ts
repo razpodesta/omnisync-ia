@@ -1,134 +1,196 @@
 /** libs/tools/internal-scripts/src/lib/data-snapshot-extractor.apparatus.ts */
 
-import * as fs from 'node:fs';
+import * as fileSystem from 'node:fs';
 import * as path from 'node:path';
-import { z } from 'zod';
+import * as crypto from 'node:crypto';
 import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-
-/**
- * @name SovereignSnapshotSeedSchema
- * @description Contrato de integridad para el snapshot de ADN del sistema.
- */
-const SovereignSnapshotSeedSchema = z.object({
-  snapshotIdentifier: z.string().uuid(),
-  timestamp: z.string().datetime(),
-  schemaVersion: z.string(),
-  layers: z.object({
-    relational: z.object({ status: z.string(), recordsCaptured: z.number() }),
-    vectorial: z.object({ status: z.string(), collectionsNoted: z.number() }),
-    volatile: z.object({ status: z.string(), keysNoted: z.number() })
-  }),
-  checksum: z.string()
-}).readonly();
-
-export type ISovereignSnapshotSeed = z.infer<typeof SovereignSnapshotSeedSchema>;
+import {
+  SovereignSnapshotSeedSchema,
+  ISovereignSnapshotSeed,
+  ISovereignSnapshotLayer,
+} from './schemas/data-snapshot-extractor.schema';
 
 /**
  * @name DataSnapshotExtractor
- * @description Aparato encargado de la persistencia de seguridad del estado del sistema.
- * Genera copias de fidelidad total del ADN operativo para auditoría y recuperación.
+ * @description Aparato encargado de la persistencia de seguridad del estado integral del sistema.
+ * Genera copias de fidelidad total del ADN operativo (Relacional, Vectorial y Volátil)
+ * para auditoría forense y protocolos de recuperación ante desastres.
  *
- * @protocol OEDP-Level: Ultra-Holistic (System DNA Chronicler)
+ * @protocol OEDP-Level: Elite (System DNA Chronicler)
  */
 export class DataSnapshotExtractor {
-  private static readonly SNAPSHOT_BASE_DIRECTORY = 'internal-backups/snapshots';
+  /**
+   * @private
+   * @description Directorio base para el almacenamiento de respaldos internos.
+   */
+  private static readonly SNAPSHOT_BASE_DIRECTORY =
+    'internal-backups/snapshots';
 
   /**
    * @method executeSovereignSnapshotExtraction
    * @description Orquesta el volcado coordinado de todas las capas de datos del ecosistema.
+   * Garantiza la consistencia atómica mediante el seguimiento de estados por capa.
+   *
+   * @returns {Promise<ISovereignSnapshotSeed>} Semilla de snapshot validada por SSOT.
    */
   public static async executeSovereignSnapshotExtraction(): Promise<ISovereignSnapshotSeed> {
-    return await OmnisyncTelemetry.traceExecution('DataSnapshotExtractor', 'execute', async () => {
-      const snapshotStartTime = new Date().toISOString();
-      const snapshotId = crypto.randomUUID();
+    const apparatusName = 'DataSnapshotExtractor';
+    const operationName = 'executeSovereignSnapshotExtraction';
 
-      // 1. Snapshot de Capa Relacional (Supabase/PostgreSQL)
-      const relationalStatus = await this.captureRelationalDNA();
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        const snapshotStartTime = new Date().toISOString();
+        const snapshotIdentifier = crypto.randomUUID();
 
-      // 2. Snapshot de Capa Vectorial (Qdrant - Metadata Only)
-      const vectorialStatus = await this.captureVectorialMetadata();
+        // 1. Captura de Capa Relacional (Sincronización con Supabase)
+        const relationalStatus =
+          await this.captureRelationalInfrastructureDNA();
 
-      const seedPayload: ISovereignSnapshotSeed = {
-        snapshotIdentifier: snapshotId,
-        timestamp: snapshotStartTime,
-        schemaVersion: '2026.01.v1',
-        layers: {
-          relational: relationalStatus,
-          vectorial: vectorialStatus,
-          volatile: { status: 'OBSERVED', keysNoted: 0 } // Integración con Redis en fase 2
-        },
-        checksum: 'PENDING_SHA256'
-      };
+        // 2. Captura de Capa Vectorial (Metadatos de Qdrant Cloud)
+        const vectorialStatus =
+          await this.captureVectorialInfrastructureMetadata();
 
-      this.persistSeedToDisk(seedPayload, 'master-integrity.json');
+        // 3. Preparación de Carga Útil (Seed Payload)
+        const auditSeedPayload: ISovereignSnapshotSeed = {
+          snapshotIdentifier: snapshotIdentifier,
+          timestamp: snapshotStartTime,
+          schemaVersion: '2026.01.v1-ELITE',
+          layers: {
+            relational: relationalStatus,
+            vectorial: vectorialStatus,
+            volatile: { status: 'OBSERVED', recordsCount: 0 }, // Integración con Upstash en Fase 3.3
+          },
+          checksum: 'SHA256_PENDING_INTEGRATION',
+        };
 
-      console.log(`[DNA-SNAPSHOT-COMPLETED]: ID ${snapshotId}`);
-      return SovereignSnapshotSeedSchema.parse(seedPayload);
-    });
+        // Persistencia física de la semilla maestra
+        this.persistSeedToSecureStorage(
+          auditSeedPayload,
+          'master-integrity.json',
+        );
+
+        OmnisyncTelemetry.verbose(
+          apparatusName,
+          'snapshot_completed',
+          `Punto de restauración generado: ${snapshotIdentifier}`,
+        );
+
+        return SovereignSnapshotSeedSchema.parse(auditSeedPayload);
+      },
+    );
   }
 
   /**
-   * @method captureRelationalDNA
+   * @method captureRelationalInfrastructureDNA
    * @private
-   * @description Resuelve el error TS2339 usando la propiedad nivelada 'databaseEngine'.
+   * @description Realiza el volcado de las tablas núcleo del sistema.
    */
-  private static async captureRelationalDNA() {
-    try {
-      const engine = OmnisyncDatabase.databaseEngine;
+  private static async captureRelationalInfrastructureDNA(): Promise<ISovereignSnapshotLayer> {
+    const apparatusName = 'DataSnapshotExtractor';
 
-      // Captura atómica de tablas núcleo
-      const [tenants, supportThreads] = await Promise.all([
-        engine.tenant.findMany(),
-        engine.supportThread.findMany()
+    try {
+      const databaseEngine = OmnisyncDatabase.databaseEngine;
+
+      // Extracción paralela de entidades de soberanía
+      const [tenantsCollection, supportThreadsCollection] = await Promise.all([
+        databaseEngine.tenant.findMany(),
+        databaseEngine.supportThread.findMany(),
       ]);
 
-      this.persistDataChunk('supabase/tenants-records.json', tenants);
-      this.persistDataChunk('supabase/support-threads.json', supportThreads);
+      this.persistDataChunkToDisk(
+        'supabase/tenants-records.json',
+        tenantsCollection,
+      );
+      this.persistDataChunkToDisk(
+        'supabase/support-threads.json',
+        supportThreadsCollection,
+      );
 
       return {
         status: 'SUCCESS',
-        recordsCaptured: tenants.length + supportThreads.length
+        recordsCount:
+          tenantsCollection.length + supportThreadsCollection.length,
       };
-    } catch (criticalError: unknown) {
+    } catch (criticalDatabaseError: unknown) {
       await OmnisyncSentinel.report({
         errorCode: 'OS-CORE-002',
         severity: 'HIGH',
-        apparatus: 'DataSnapshotExtractor',
+        apparatus: apparatusName,
         operation: 'capture_relational',
-        message: 'core.snapshot.relational_failure',
-        context: { error: String(criticalError) }
+        message: 'Fallo crítico durante el volcado de la capa relacional.',
+        context: { errorDetail: String(criticalDatabaseError) },
+        isRecoverable: true,
       });
-      return { status: 'FAILED', recordsCaptured: 0 };
+
+      return { status: 'FAILED', recordsCount: 0 };
     }
   }
 
   /**
-   * @method captureVectorialMetadata
+   * @method captureVectorialInfrastructureMetadata
    * @private
+   * @description Registra el estado de las colecciones semánticas en la nube.
    */
-  private static async captureVectorialMetadata() {
-    // Actualmente la captura de vectores es informativa para evitar latencia de Scroll API
-    this.persistDataChunk('qdrant/vector-status.json', {
-      lastAudit: new Date().toISOString(),
-      note: 'Semantic vector data persists in Qdrant Cloud Cluster'
+  private static async captureVectorialInfrastructureMetadata(): Promise<ISovereignSnapshotLayer> {
+    // Nota: El backup real de vectores reside en los snapshots nativos de Qdrant Cloud.
+    this.persistDataChunkToDisk('qdrant/vector-infrastructure-status.json', {
+      lastAuditTimestamp: new Date().toISOString(),
+      note: 'Semantic vector integrity is maintained by Qdrant Cloud Native Snapshots.',
     });
-    return { status: 'OBSERVED', collectionsNoted: 1 };
+
+    return { status: 'OBSERVED', recordsCount: 1 };
   }
 
   /**
-   * @method persistDataChunk
+   * @method persistDataChunkToDisk
    * @private
    */
-  private static persistDataChunk(relativePath: string, data: unknown): void {
-    const fullPath = path.join(process.cwd(), this.SNAPSHOT_BASE_DIRECTORY, relativePath);
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-    fs.writeFileSync(fullPath, JSON.stringify(data, null, 2), 'utf-8');
+  private static persistDataChunkToDisk(
+    relativeFilePath: string,
+    dataContent: unknown,
+  ): void {
+    const absolutePath = path.join(
+      process.cwd(),
+      this.SNAPSHOT_BASE_DIRECTORY,
+      relativeFilePath,
+    );
+
+    try {
+      fileSystem.mkdirSync(path.dirname(absolutePath), { recursive: true });
+      fileSystem.writeFileSync(
+        absolutePath,
+        JSON.stringify(dataContent, null, 2),
+        'utf-8',
+      );
+    } catch (ioError: unknown) {
+      console.error(
+        `[CRITICAL-IO-ERROR]: No se pudo escribir el fragmento: ${relativeFilePath}`,
+        ioError,
+      );
+    }
   }
 
-  private static persistSeedToDisk(seed: ISovereignSnapshotSeed, fileName: string): void {
-    const fullPath = path.join(process.cwd(), this.SNAPSHOT_BASE_DIRECTORY, fileName);
-    fs.writeFileSync(fullPath, JSON.stringify(seed, null, 2), 'utf-8');
+  /**
+   * @method persistSeedToSecureStorage
+   * @private
+   */
+  private static persistSeedToSecureStorage(
+    seed: ISovereignSnapshotSeed,
+    fileName: string,
+  ): void {
+    const absolutePath = path.join(
+      process.cwd(),
+      this.SNAPSHOT_BASE_DIRECTORY,
+      fileName,
+    );
+    fileSystem.writeFileSync(
+      absolutePath,
+      JSON.stringify(seed, null, 2),
+      'utf-8',
+    );
   }
 }

@@ -1,167 +1,226 @@
 /** libs/tools/internal-scripts/src/lib/connectivity-integrity.apparatus.ts */
 
+import * as fileSystem from 'node:fs';
+import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
-import { z } from 'zod';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-
-/**
- * @name ConnectivityReportSchema
- * @description Contrato SSOT para el reporte de salud, optimizado para consumo por IA.
- */
-const ConnectivityReportSchema = z.object({
-  reportId: z.string().uuid(),
-  timestamp: z.string().datetime(),
-  environment: z.string(),
-  overallStatus: z.enum(['HEALTHY', 'DEGRADED', 'FAILING']),
-  nodes: z.record(z.string(), z.object({
-    status: z.string(),
-    latencyMs: z.number().optional(),
-    provider: z.string(),
-    error: z.string().optional(),
-    remediationHint: z.string().optional()
-  })),
-  aiContext: z.object({
-    summary: z.string(),
-    isActionRequired: z.boolean()
-  })
-}).readonly();
-
-export type IConnectivityReport = z.infer<typeof ConnectivityReportSchema>;
+import {
+  ConnectivityReportSchema,
+  IConnectivityReport,
+  IConnectivityNodeHealth,
+} from './schemas/connectivity-integrity.schema';
 
 /**
  * @name ConnectivityIntegrity
  * @description Aparato de auditoría profunda de infraestructura Cloud.
- * Genera reportes de grado arquitectónico para el entrenamiento y diagnóstico de IA.
+ * Realiza sondas de integridad sobre los pilares de la red neural (SQL, Redis, Vector DB)
+ * para generar semillas de conocimiento arquitectónico.
  *
- * @protocol OEDP-Level: Ultra-Holistic (AI-Ready)
+ * @protocol OEDP-Level: Elite (Ultra-Holistic Monitoring)
  */
 export class ConnectivityIntegrity {
-  private static readonly REPORT_PATH = 'reports/infrastructure/connectivity';
+  /**
+   * @private
+   * @description Ruta de persistencia para reportes de salud consumibles por IA.
+   */
+  private static readonly REPORT_BASE_PATH =
+    'reports/infrastructure/connectivity';
 
   /**
    * @method executeSovereignAudit
-   * @description Realiza una sonda de 360° sobre los pilares de la red neural.
+   * @description Orquesta una inspección síncrona de 360° sobre la nube Omnisync.
+   *
+   * @returns {Promise<IConnectivityReport>} Reporte validado por contrato SSOT.
    */
   public static async executeSovereignAudit(): Promise<IConnectivityReport> {
-    return await OmnisyncTelemetry.traceExecution('ConnectivityIntegrity', 'audit', async () => {
-      const auditStartTime = performance.now();
+    const apparatusName = 'ConnectivityIntegrity';
+    const operationName = 'executeSovereignAudit';
 
-      const [supabase, upstash, qdrant] = await Promise.all([
-        this.pingSupabaseCloud(),
-        this.pingUpstashRedis(),
-        this.pingQdrantCloud()
-      ]);
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        const auditStartTime = performance.now();
 
-      const report: IConnectivityReport = {
-        reportId: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        environment: process.env['NODE_ENV'] || 'development',
-        overallStatus: this.calculateOverallHealth([supabase.status, upstash.status, qdrant.status]),
-        nodes: {
-          database_sql: supabase,
-          memory_cache: upstash,
-          vector_engine: qdrant
-        },
-        aiContext: {
-          summary: `Audit completed in ${(performance.now() - auditStartTime).toFixed(2)}ms.`,
-          isActionRequired: [supabase.status, upstash.status, qdrant.status].includes('CRITICAL_FAILURE')
-        }
-      };
+        // Ejecución concurrente de sondas de integridad
+        const [databaseStatus, memoryStatus, vectorStatus] = await Promise.all([
+          this.probeSupabaseCloud(),
+          this.probeUpstashRedis(),
+          this.probeQdrantCloud(),
+        ]);
 
-      this.persistReportSeed(report);
-      return ConnectivityReportSchema.parse(report);
-    });
+        const auditPayload: IConnectivityReport = {
+          reportId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          environment: process.env['NODE_ENV'] || 'development',
+          overallStatus: this.calculateConsolidatedHealth([
+            databaseStatus.status,
+            memoryStatus.status,
+            vectorStatus.status,
+          ]),
+          nodes: {
+            relational_persistence: databaseStatus,
+            volatile_memory: memoryStatus,
+            semantic_vector_engine: vectorStatus,
+          },
+          aiContext: {
+            summary: `Audit finished in ${(performance.now() - auditStartTime).toFixed(2)}ms.`,
+            isActionRequired: [
+              databaseStatus.status,
+              memoryStatus.status,
+              vectorStatus.status,
+            ].includes('CRITICAL_FAILURE'),
+          },
+        };
+
+        // Vuelco inmutable de la semilla de conocimiento
+        this.persistSovereignReportSeed(auditPayload);
+
+        return ConnectivityReportSchema.parse(auditPayload);
+      },
+    );
   }
 
   /**
-   * @method pingSupabaseCloud
+   * @method probeSupabaseCloud
    * @private
    */
-  private static async pingSupabaseCloud() {
-    const start = performance.now();
+  private static async probeSupabaseCloud(): Promise<IConnectivityNodeHealth> {
+    const probeStartTime = performance.now();
     try {
+      // Sonda de bajo nivel contra PostgreSQL
       await OmnisyncDatabase.databaseEngine.$queryRaw`SELECT 1`;
+
       return {
         status: 'OPERATIONAL',
-        latencyMs: performance.now() - start,
-        provider: 'Supabase Cloud (PostgreSQL)',
-        remediationHint: 'None required.'
+        latencyInMilliseconds: performance.now() - probeStartTime,
+        provider: 'Supabase Cloud (PostgreSQL 15+)',
+        remediationHint: 'Handshake successful.',
       };
-    } catch (e: unknown) {
+    } catch (criticalError: unknown) {
       return {
         status: 'CRITICAL_FAILURE',
         provider: 'Supabase Cloud',
-        error: String(e),
-        remediationHint: 'Check DATABASE_URL and Supabase project status. Possible IP block in Geofencing.'
+        error: String(criticalError),
+        remediationHint:
+          'Verify DATABASE_URL and Supabase project state. Possible IP Geofencing block.',
       };
     }
   }
 
   /**
-   * @method pingUpstashRedis
+   * @method probeUpstashRedis
    * @private
    */
-  private static async pingUpstashRedis() {
-    const start = performance.now();
+  private static async probeUpstashRedis(): Promise<IConnectivityNodeHealth> {
+    const probeStartTime = performance.now();
     try {
-      const url = process.env['UPSTASH_REDIS_REST_URL'];
-      const token = process.env['UPSTASH_REDIS_REST_TOKEN'];
-      if (!url || !token) throw new Error('Missing credentials');
+      const cloudRestUrl = process.env['UPSTASH_REDIS_REST_URL'];
+      const cloudRestToken = process.env['UPSTASH_REDIS_REST_TOKEN'];
 
-      const res = await fetch(`${url}/ping`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!cloudRestUrl || !cloudRestToken)
+        throw new Error('OS-SEC-004: Missing Cloud Memory Credentials.');
+
+      const networkResponse = await fetch(`${cloudRestUrl}/ping`, {
+        headers: { Authorization: `Bearer ${cloudRestToken}` },
+      });
+
       return {
-        status: res.ok ? 'OPERATIONAL' : 'DEGRADED',
-        latencyMs: performance.now() - start,
-        provider: 'Upstash Redis (REST)',
-        remediationHint: res.ok ? 'None' : 'Check Upstash monthly quota and REST token validity.'
+        status: networkResponse.ok ? 'OPERATIONAL' : 'DEGRADED',
+        latencyInMilliseconds: performance.now() - probeStartTime,
+        provider: 'Upstash Redis (REST Interface)',
+        remediationHint: networkResponse.ok
+          ? 'Heartbeat active.'
+          : 'Check Upstash quota or token expiration.',
       };
-    } catch (e: unknown) {
-      return { status: 'CRITICAL_FAILURE', provider: 'Upstash', error: String(e), remediationHint: 'Verify UPSTASH_REDIS_REST_URL and token in .env.' };
+    } catch (criticalError: unknown) {
+      return {
+        status: 'CRITICAL_FAILURE',
+        provider: 'Upstash Memory',
+        error: String(criticalError),
+        remediationHint:
+          'Verify UPSTASH environment variables and network egress.',
+      };
     }
   }
 
   /**
-   * @method pingQdrantCloud
+   * @method probeQdrantCloud
    * @private
    */
-  private static async pingQdrantCloud() {
-    const start = performance.now();
+  private static async probeQdrantCloud(): Promise<IConnectivityNodeHealth> {
+    const probeStartTime = performance.now();
     try {
-      const url = process.env['QDRANT_URL'];
-      if (!url) throw new Error('Missing URL');
+      const vectorUrl = process.env['QDRANT_URL'];
+      if (!vectorUrl)
+        throw new Error('OS-SEC-004: Qdrant URL is not configured.');
 
-      const res = await fetch(`${url}/healthz`);
+      const networkResponse = await fetch(`${vectorUrl}/healthz`);
+
       return {
-        status: res.ok ? 'OPERATIONAL' : 'FAILING',
-        latencyMs: performance.now() - start,
-        provider: 'Qdrant Cloud (Vector DB)',
-        remediationHint: res.ok ? 'None' : 'Check Qdrant cluster status and API Key in headers.'
+        status: networkResponse.ok ? 'OPERATIONAL' : 'FAILING',
+        latencyInMilliseconds: performance.now() - probeStartTime,
+        provider: 'Qdrant Cloud (Rust Vector Engine)',
+        remediationHint: networkResponse.ok
+          ? 'Cluster healthy.'
+          : 'Check Qdrant dashboard for maintenance alerts.',
       };
-    } catch (e: unknown) {
-      return { status: 'CRITICAL_FAILURE', provider: 'Qdrant', error: String(e), remediationHint: 'Verify QDRANT_URL. If on Free Tier, cluster might be hibernating.' };
+    } catch (criticalError: unknown) {
+      return {
+        status: 'CRITICAL_FAILURE',
+        provider: 'Qdrant Cloud',
+        error: String(criticalError),
+        remediationHint:
+          'If using Free Tier, cluster might be in hibernation mode.',
+      };
     }
   }
 
-  private static calculateOverallHealth(statuses: string[]): 'HEALTHY' | 'DEGRADED' | 'FAILING' {
-    if (statuses.every(s => s === 'OPERATIONAL')) return 'HEALTHY';
-    if (statuses.some(s => s === 'CRITICAL_FAILURE')) return 'FAILING';
+  /**
+   * @method calculateConsolidatedHealth
+   * @private
+   */
+  private static calculateConsolidatedHealth(
+    nodeStatuses: string[],
+  ): IConnectivityReport['overallStatus'] {
+    if (nodeStatuses.every((current) => current === 'OPERATIONAL'))
+      return 'HEALTHY';
+    if (nodeStatuses.some((current) => current === 'CRITICAL_FAILURE'))
+      return 'FAILING';
     return 'DEGRADED';
   }
 
   /**
-   * @method persistReportSeed
+   * @method persistSovereignReportSeed
    * @private
-   * @description Vuelca el reporte en una ubicación que la IA utilizará como "Base de Conocimientos" de infraestructura.
    */
-  private static persistReportSeed(report: IConnectivityReport): void {
-    const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-connectivity-audit.json`;
-    const fullPath = path.join(process.cwd(), this.REPORT_PATH, fileName);
+  private static persistSovereignReportSeed(report: IConnectivityReport): void {
+    const reportFileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-connectivity-audit.json`;
+    const absolutePath = path.join(
+      process.cwd(),
+      this.REPORT_BASE_PATH,
+      reportFileName,
+    );
 
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-    fs.writeFileSync(fullPath, JSON.stringify(report, null, 2), 'utf-8');
+    try {
+      fileSystem.mkdirSync(path.dirname(absolutePath), { recursive: true });
+      fileSystem.writeFileSync(
+        absolutePath,
+        JSON.stringify(report, null, 2),
+        'utf-8',
+      );
 
-    console.log(`[SEED-GENERATED]: ${fileName} (Ready for IA ingestion)`);
+      OmnisyncTelemetry.verbose(
+        'ConnectivityIntegrity',
+        'persist_seed',
+        `Semilla de salud generada: ${reportFileName}`,
+      );
+    } catch (criticalFileSystemError: unknown) {
+      console.error(
+        '[CRITICAL-IO-FAILURE]: No se pudo persistir el reporte de conectividad.',
+        criticalFileSystemError,
+      );
+    }
   }
 }

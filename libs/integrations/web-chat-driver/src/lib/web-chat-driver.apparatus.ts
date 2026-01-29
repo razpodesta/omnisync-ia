@@ -5,7 +5,7 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
   INeuralIntent,
   NeuralIntentSchema,
-  TenantId
+  TenantId,
 } from '@omnisync/core-contracts';
 
 /**
@@ -39,7 +39,7 @@ export class WebChatDriver {
   public static async transformEventToIntent(
     socketClientId: string,
     rawPayload: unknown,
-    tenantOrganizationIdentifier: string
+    tenantOrganizationIdentifier: string,
   ): Promise<INeuralIntent> {
     return await OmnisyncTelemetry.traceExecution(
       'WebChatDriver',
@@ -65,31 +65,31 @@ export class WebChatDriver {
               type: 'TEXT',
               content: socketEvent.message ?? '',
               metadata: {
-                userAgent: socketEvent.browserInfo ?? 'unknown_browser_agent'
-              }
+                userAgent: socketEvent.browserInfo ?? 'unknown_browser_agent',
+              },
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           };
 
           return NeuralIntentSchema.parse(neuralIntentPayload);
-
         } catch (criticalError: unknown) {
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-701',
             severity: 'MEDIUM',
             apparatus: 'WebChatDriver',
             operation: 'transform',
-            message: 'Fallo crítico al mapear evento de socket a Intención Neural.',
+            message:
+              'Fallo crítico al mapear evento de socket a Intención Neural.',
             context: {
               socketClientId,
               tenantId: tenantOrganizationIdentifier,
-              error: String(criticalError)
+              error: String(criticalError),
             },
-            isRecoverable: true
+            isRecoverable: true,
           });
           throw criticalError;
         }
-      }
+      },
     );
   }
 }

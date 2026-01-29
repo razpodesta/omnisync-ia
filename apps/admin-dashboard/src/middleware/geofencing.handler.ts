@@ -1,7 +1,10 @@
 /** apps/admin-dashboard/src/middleware/geofencing.handler.ts */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GeoFencingConfigurationSchema, IGeoFencingConfiguration } from '@omnisync/core-security';
+import {
+  GeoFencingConfigurationSchema,
+  IGeoFencingConfiguration,
+} from '@omnisync/core-security';
 
 /**
  * @name geoFencingSecurityHandler
@@ -11,25 +14,32 @@ import { GeoFencingConfigurationSchema, IGeoFencingConfiguration } from '@omnisy
  * @param {NextRequest} incomingRequest - Petición capturada por Vercel Edge.
  * @returns {NextResponse | null} Respuesta de bloqueo o null para continuar.
  */
-export const geoFencingSecurityHandler = (incomingRequest: NextRequest): NextResponse | null => {
-
+export const geoFencingSecurityHandler = (
+  incomingRequest: NextRequest,
+): NextResponse | null => {
   // 🛡️ CONFIGURACIÓN DE ÉLITE (En producción, esto se recupera de un Remote Config o Variable de Entorno)
   const configurationRaw: unknown = {
     allowedCountryCodes: ['ES', 'BR', 'US', 'AR', 'MX', 'CO'],
-    enforceInDevelopment: false
+    enforceInDevelopment: false,
   };
 
   // Validación de Integridad mediante el Esquema Atómico
-  const securityConfiguration: IGeoFencingConfiguration = GeoFencingConfigurationSchema.parse(configurationRaw);
+  const securityConfiguration: IGeoFencingConfiguration =
+    GeoFencingConfigurationSchema.parse(configurationRaw);
 
-  const detectedCountry: string = incomingRequest.headers.get('x-vercel-ip-country') ?? 'XX';
+  const detectedCountry: string =
+    incomingRequest.headers.get('x-vercel-ip-country') ?? 'XX';
 
   // Bypass para desarrollo según configuración del esquema
-  if (process.env.NODE_ENV === 'development' && !securityConfiguration.enforceInDevelopment) {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    !securityConfiguration.enforceInDevelopment
+  ) {
     return null;
   }
 
-  const isAccessGranted: boolean = securityConfiguration.allowedCountryCodes.includes(detectedCountry);
+  const isAccessGranted: boolean =
+    securityConfiguration.allowedCountryCodes.includes(detectedCountry);
 
   if (!isAccessGranted) {
     /**
@@ -41,9 +51,9 @@ export const geoFencingSecurityHandler = (incomingRequest: NextRequest): NextRes
       JSON.stringify({
         errorCode: 'OS-SEC-403',
         regionDetected: detectedCountry,
-        message: 'Acceso denegado por políticas de soberanía geográfica.'
+        message: 'Acceso denegado por políticas de soberanía geográfica.',
       }),
-      { status: 403, headers: { 'content-type': 'application/json' } }
+      { status: 403, headers: { 'content-type': 'application/json' } },
     );
   }
 
