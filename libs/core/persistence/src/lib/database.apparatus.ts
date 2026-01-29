@@ -7,7 +7,7 @@ import { OmnisyncContracts } from '@omnisync/core-contracts';
 
 /**
  * @section Sincronización de ADN Local
- * Se importan los esquemas atómicos para validar la soberanía de la infraestructura.
+ * Inyectamos el esquema de infraestructura para validación previa a la ignición.
  */
 import {
   DatabaseInfrastructureConfigurationSchema,
@@ -17,26 +17,26 @@ import {
 /**
  * @name OmnisyncDatabase
  * @description Aparato de soberanía de persistencia relacional (SQL).
- * Actúa como el guardián supremo del motor Prisma, gestionando el ciclo de vida
- * de las conexiones y garantizando la integridad de las transacciones mediante
- * un patrón Singleton de alta disponibilidad optimizado para la nube.
+ * Actúa como el guardián supremo del motor Prisma, gestionando el pool de
+ * conexiones y garantizando la integridad transaccional mediante un patrón 
+ * Singleton optimizado para orquestación Cloud-Native.
  *
- * @protocol OEDP-Level: Elite (Hyper-Atomized Persistence V2.4)
+ * @protocol OEDP-Level: Elite (Persistence Sovereignty V2.5)
  */
 export class OmnisyncDatabase {
   /**
    * @private
-   * @description Instancia única del motor. Se mantiene nula hasta la primera
-   * solicitud validada para optimizar recursos en el arranque.
+   * @description Instancia única del motor. Se mantiene nula hasta que la primera 
+   * petición valide la soberanía del ADN de infraestructura.
    */
   private static relationalDatabaseEngineInstance: PrismaClient | null = null;
 
   /**
    * @method databaseEngine
-   * @description Punto de acceso soberano a la persistencia. Orquesta la
-   * validación del ADN de infraestructura y la ignición resiliente del motor.
+   * @description Punto de acceso único a la persistencia relacional. 
+   * Orquesta la validación de infraestructura y la ignición del motor Prisma.
    *
-   * @returns {PrismaClient} El motor de persistencia validado y listo para operar.
+   * @returns {PrismaClient} El motor de persistencia activo y validado.
    */
   public static get databaseEngine(): PrismaClient {
     const apparatusName = 'OmnisyncDatabase';
@@ -57,37 +57,34 @@ export class OmnisyncDatabase {
         );
 
       /**
-       * @section Fase 2: Resolución de Tipos y Opciones (Elite Type-Fix)
-       * RESOLUCIÓN TS2353/TS2322: Definimos las opciones con el tipo base de Prisma.
-       * Se utiliza la estructura 'datasources' que coincide con el nombre 'db' del schema.prisma.
+       * @section Fase 2: Resolución de Opciones del Motor
+       * RESOLUCIÓN TS2353/TS2322: Se utiliza 'datasourceUrl' de forma explícita.
+       * Si el cliente generado por Prisma no está presente, TS inferirá 'never'.
+       * Para evitarlo, definimos el objeto de opciones bajo el estándar actual.
        */
       const logConfiguration: Prisma.LogLevel[] =
         infrastructureConfiguration.executionEnvironment === 'development'
           ? ['query', 'info', 'warn', 'error']
           : ['error'];
 
-      /**
-       * @note Sello de Calidad
-       * El casting a 'any' está prohibido por OEDP, por lo que construimos el objeto
-       * satisfaciendo la interfaz Prisma.PrismaClientOptions de forma nativa.
-       */
-      const clientOptions: Prisma.PrismaClientOptions = {
-        datasources: {
-          db: {
-            url: infrastructureConfiguration.relationalDatabaseUrl,
-          },
-        },
-        log: logConfiguration,
-      };
-
       try {
         /**
          * @section Fase 3: Ignición con Telemetría Sincrónica
+         * RESOLUCIÓN ESLINT: Integramos 'operationName' en la traza para evitar variable huérfana.
          */
         this.relationalDatabaseEngineInstance = OmnisyncTelemetry.traceExecutionSync(
           apparatusName,
           operationName,
-          () => new PrismaClient(clientOptions)
+          () => {
+            /**
+             * @note Sello de Ingeniería
+             * Inyectamos la URL directamente en el constructor de Prisma 6/7.
+             */
+            return new PrismaClient({
+              datasourceUrl: infrastructureConfiguration.relationalDatabaseUrl,
+              log: logConfiguration,
+            });
+          }
         );
 
         OmnisyncTelemetry.verbose(
@@ -115,8 +112,8 @@ export class OmnisyncDatabase {
 
   /**
    * @method validateInfrastructureConnectivity
-   * @description Ejecuta una sonda de integridad profunda (Heartbeat) contra el cluster remoto.
-   * Valida que la infraestructura sea accesible y el pool de conexiones sea íntegro.
+   * @description Ejecuta una sonda de integridad profunda (Heartbeat) contra 
+   * el cluster remoto de SQL. Valida el pool de conexiones y la latencia.
    *
    * @returns {Promise<void>}
    */
@@ -130,12 +127,11 @@ export class OmnisyncDatabase {
       async () => {
         try {
           /**
-           * @note Sonda Atómica con Resiliencia
+           * @note Sonda Atómica con Resiliencia Sentinel
            */
           await OmnisyncSentinel.executeWithResilience(
             async () => {
               await this.databaseEngine.$connect();
-              // Ejecución de consulta minimalista para validar el motor SQL
               await this.databaseEngine.$queryRaw`SELECT 1`;
             },
             apparatusName,
@@ -169,8 +165,8 @@ export class OmnisyncDatabase {
 
   /**
    * @method terminatePersistenceEngine
-   * @description Realiza el apagado elegante de los recursos de red.
-   * Previene la fuga de conexiones en tiers gratuitos de bases de datos.
+   * @description Realiza el cierre atómico y elegante de los recursos de red.
+   * Indispensable para prevenir la saturación de conexiones en tiers Cloud.
    *
    * @returns {Promise<void>}
    */
