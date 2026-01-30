@@ -1,0 +1,8 @@
+{
+  "toggle_label": "Toggle Visual Identity",
+  "modes": {
+    "light": "Activate Milk Mode",
+    "dark": "Activate Obsidian Mode",
+    "system": "Sync with System"
+  }
+}

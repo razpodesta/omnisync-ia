@@ -1,6 +1,6 @@
 {
-  "name": "@omnisync-ecosystem/contracts",
-  "version": "0.0.1",
+  "name": "@omnisync/core-contracts",
+  "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",
@@ -8,7 +8,7 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "zod": "^4.3.6",
-    "@omnisync-ecosystem/sentinel": "workspace:*",
-    "@omnisync-ecosystem/telemetry": "workspace:*"
+    "@omnisync/core-sentinel": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*"
   }
 }

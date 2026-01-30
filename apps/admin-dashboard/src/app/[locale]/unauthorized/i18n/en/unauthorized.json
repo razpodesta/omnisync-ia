@@ -1,0 +1,10 @@
+{
+  "header_label": "SECURITY BREACH PREVENTION",
+  "title_part_1": "Unauthorized",
+  "title_part_2": "Access.",
+  "error_code_label": "ERROR_CODE",
+  "restricted_region_message": "Territorial sovereignty active: Your current region ({country}) lacks neural consumption permissions.",
+  "legal_notice": "Access to artificial intelligence infrastructure and ERP orchestration is limited by data sovereignty regulations and token budget protection.",
+  "back_to_safe_zone": "Return to Secure Genesis",
+  "forensic_footer": "Omnisync Security Protocol Implementation // RLS Enabled"
+}

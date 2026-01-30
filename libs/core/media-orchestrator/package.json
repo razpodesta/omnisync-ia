@@ -1,5 +1,5 @@
 {
-  "name": "@omnisync-ecosystem/media-orchestrator",
+  "name": "@omnisync/core-media-orchestrator",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",

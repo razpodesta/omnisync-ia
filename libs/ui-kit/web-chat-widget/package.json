@@ -1,0 +1,19 @@
+{
+  "name": "@omnisync/web-chat-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*",
+    "framer-motion": "^12.0.0",
+    "next-intl": "^4.0.0"
+  }
+}

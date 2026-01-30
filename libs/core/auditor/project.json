@@ -1,0 +1,36 @@
+
+{
+  "name": "core-auditor",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/core/auditor/src",
+  "projectType": "library",
+  "tags": ["scope:core", "type:util"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/core/auditor",
+        "main": "libs/core/auditor/src/index.ts",
+        "tsConfig": "libs/core/auditor/tsconfig.lib.json",
+        "assets": [
+          "libs/core/auditor/*.md",
+          {
+            "input": "libs/core/auditor",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/auditor/jest.config.cts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

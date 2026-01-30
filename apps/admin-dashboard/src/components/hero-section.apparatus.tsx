@@ -2,99 +2,136 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { motion, Variants } from 'framer-motion';
+import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { OmnisyncContracts } from '@omnisync/core-contracts';
+
+import {
+  HeroSectionConfigurationSchema,
+  IHeroSectionConfiguration
+} from './schemas/hero-section.schema';
 
 /**
  * @name HeroSection
- * @description Aparato de impacto visual primario del ecosistema Omnisync-AI. 
- * Orquesta la narrativa inicial del usuario mediante tipografía de grado 
- * arquitectónico y animaciones coreografiadas. Implementa la estética 
- * Obsidian & Milk bajo el protocolo OEDP.
+ * @description Aparato de impacto visual primario con sistema de navegación secuencial.
+ * Orquesta la narrativa del ecosistema mediante un slider de alta gama Obsidian & Milk.
  *
- * @protocol OEDP-Level: Elite (Visual Impact & Motion)
+ * @protocol OEDP-Level: Elite (Kinetic Storytelling)
  */
 export const HeroSection: React.FC = () => {
-  /**
-   * @section Internacionalización
-   * Se consume el namespace 'common' para el ADN de marca global.
-   */
-  const translations = useTranslations('common');
+  const translations = useTranslations('hero-section');
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   /**
-   * @section Configuración de Animaciones (Motion Canvas)
-   * Definición de variantes para una entrada fluida y profesional.
+   * @section Configuración del Carrusel
    */
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.2,
-      },
-    },
+  const configuration: IHeroSectionConfiguration = useMemo(() => {
+    const rawData: unknown = {
+      autoplayInterval: 6000,
+      slides: [
+        { id: crypto.randomUUID(), titleKey: 'slides.infra.title', subtitleKey: 'slides.infra.subtitle', ctaKey: 'slides.infra.cta', accentVariant: 'OBSIDIAN' },
+        { id: crypto.randomUUID(), titleKey: 'slides.erp.title', subtitleKey: 'slides.erp.subtitle', ctaKey: 'slides.erp.cta', accentVariant: 'MILK' },
+        { id: crypto.randomUUID(), titleKey: 'slides.rag.title', subtitleKey: 'slides.rag.subtitle', ctaKey: 'slides.rag.cta', accentVariant: 'NEURAL_PULSE' },
+      ]
+    };
+
+    return OmnisyncContracts.validate(HeroSectionConfigurationSchema, rawData, 'HeroSectionApparatus');
+  }, []);
+
+  /**
+   * @method nextSlide
+   * @description Avanza cíclicamente al siguiente nodo narrativo.
+   */
+  const nextSlide = useCallback(() => {
+    setActiveSlideIndex((prev) => (prev + 1) % configuration.slides.length);
+  }, [configuration.slides.length]);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, configuration.autoplayInterval);
+    return () => clearInterval(timer);
+  }, [nextSlide, configuration.autoplayInterval]);
+
+  /**
+   * @section Coreografía de Transición
+   */
+  const slideVariants: Variants = {
+    enter: { opacity: 0, x: 20, filter: 'blur(10px)' },
+    center: { opacity: 1, x: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, x: -20, filter: 'blur(10px)' }
   };
 
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30, filter: 'blur(10px)' },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: { duration: 1, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
+  return OmnisyncTelemetry.traceExecutionSync('HeroSection', 'render', () => (
+    <section className="relative h-[90vh] flex flex-col items-center justify-center overflow-hidden px-10 border-b border-border">
 
-  return (
-    <motion.section
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="relative py-48 px-10 text-center flex flex-col items-center justify-center overflow-hidden"
-    >
-      {/* 1. Indicador de Soberanía Técnica (Badge) */}
-      <motion.div variants={itemVariants} className="mb-12">
-        <div className="flex items-center gap-4 px-6 py-2 border border-border rounded-full bg-neutral-50/50 dark:bg-neutral-900/30 backdrop-blur-sm">
-          <div className="w-1.5 h-1.5 bg-foreground rounded-full animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-[0.6em] text-foreground/40 italic">
-            {translations('status')}
-          </span>
-        </div>
-      </motion.div>
+      {/* 1. Canvas Narrativo (Slider) */}
+      <div className="max-w-6xl w-full text-center">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={configuration.slides[activeSlideIndex].id}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-12"
+          >
+            <h1 className="text-[9vw] md:text-8xl font-light tracking-tighter leading-[0.9] italic">
+              {translations(configuration.slides[activeSlideIndex].titleKey).split('.')[0]}
+              <span className="font-black not-italic block">
+                {translations(configuration.slides[activeSlideIndex].titleKey).split('.')[1]}.
+              </span>
+            </h1>
 
-      {/* 2. Headline Maestro (Obsidian & Milk Typography) */}
-      <motion.h1 
-        variants={itemVariants}
-        className="text-[10vw] md:text-8xl font-light tracking-tighter leading-[0.9] text-foreground italic max-w-6xl"
-      >
-        Mentes <br className="md:hidden" />
-        <span className="font-black not-italic decoration-1 underline-offset-[12px]">
-          Descentralizadas.
-        </span>
-      </motion.h1>
+            <p className="max-w-2xl mx-auto text-sm md:text-base font-light uppercase tracking-[0.4em] opacity-40 leading-relaxed">
+              {translations(configuration.slides[activeSlideIndex].subtitleKey)}
+            </p>
 
-      {/* 3. Subtexto de Proposición de Valor */}
-      <motion.div variants={itemVariants} className="mt-16 max-w-2xl">
-        <p className="text-[13px] md:text-sm font-light leading-relaxed opacity-50 uppercase tracking-[0.4em]">
-          {translations('welcome')} <span className="opacity-20 mx-2">//</span> {translations('hero_description')}
-        </p>
-      </motion.div>
+            <div className="pt-8">
+              <button className="bg-foreground text-background px-16 py-6 text-[10px] font-black uppercase tracking-[0.8em] hover:scale-105 transition-all shadow-2xl active:scale-95">
+                {translations(configuration.slides[activeSlideIndex].ctaKey)}
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-      {/* 4. Llamada a la Acción (CTA de Grado Elite) */}
-      <motion.div variants={itemVariants} className="mt-20">
-        <button 
-          className="group relative bg-foreground text-background px-16 py-6 text-[10px] font-black uppercase tracking-[0.8em] transition-all hover:scale-105 active:scale-95 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_20px_50px_rgba(255,255,255,0.05)]"
-        >
-          <span className="relative z-10">{translations('explore_infrastructure')}</span>
-          <div className="absolute inset-0 bg-background opacity-0 group-hover:opacity-10 transition-opacity" />
-        </button>
-      </motion.div>
+      {/* 2. Navegación de Soberanía (Pagination) */}
+      <div className="absolute bottom-20 flex gap-4">
+        {configuration.slides.map((slide, index) => (
+          <button
+            key={slide.id}
+            onClick={() => {
+              OmnisyncTelemetry.verbose('HeroSection', 'manual_nav', `Slide ${index}`);
+              setActiveSlideIndex(index);
+            }}
+            className="group relative p-2 outline-none"
+          >
+            <div className={`
+              h-[2px] transition-all duration-1000
+              ${index === activeSlideIndex ? 'w-12 bg-foreground' : 'w-6 bg-border group-hover:bg-foreground/30'}
+            `} />
+            {index === activeSlideIndex && (
+              <motion.div
+                layoutId="hero-pill-timer"
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                transition={{ duration: configuration.autoplayInterval / 1000, ease: 'linear' }}
+                className="absolute top-2 left-2 h-[2px] bg-foreground/20"
+              />
+            )}
+          </button>
+        ))}
+      </div>
 
-      {/* 5. Elementos Decorativos de Grid (Manus.io Signature) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-full bg-gradient-to-b from-transparent via-border to-transparent opacity-20 -z-10" />
-      <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-border to-transparent opacity-20 -z-10" />
-    </motion.section>
-  );
+      {/* 3. Elementos de Firma Manus.io */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[1px] h-full bg-border/20" />
+        <div className="absolute top-0 left-3/4 w-[1px] h-full bg-border/20" />
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-border/10" />
+      </div>
+
+    </section>
+  ));
 };

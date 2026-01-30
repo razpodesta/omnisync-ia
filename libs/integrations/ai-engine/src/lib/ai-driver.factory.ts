@@ -7,7 +7,7 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 /**
  * @section Sincronización de ADN Local
- * Importamos el esquema de resolución para validar la soberanía de la petición.
+ * Resolución de esquemas de validación interna para la capa de integración.
  */
 import {
   AIProviderResolutionSchema,
@@ -16,37 +16,42 @@ import {
 
 /**
  * @type NeuralModelTier
- * @description Define los niveles de razonamiento y especialización del modelo.
- * NIVELACIÓN 2026: Inclusión de tiers para procesos de fondo y razonamiento profundo.
+ * @description Define la taxonomía de potencia y especialización de los modelos.
+ * Sincronizado para soportar razonamiento profundo (Thinking) y vectorización.
  */
 export type NeuralModelTier = 'PRO' | 'FLASH' | 'DEEP_THINK' | 'EMBEDDING';
 
 /**
  * @name ArtificialIntelligenceDriverFactory
- * @description Fábrica de infraestructura de alta disponibilidad para la resolución de drivers de IA.
- * Actúa como el ruteador soberano del sistema, gestionando el ciclo de vida de los conectores
- * y garantizando el agnosticismo de los orquestadores superiores.
+ * @description Fábrica de infraestructura de alta disponibilidad encargada de la 
+ * resolución y ciclo de vida de los drivers de IA. Implementa un patrón 
+ * Singleton Memoizado para optimizar el consumo de memoria y garantizar 
+ * el agnosticismo total del Neural Hub.
  *
- * @protocol OEDP-Level: Elite (Atomic & Memoized)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Provider-Sovereignty V3.2)
+ * @vision Ultra-Holística: Model-Agnostic & Zero-Latency-Resolution
  */
 export class ArtificialIntelligenceDriverFactory {
   /**
    * @private
-   * @description Almacén inmutable de instancias para evitar la fragmentación de memoria.
+   * @description Registro inmutable de instancias activas. Previene la 
+   * duplicidad de handshakes con los SDKs de proveedores.
    */
-  private static readonly sovereignDriverCache = new Map<
+  private static readonly sovereignDriverRegistry = new Map<
     string,
     IArtificialIntelligenceDriver
   >();
 
   /**
    * @method getSovereignDriver
-   * @description Localiza, valida e instancia el driver de inteligencia artificial requerido.
-   * Aplica un patrón Singleton por combinación de Proveedor/Tier.
+   * @description Localiza y activa el driver de IA requerido. 
+   * Ejecuta una auditoría de integridad sobre la petición antes de la instanciación.
    *
-   * @param {string} providerIdentifier - Identificador nominal (ej: 'GOOGLE_GEMINI').
-   * @param {NeuralModelTier} neuralModelTier - Nivel de potencia del modelo (Default: FLASH).
-   * @returns {IArtificialIntelligenceDriver} El driver listo para la ejecución de inferencia.
+   * @param {string} providerIdentifier - ID nominal del proveedor (ej: 'GOOGLE_GEMINI').
+   * @param {NeuralModelTier} neuralModelTier - Nivel de potencia solicitado (Default: FLASH).
+   * @returns {IArtificialIntelligenceDriver} Driver validado y listo para inferencia.
    */
   public static getSovereignDriver(
     providerIdentifier: string,
@@ -60,96 +65,100 @@ export class ArtificialIntelligenceDriverFactory {
       operationName,
       () => {
         /**
-         * @section Fase 1: Validación de Soberanía de Entrada
-         * Aseguramos que la petición cumpla con el contrato SSOT de la capa de integración.
+         * @section Fase 1: Validación de Soberanía de Entrada (SSOT)
+         * Aseguramos que el identificador y el tier cumplan con el contrato de la capa.
          */
-        const validationResult: IAIProviderResolution =
+        const validatedResolution: IAIProviderResolution =
           AIProviderResolutionSchema.parse({
-            providerIdentifier,
+            providerIdentifier: providerIdentifier.toUpperCase(),
             modelTier: neuralModelTier,
           });
 
-        const normalizedProvider = validationResult.providerIdentifier;
-        const cacheKey = `${normalizedProvider}:${neuralModelTier}`;
+        const cacheLookupKey = `${validatedResolution.providerIdentifier}:${neuralModelTier}`;
 
-        // Verificación en caché para optimización de performance
-        const cachedDriver = this.sovereignDriverCache.get(cacheKey);
-        if (cachedDriver) {
+        // Optimización por Recuperación de Memoria
+        const existingDriver = this.sovereignDriverRegistry.get(cacheLookupKey);
+        if (existingDriver) {
           OmnisyncTelemetry.verbose(
             apparatusName,
-            'cache_hit',
-            `Reutilizando instancia: ${cacheKey}`,
+            'memoization_hit',
+            `Reutilizando infraestructura para: ${cacheLookupKey}`,
           );
-          return cachedDriver;
+          return existingDriver;
         }
 
         /**
-         * @section Fase 2: Resolución y Activación de Driver
-         * Despacho polimórfico basado en el identificador de infraestructura.
+         * @section Fase 2: Activación de Driver Físico
+         * Delegamos la creación a un nodo de decisión interno para mantener SRP.
          */
-        const resolvedDriver = this.resolveInternalDriver(
-          normalizedProvider,
+        const newlyActivatedDriver = this.instantiateInternalDriver(
+          validatedResolution.providerIdentifier,
           neuralModelTier,
         );
 
-        // Registro en caché soberana
-        this.sovereignDriverCache.set(cacheKey, resolvedDriver);
+        // Registro en la Bóveda de Soberanía
+        this.sovereignDriverRegistry.set(cacheLookupKey, newlyActivatedDriver);
 
-        return resolvedDriver;
+        return newlyActivatedDriver;
       },
+      { provider: providerIdentifier, tier: neuralModelTier }
     );
   }
 
   /**
-   * @method resolveInternalDriver
+   * @method instantiateInternalDriver
    * @private
-   * @description Nodo de decisión para la instanciación de drivers físicos.
+   * @description Nodo de decisión para el aprovisionamiento de drivers.
    */
-  private static resolveInternalDriver(
+  private static instantiateInternalDriver(
     provider: string,
     tier: NeuralModelTier,
   ): IArtificialIntelligenceDriver {
-    const apparatusName = 'ArtificialIntelligenceDriverFactory';
+    const apparatusName = 'ArtificialIntelligenceDriverFactory:Aprovisionador';
 
     switch (provider) {
       case 'GOOGLE_GEMINI':
         /**
          * @note Integración con Gemini 2026
-         * Se delega la configuración específica al driver de la capa Google Gemini.
+         * El driver de Google maneja internamente la lógica de sus propios modelos.
          */
         return new GoogleGeminiDriver(
           tier as 'PRO' | 'FLASH' | 'DEEP_THINK' | 'EMBEDDING',
         );
 
       default: {
-        const resolutionErrorMessage = `[OS-AI-FACTORY]: El proveedor [${provider}] no posee un adaptador activo en la infraestructura.`;
+        const failureMessage = `[OS-AI-ENGINE]: El proveedor [${provider}] no tiene un adaptador autorizado.`;
 
+        /**
+         * @section Gestión de Anomalía Crítica
+         * Si el proveedor no es reconocido, el Sentinel bloquea la ejecución.
+         */
         OmnisyncSentinel.report({
           errorCode: 'OS-INTEG-604',
           severity: 'CRITICAL',
           apparatus: apparatusName,
-          operation: 'resolve_internal_driver',
-          message: resolutionErrorMessage,
-          context: { provider, requestedTier: tier },
+          operation: 'instantiate_driver',
+          message: failureMessage,
+          context: { providerIdentifier: provider, requestedTier: tier },
           isRecoverable: false,
         });
 
-        throw new Error(resolutionErrorMessage);
+        throw new Error(failureMessage);
       }
     }
   }
 
   /**
-   * @method flushCache
-   * @description Libera todas las instancias de drivers. Útil para rotación de API Keys
-   * o reinicio caliente del sistema de orquestación.
+   * @method flushSovereignCache
+   * @description Limpia el registro de drivers. Vital para la rotación de 
+   * secretos en caliente sin reiniciar el microservicio.
    */
-  public static flushCache(): void {
-    this.sovereignDriverCache.clear();
+  public static flushSovereignCache(): void {
+    this.sovereignDriverRegistry.clear();
     OmnisyncTelemetry.verbose(
       'ArtificialIntelligenceDriverFactory',
-      'cache_flush',
-      'Sovereign Driver Cache has been purged.',
+      'cache_purged',
+      'El registro de drivers ha sido vaciado por orden de seguridad.'
     );
   }
 }

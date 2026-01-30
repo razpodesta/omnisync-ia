@@ -1,5 +1,5 @@
 {
-  "name": "persistence",
+  "name": "core-persistence",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/persistence/src",
   "projectType": "library",

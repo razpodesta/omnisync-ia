@@ -1,5 +1,5 @@
 {
-  "name": "security",
+  "name": "core-security",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/security/src",
   "projectType": "library",
@@ -12,7 +12,31 @@
         "outputPath": "dist/libs/core/security",
         "main": "libs/core/security/src/index.ts",
         "tsConfig": "libs/core/security/tsconfig.lib.json",
-        "assets": ["libs/core/security/*.md"]
+        "assets": [
+          "libs/core/security/*.md",
+          {
+            "input": "libs/core/security",
+            "glob": "package.json",
+            "output": "."
+          },
+          {
+            "input": "libs/core/security/src/lib/i18n",
+            "glob": "**/*.json",
+            "output": "i18n"
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/security/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

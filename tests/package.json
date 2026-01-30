@@ -1,5 +1,5 @@
 {
-  "name": "@omnisync-ecosystem/tests",
+  "name": "@omnisync/tests",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",

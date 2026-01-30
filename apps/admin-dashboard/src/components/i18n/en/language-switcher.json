@@ -1,0 +1,9 @@
+
+{
+  "selector_label": "Change Language",
+  "locales": {
+    "es": "Spanish",
+    "en": "English",
+    "pt": "Portuguese"
+  }
+}

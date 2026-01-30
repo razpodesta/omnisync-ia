@@ -1,5 +1,5 @@
 {
-  "name": "@omnisync-ecosystem/internal-scripts",
+  "name": "@omnisync/core-internal-scripts",
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
@@ -9,9 +9,10 @@
     "tslib": "^2.3.0",
     "zod": "^4.3.6",
     "glob": "^13.0.0",
-    "lodash": "^4.17.21",
-    "@omnisync-ecosystem/telemetry": "workspace:*",
-    "@omnisync-ecosystem/sentinel": "workspace:*",
-    "@omnisync-ecosystem/persistence": "workspace:*"
+    "lodash": "^4.17.23",
+    "@omnisync/core-telemetry": "workspace:*",
+    "@omnisync/core-sentinel": "workspace:*",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/persistence": "workspace:*"
   }
 }

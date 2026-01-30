@@ -1,2 +1,4 @@
 /** libs/integrations/erp-adapter-mock/src/index.ts */
-export { MockEnterpriseResourcePlanningAdapter } from './lib/mock-adapter.apparatus';
+
+export * from './lib/mock-adapter.apparatus';
+export * from './lib/schemas/mock-adapter.schema';

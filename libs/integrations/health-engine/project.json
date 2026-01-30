@@ -1,0 +1,35 @@
+{
+  "name": "health-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/health-engine/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/health-engine",
+        "main": "libs/integrations/health-engine/src/index.ts",
+        "tsConfig": "libs/integrations/health-engine/tsconfig.lib.json",
+        "assets": [
+          "libs/integrations/health-engine/*.md",
+          {
+            "input": "libs/integrations/health-engine",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/integrations/health-engine/jest.config.cts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

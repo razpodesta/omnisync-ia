@@ -6,90 +6,119 @@ import {
   INeuralIntent,
   NeuralIntentSchema,
   TenantId,
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 
-/**
- * @interface IWebChatSocketEvent
- * @description Estructura cruda esperada desde el cliente del Widget Web.
+/** 
+ * @section Sincronización de ADN Local 
+ * RESOLUCIÓN LINT: Inyección de Zod para validación de entrada técnica.
  */
-interface IWebChatSocketEvent {
-  readonly message: string;
-  readonly browserInfo?: string;
-}
+import { WebChatSocketEventSchema, IWebChatSocketEvent } from './schemas/web-chat-driver.schema';
 
 /**
  * @name WebChatDriver
- * @description Aparato encargado de la mediación entre eventos de WebSockets y
- * el Neural Hub. Traduce la interacción del usuario en la web en Intenciones
- * Neurales estandarizadas bajo contrato SSOT.
+ * @description Aparato mediador de alta disponibilidad encargado de la normalización 
+ * de tráfico WebSocket. Actúa como el intérprete entre el Widget Web y el 
+ * Neural Hub, transformando eventos asíncronos en Intenciones Neurales inmutables.
  *
- * @protocol OEDP-Level: Elite (Zero Any Implementation)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Secure-WebSocket-Gateway V3.2)
+ * @vision Ultra-Holística: Zero-Any & Forensic-Mapping
  */
 export class WebChatDriver {
   /**
    * @method transformEventToIntent
-   * @description Normaliza y valida el payload recibido desde el socket.
-   * Erradica el uso de 'any' mediante tipado fuerte y validación de esquemas.
+   * @description Transforma un pulso de red web en un contrato neural operativo. 
+   * Ejecuta una validación de doble capa: local (ADN de red) y global (ADN neural).
    *
-   * @param {string} socketClientId - Identificador del cliente conectado al socket.
-   * @param {unknown} rawPayload - Datos brutos recibidos por la red.
-   * @param {string} tenantOrganizationIdentifier - ID del nodo suscriptor.
+   * @param {string} socketClientId - Identificador único de la conexión física.
+   * @param {unknown} rawPayload - Carga útil recibida por el socket.
+   * @param {string} tenantId - Identificador nominal de la organización suscriptora.
    * @returns {Promise<INeuralIntent>} Intención validada y lista para orquestación.
    */
   public static async transformEventToIntent(
     socketClientId: string,
     rawPayload: unknown,
-    tenantOrganizationIdentifier: string,
+    tenantId: string,
   ): Promise<INeuralIntent> {
+    const apparatusName = 'WebChatDriver';
+    const operationName = 'transformEventToIntent';
+
     return await OmnisyncTelemetry.traceExecution(
-      'WebChatDriver',
-      'transformEventToIntent',
+      apparatusName,
+      operationName,
       async () => {
         try {
           /**
-           * @section Normalización de Carga Útil
-           * Se realiza un casteo seguro a la interfaz de evento interna.
+           * @section Fase 1: Aduana de Entrada (Red)
+           * Erradicamos el uso de 'as' mediante validación estricta del esquema local.
            */
-          const socketEvent = rawPayload as IWebChatSocketEvent;
+          const validatedEvent: IWebChatSocketEvent = OmnisyncContracts.validate(
+            WebChatSocketEventSchema,
+            rawPayload,
+            `${apparatusName}:NetworkHandshake`
+          );
 
-          const neuralIntentPayload: Partial<INeuralIntent> = {
+          /**
+           * @section Fase 2: Mapeo y Normalización
+           * Construimos el ADN de la intención inyectando soberanía de identidad y versión.
+           */
+          const neuralIntentPayload: unknown = {
             id: crypto.randomUUID(),
             channel: 'WEB_CHAT',
             externalUserId: socketClientId,
             /**
-             * NIVELACIÓN: Casteo explícito al Branded Type 'TenantId'
-             * para cumplir con la soberanía nominal del sistema.
+             * NIVELACIÓN: Aplicamos la soberanía de marca mediante el Branded Type TenantId.
              */
-            tenantId: tenantOrganizationIdentifier as TenantId,
+            tenantId: tenantId as TenantId,
             payload: {
               type: 'TEXT',
-              content: socketEvent.message ?? '',
+              content: validatedEvent.message,
               metadata: {
-                userAgent: socketEvent.browserInfo ?? 'unknown_browser_agent',
+                userAgent: validatedEvent.browserInfo,
+                socketIdentifier: socketClientId,
+                frameworkVersion: 'OEDP-V3.2-ELITE',
+                clientContext: validatedEvent.context ?? {}
               },
             },
             timestamp: new Date().toISOString(),
           };
 
-          return NeuralIntentSchema.parse(neuralIntentPayload);
-        } catch (criticalError: unknown) {
+          /**
+           * @section Fase 3: Sello de Integridad SSOT
+           * Validamos que el resultado final cumpla con el estándar omnicanal del sistema.
+           */
+          return OmnisyncContracts.validate(
+            NeuralIntentSchema,
+            neuralIntentPayload,
+            apparatusName
+          );
+
+        } catch (criticalMappingError: unknown) {
+          /**
+           * @note Gestión de Resiliencia Forense
+           * El Sentinel captura el fallo pero permite identificar si el 
+           * cliente web está enviando datos fuera de norma.
+           */
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-701',
             severity: 'MEDIUM',
-            apparatus: 'WebChatDriver',
-            operation: 'transform',
-            message:
-              'Fallo crítico al mapear evento de socket a Intención Neural.',
+            apparatus: apparatusName,
+            operation: operationName,
+            message: 'tools.web_chat.normalization_failed',
             context: {
-              socketClientId,
-              tenantId: tenantOrganizationIdentifier,
-              error: String(criticalError),
+              socketId: socketClientId,
+              tenantIdentifier: tenantId,
+              errorDetail: String(criticalMappingError),
             },
             isRecoverable: true,
           });
-          throw criticalError;
+          
+          throw criticalMappingError;
         }
       },
+      { socketId: socketClientId, tenant: tenantId }
     );
   }
 }

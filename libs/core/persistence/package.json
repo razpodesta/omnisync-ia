@@ -1,14 +1,20 @@
 {
-  "name": "@omnisync-ecosystem/persistence",
-  "version": "0.0.1",
+  "name": "@omnisync/core-persistence",
+  "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
+    "zod": "^4.3.6",
+    "prisma": "^7.3.0",
     "@prisma/client": "^7.3.0",
-    "@omnisync-ecosystem/sentinel": "workspace:*",
-    "@omnisync-ecosystem/telemetry": "workspace:*"
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-sentinel": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "prisma": "^7.3.0"
   }
 }

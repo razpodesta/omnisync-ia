@@ -2,30 +2,35 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
+/**
+ * @section Sincronización de Persistencia
+ * RESOLUCIÓN TS2307: Se actualiza el alias al nombre nominal soberano.
+ */
+import { OmnisyncDatabase } from '@omnisync/core-persistence';
 import {
   ITenantConfiguration,
   TenantConfigurationSchema,
   TenantId,
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 
 /**
  * @name SovereigntyResolverApparatus
  * @description Aparato de gobernanza encargado de la resolución de identidades corporativas.
- * Actúa como el guardián de acceso a la configuración del suscriptor, validando
- * la integridad del ADN organizacional y su estado operativo actual.
+ * Actúa como el guardián de acceso al ADN del suscriptor, validando la integridad 
+ * de la configuración y el estado operativo del nodo solicitado.
  *
- * @protocol OEDP-Level: Elite (Identity Governance)
+ * @protocol OEDP-Level: Elite (Identity-Governance V3.0)
  */
 export class SovereigntyResolverApparatus {
   /**
    * @method resolveTenantSovereignty
-   * @description Localiza y valida la configuración completa de una organización.
-   * Ejecuta una validación de contrato SSOT sobre el registro de base de datos.
+   * @description Localiza, valida y entrega la configuración completa de una organización.
+   * Ejecuta una validación estricta (SSOT) sobre el registro recuperado de la base de datos.
    *
    * @param {TenantId} tenantOrganizationIdentifier - Identificador nominal del nodo.
-   * @returns {Promise<ITenantConfiguration>} Configuración validada y lista para la acción.
-   * @throws {Error} Si el nodo no existe o su ADN es inconsistente.
+   * @returns {Promise<ITenantConfiguration>} Configuración validada y sellada.
+   * @throws {Error} Si el nodo es inexistente, está inactivo o su ADN es inconsistente.
    */
   public static async resolveTenantSovereignty(
     tenantOrganizationIdentifier: TenantId,
@@ -39,8 +44,8 @@ export class SovereigntyResolverApparatus {
       async () => {
         try {
           /**
-           * @section Consulta a Persistencia Soberana
-           * Utilizamos el motor de base de datos relacional para recuperar el ADN.
+           * @section 1. Consulta a Persistencia Relacional
+           * Handshake con Supabase Cloud mediante el motor nivelado.
            */
           const rawConfigurationRecord =
             await OmnisyncDatabase.databaseEngine.tenant.findUnique({
@@ -48,54 +53,54 @@ export class SovereigntyResolverApparatus {
             });
 
           /**
-           * @section Verificación de Existencia Física
-           * Si el registro no existe, el Sentinel reporta una anomalía de acceso
-           * ya que una petición llegó con un TenantId no registrado.
+           * @section 2. Verificación de Existencia Física
+           * Si el registro es nulo, el Sentinel reporta una tentativa de acceso no autorizada.
            */
           if (!rawConfigurationRecord) {
-            const nodeNotFoundError = new Error(
-              `OS-DOM-404: Nodo [${tenantOrganizationIdentifier}] no localizado en la infraestructura.`,
-            );
+            const anomalyMessage = `OS-DOM-404: El nodo organizacional [${tenantOrganizationIdentifier}] no existe en la infraestructura.`;
 
             await OmnisyncSentinel.report({
               errorCode: 'OS-DOM-404',
               severity: 'HIGH',
               apparatus: apparatusName,
               operation: operationName,
-              message: 'core.sovereignty.node_not_found',
-              context: { tenantId: tenantOrganizationIdentifier },
+              message: 'core.sovereignty.error.node_not_found',
+              context: { requestedTenantId: tenantOrganizationIdentifier },
               isRecoverable: false,
             });
 
-            throw nodeNotFoundError;
+            throw new Error(anomalyMessage);
           }
 
           /**
-           * @section Validación de ADN (SSOT)
-           * Transformamos el registro bruto en un objeto tipado e inmutable.
+           * @section 3. Validación de ADN Estructural (SSOT)
+           * Transformamos el registro bruto en una instancia inmutable validada por Zod.
            */
-          const validatedConfiguration = TenantConfigurationSchema.parse(
+          const validatedConfiguration = OmnisyncContracts.validate(
+            TenantConfigurationSchema,
             rawConfigurationRecord,
+            `${apparatusName}:DatabaseRecord`
           );
 
           /**
-           * @section Auditoría de Estado Operativo
-           * Bloqueamos el flujo si el nodo se encuentra suspendido o en mantenimiento.
+           * @section 4. Auditoría de Estado Operativo
+           * Bloqueamos la ejecución si el nodo no está en fase 'ACTIVE'.
            */
           if (validatedConfiguration.status !== 'ACTIVE') {
             OmnisyncTelemetry.verbose(
               apparatusName,
-              'status_check',
-              `Nodo [${tenantOrganizationIdentifier}] inactivo: ${validatedConfiguration.status}`,
+              'operational_block',
+              `Acceso denegado: Nodo [${tenantOrganizationIdentifier}] se encuentra en estado ${validatedConfiguration.status}.`
             );
-            throw new Error(
-              `OS-DOM-403: El servicio para la organización está temporalmente ${validatedConfiguration.status}.`,
-            );
+            throw new Error(`OS-DOM-403: El servicio para esta organización está en ${validatedConfiguration.status}.`);
           }
 
           return validatedConfiguration;
         } catch (criticalResolverError: unknown) {
-          // Si es un error de Zod, el Sentinel lo captura mediante el middleware de contratos
+          /**
+           * @section Gestión de Fallos de Infraestructura
+           * Filtramos errores de dominio para reportar solo brechas de red o conectividad SQL.
+           */
           if (
             criticalResolverError instanceof Error &&
             !criticalResolverError.message.includes('OS-DOM')
@@ -105,14 +110,15 @@ export class SovereigntyResolverApparatus {
               severity: 'CRITICAL',
               apparatus: apparatusName,
               operation: 'database_handshake',
-              message: 'core.sovereignty.resolution_failed',
-              context: { error: String(criticalResolverError) },
+              message: 'core.sovereignty.error.resolution_failed',
+              context: { errorTrace: String(criticalResolverError) },
               isRecoverable: true,
             });
           }
           throw criticalResolverError;
         }
       },
+      { tenantId: tenantOrganizationIdentifier }
     );
   }
 }

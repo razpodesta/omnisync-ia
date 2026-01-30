@@ -1,11 +1,18 @@
-/** libs/[any-lib]/tsconfig.lib.json */
+/** libs/tools/internal-scripts/tsconfig.lib.json */
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
+    /**
+     * @section Soberanía de Definiciones
+     * RESOLUCIÓN TS2580: Se incluye 'node' explícitamente para habilitar el objeto 'process'.
+     */
     "types": ["node"],
-    "target": "es2022"
+    "target": "es2022",
+    "module": "commonjs",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts"]

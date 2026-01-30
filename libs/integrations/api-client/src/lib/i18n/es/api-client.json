@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "network_failure": "Incapacidad de conectar con el Neural Hub.",
+    "contract_violation": "ADN de petición inconsistente detectado.",
+    "timeout": "La operación neural ha excedido el tiempo de gracia."
+  },
+  "telemetry": {
+    "call_initiated": "Iniciando despacho hacia endpoint neural: {endpoint}"
+  }
+}

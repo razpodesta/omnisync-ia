@@ -1,5 +1,5 @@
 {
-  "name": "telemetry",
+  "name": "core-telemetry",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/telemetry/src",
   "projectType": "library",
@@ -12,7 +12,26 @@
         "outputPath": "dist/libs/core/telemetry",
         "main": "libs/core/telemetry/src/index.ts",
         "tsConfig": "libs/core/telemetry/tsconfig.lib.json",
-        "assets": ["libs/core/telemetry/*.md"]
+        "assets": [
+          "libs/core/telemetry/*.md",
+          {
+            "input": "libs/core/telemetry",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/telemetry/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

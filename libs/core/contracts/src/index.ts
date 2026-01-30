@@ -1,49 +1,54 @@
 /** libs/core/contracts/src/index.ts */
 
 /**
- * @section Capa de Validación y Comunicación
- * Aparatos encargados de la integridad SSOT y el transporte de datos.
+ * @module CoreContracts
+ * @description Única Fuente de Verdad (SSOT) para el ecosistema Omnisync-AI.
+ * Centraliza la lógica de validación de integridad, el transporte neural y 
+ * los contratos inmutables de datos compartidos entre todas las capas.
+ * 
+ * @version 3.0.0-ELITE
+ * @protocol OEDP-Standard: Sempiternal DNA Architecture
+ */
+
+/**
+ * @section 1. Motores de Integridad y Transporte
+ * Aparatos fundamentales que orquestan la pureza del dato y la comunicación.
  */
 export { OmnisyncContracts } from './lib/contracts.apparatus';
 export { NeuralBridge } from './lib/neural-bridge.apparatus';
 
 /**
- * @section Capa Core & Identity
- * Tipos base, perfiles de usuario y gestión de sesiones.
+ * @section 2. Identidad y Gobernanza (Identity & Tenants)
+ * El ADN que define la soberanía de los usuarios y la configuración de nodos.
  */
 export * from './lib/schemas/core-contracts.schema';
 export * from './lib/schemas/identity-session.schema';
-
-/**
- * @section Capa de Gobernanza (Tenants)
- * El ADN que define el comportamiento de cada nodo.
- */
 export * from './lib/schemas/tenant-config.schema';
 
 /**
- * @section Capa de Cognición (Intelligence & RAG)
- * Esquemas para orquestación de IA, búsqueda semántica y fragmentación de conocimiento.
+ * @section 3. Inteligencia y Cognición (AI & RAG)
+ * Esquemas para orquestación de LLMs, búsqueda vectorial y memoria semántica.
  */
 export * from './lib/schemas/ai-orchestration.schema';
 export * from './lib/schemas/knowledge.schema';
 
 /**
- * @section Capa de Acción (ERP & CRM)
- * Contratos para la ejecución operativa y resolución de identidades en sistemas externos.
+ * @section 4. Ejecución y Acción (ERP & CRM)
+ * Contratos de sincronización operativa para la integración con sistemas externos.
  */
 export * from './lib/schemas/erp-integration.schema';
 export * from './lib/schemas/crm-integration.schema';
 
 /**
- * @section Capa de Infraestructura y Transporte
- * Contratos para el puente neural y normalización de canales.
+ * @section 5. Omnicanalidad e Infraestructura (Channels & Bridge)
+ * Contratos para normalización de mensajes y parámetros de red.
  */
 export * from './lib/schemas/neural-bridge.schema';
 export * from './lib/schemas/omnichannel.schema';
 export * from './lib/schemas/whatsapp-integration.schema';
 
 /**
- * @section Capa de Resultados (Orchestration)
- * El contrato final consolidado del flujo neural.
+ * @section 6. Orquestación y Resultados (Flow Consummation)
+ * El contrato final consolidado que sella el ciclo de vida de una intención neural.
  */
 export * from './lib/schemas/flow-orchestration.schema';

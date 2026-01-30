@@ -1,51 +1,107 @@
 {
-  "common": {
-    "welcome": "Bienvenido a Omnisync-AI",
-    "status": "Neural Hub Activo",
-    "hero_description": "Infraestructura descentralizada para orquestación de comunicaciones e IA generativa.",
-    "input_placeholder": "Escribe una consulta técnica...",
-    "footer": {
-      "version_label": "Omnisync-AI",
-      "credits": "Infraestructura Neural por MetaShark Tech Cloud Architecture",
-      "rights": "Todos los derechos reservados",
-      "latency_label": "Latencia",
-      "region_label": "Región"
+  "theme-switcher": {
+    "toggle_label": "Alternar Identidad Visual",
+    "modes": {
+      "light": "Activar modo Milk",
+      "dark": "Activar modo Obsidian",
+      "system": "Sincronizar con Sistema"
+    }
+  },
+  "language-switcher": {
+    "selector_label": "Cambiar Idioma",
+    "locales": {
+      "es": "Español",
+      "en": "Inglés",
+      "pt": "Portugués"
+    }
+  },
+  "hero-section": {
+    "slides": {
+      "infra": {
+        "title": "Mentes Descentralizadas.",
+        "subtitle": "Infraestructura neural para la orquestación de comunicaciones de élite.",
+        "cta": "Explorar Red"
+      },
+      "erp": {
+        "title": "Acción Transaccional.",
+        "subtitle": "Puentes inteligentes entre la IA generativa y su núcleo operativo ERP.",
+        "cta": "Ver Integraciones"
+      },
+      "rag": {
+        "title": "Memoria Semántica.",
+        "subtitle": "Elimine alucinaciones inyectando sus manuales técnicos en el motor Gemini.",
+        "cta": "Cargar Conocimiento"
+      }
     }
   },
   "widget": {
     "header": "Soporte Neural",
-    "nav_dashboard": "Dashboard",
-    "nav_knowledge": "Knowledge",
+    "status_active": "Soberanía Activa",
+    "close": "CERRAR",
+    "welcome_message": "Infraestructura Neural conectada. ¿En qué puedo asistirle hoy?",
+    "ai_typing": "Procesando Inferencia...",
+    "input_placeholder": "Escriba una consulta técnica...",
     "send": "Enviar",
-    "ai_typing": "Procesando...",
-    "welcome_message": "Soberanía Técnica habilitada. ¿En qué puedo asistirle hoy?"
-  },
-  "knowledge": {
-    "section_label": "Repositorio de Conocimiento",
-    "title_placeholder": "TÍTULO DEL DOCUMENTO",
-    "content_placeholder": "INYECTE EL CONTENIDO TÉCNICO AQUÍ...",
-    "status_syncing": "Sincronizando ADN...",
-    "status_ready": "Nodo listo para ingesta",
-    "ingest_button": "Indexar Conocimiento"
-  },
-  "security": {
-    "auth": {
-      "invalid_token": "El token proporcionado no es válido o ha expirado.",
-      "unauthorized": "No tiene permisos suficientes para realizar esta acción.",
-      "session_expired": "Su sesión ha caducado. Por favor, inicie sesión nuevamente."
-    },
-    "encryption": {
-      "failure": "Error crítico al procesar el cifrado de datos sensibles.",
-      "integrity_violation": "Los datos han sido manipulados o la clave es incorrecta."
-    },
-    "geofencing": {
-      "restricted_region": "Acceso restringido: Omnisync-AI no está disponible en su ubicación actual ({country}).",
-      "token_protection_active": "Protección de tokens activa para la región: {country}.",
-      "error_code": "OS-SEC-403"
-    },
-    "exceptions": {
-      "page_not_found_description": "El nodo solicitado no ha sido localizado en la red neural de Omnisync.",
-      "return_genesis": "Volver al Inicio Seguro"
+    "errors": {
+      "system_offline": "Incapacidad de comunicación neural. Por favor, reintente en breve."
     }
+  },
+  "api-client": {
+    "errors": {
+      "network_failure": "Incapacidad de conectar con el Neural Hub.",
+      "contract_violation": "ADN de petición inconsistente detectado.",
+      "timeout": "La operación neural ha excedido el tiempo de gracia."
+    },
+    "telemetry": {
+      "call_initiated": "Iniciando despacho hacia endpoint neural: {endpoint}"
+    }
+  },
+  "database": {
+    "status": {
+      "handshake_success": "HANDSHAKE_CON_EL_CLUSTER_SQL_EXITOSO",
+      "heartbeat_operational": "PULSO_DE_PERSISTENCIA_ACTIVO_Y_ESTABLE",
+      "pool_shutdown": "POOL_DE_CONEXIONES_CERRADO_LIMPIAMENTE"
+    },
+    "errors": {
+      "engine_failed": "FALLO_CRÍTICO_EN_LA_IGNICIÓN_DEL_MOTOR_PRISMA",
+      "connectivity_loss": "PÉRDIDA_DE_CONEXIÓN_CON_LA_BASE_DE_DATOS_REMOTA",
+      "invalid_url": "URL_DE_INSTANCIA_SQL_CORRUPTA_O_INEXISTENTE"
+    }
+  },
+  "header": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "nav": {
+      "dashboard": "Panel",
+      "knowledge": "Conocimiento"
+    }
+  },
+  "footer": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "status_label": "SISTEMA OPERATIVO",
+    "version_label": "VERSIÓN",
+    "rights_reserved": "TODOS LOS DERECHOS RESERVADOS",
+    "sectors": {
+      "ecosystem": "ECOSISTEMA",
+      "company": "CORPORACIÓN"
+    },
+    "links": {
+      "network": "Red Neural",
+      "sovereignty": "Soberanía",
+      "sentinel": "Sentinel",
+      "metashark": "MetaShark Tech",
+      "labs": "Omnisync Labs"
+    }
+  },
+  "unauthorized": {
+    "header_label": "PREVENCIÓN DE BRECHA DE SEGURIDAD",
+    "title_part_1": "Acceso",
+    "title_part_2": "No Autorizado.",
+    "error_code_label": "CÓDIGO_ERROR",
+    "restricted_region_message": "Soberanía territorial activa: Su región actual ({country}) no posee permisos de consumo neural.",
+    "legal_notice": "El acceso a la infraestructura de inteligencia artificial y orquestación ERP está limitado por normativas de soberanía de datos y protección de presupuesto de tokens.",
+    "back_to_safe_zone": "Volver al Inicio Seguro",
+    "forensic_footer": "Omnisync Security Protocol Implementation // RLS Enabled"
   }
 }

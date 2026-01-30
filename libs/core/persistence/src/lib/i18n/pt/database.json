@@ -1,0 +1,12 @@
+{
+  "status": {
+    "handshake_success": "HANDSHAKE_COM_O_CLUSTER_SQL_BEM_SUCEDIDO",
+    "heartbeat_operational": "PULSO_DE_PERSISTÊNCIA_ATIVO_E_ESTÁVEL",
+    "pool_shutdown": "POOL_DE_CONEXÕES_ENCERRADO_LIMPAMENTE"
+  },
+  "errors": {
+    "engine_failed": "FALHA_CRÍTICA_NA_IGNIÇÃO_DO_MOTOR_PRISMA",
+    "connectivity_loss": "PERDA_DE_CONEXÃO_COM_O_BANCO_DE_DADOS_REMOTO",
+    "invalid_url": "URL_DA_INSTÂNCIA_SQL_CORROMPIDA_OU_INEXISTENTE"
+  }
+}

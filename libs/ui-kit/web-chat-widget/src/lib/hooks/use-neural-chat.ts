@@ -1,131 +1,167 @@
 /** libs/ui-kit/web-chat-widget/src/lib/hooks/use-neural-chat.ts */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   INeuralIntent,
   INeuralFlowResult,
   TenantId,
   NeuralBridge,
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { 
+  DialogueMessageSchema, 
+  IDialogueMessage 
+} from '../schemas/web-chat-widget.schema';
 
 /**
- * @interface IConversationMessage
- * @description Representación inmutable de un turno de diálogo en la interfaz.
+ * @interface IUseNeuralChat
+ * @description Contrato de salida inmutable para el hook de orquestación visual.
  */
-interface IConversationMessage {
-  readonly role: 'user' | 'assistant';
-  readonly content: string;
+interface IUseNeuralChat {
+  readonly neuralDialogueStream: readonly IDialogueMessage[];
+  readonly isArtificialIntelligenceTyping: boolean;
+  readonly operationalStatus: 'ONLINE' | 'OFFLINE';
+  readonly dispatchNeuralInquiry: (userInquiryContent: string) => Promise<void>;
 }
 
 /**
  * @name useNeuralChat
- * @description Hook de aparato encargado de la gestión de estado, persistencia volátil local
- * y despacho de intenciones neurales hacia el Hub. Implementa protocolos de actualización
- * optimista y recuperación ante fallos de conectividad.
+ * @description Hook de grado industrial encargado de la gestión de estado, 
+ * persistencia de identidad y despacho neural. Implementa el protocolo 
+ * "Sovereign Fingerprinting" para vincular la sesión física del navegador 
+ * con el contexto RAG en el orquestador.
  *
- * @protocol OEDP-Level: Elite (i18n-Ready & Lint-Sanated)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Identity-Sovereignty V3.2)
+ * @vision Ultra-Holística: Persistent-Dialogue & Zero-Placeholder
  */
-export const useNeuralChat = (tenantOrganizationIdentifier: TenantId) => {
-  /**
-   * @section Internacionalización
-   * Recuperamos llaves del namespace 'widget' definido en la capa core-security.
-   */
+export const useNeuralChat = (tenantId: TenantId): IUseNeuralChat => {
   const translations = useTranslations('widget');
+  
+  // Capas de Estado Reactivo
+  const [neuralDialogueStream, setNeuralDialogueStream] = useState<IDialogueMessage[]>([]);
+  const [isProcessingInference, setIsProcessingInference] = useState<boolean>(false);
+  const [operationalStatus, setOperationalStatus] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
 
-  const [conversationStream, setConversationStream] = useState<IConversationMessage[]>([]);
-  const [isProcessingNeuralInference, setIsProcessingNeuralInference] = useState<boolean>(false);
+  /**
+   * @section Gestión de Identidad Soberana (Fingerprinting)
+   * Erradica el uso de IDs temporales. La identidad persiste en el almacenamiento 
+   * local del suscriptor para asegurar la continuidad de la memoria episódica.
+   */
+  const [sovereignFingerprint, setSovereignFingerprint] = useState<string>('');
+
+  useEffect(() => {
+    /**
+     * @note Inicialización de Huella Digital
+     * Recuperamos el ID persistente o generamos uno nuevo sellado por el Framework.
+     */
+    if (typeof window === 'undefined') return;
+
+    const STORAGE_KEY = `os_identity_pulse_${tenantId}`;
+    let fingerprint = localStorage.getItem(STORAGE_KEY);
+
+    if (!fingerprint) {
+      // Generación de UUID V4 de grado criptográfico
+      fingerprint = `os_client_${crypto.randomUUID()}`;
+      localStorage.setItem(STORAGE_KEY, fingerprint);
+      
+      OmnisyncTelemetry.verbose('useNeuralChat', 'identity_genesis', 
+        'Nueva huella digital generada para el nodo.', { fingerprint }
+      );
+    }
+
+    setSovereignFingerprint(fingerprint);
+  }, [tenantId]);
 
   /**
    * @method dispatchNeuralInquiry
-   * @description Procesa la consulta del usuario, ejecuta la actualización optimista de la UI
-   * y orquesta la petición al NeuralBridge.
-   *
-   * @param {string} userInquiryContent - Contenido textual de la consulta.
+   * @description Orquesta la transmisión de la consulta técnica hacia el Neural Hub.
+   * Implementa validación de contrato SSOT y triaje de respuesta.
    */
-  const dispatchNeuralInquiry = useCallback(async (userInquiryContent: string): Promise<void> => {
+  const dispatchNeuralInquiry = useCallback(async (content: string): Promise<void> => {
     const apparatusName = 'useNeuralChat';
     const operationName = 'dispatchNeuralInquiry';
 
-    if (!userInquiryContent.trim() || isProcessingNeuralInference) {
-      return;
-    }
+    const cleanContent = content.trim();
+    
+    // Guardianes de Ejecución
+    if (!cleanContent || isProcessingInference || !sovereignFingerprint) return;
 
-    // 1. Actualización Optimista (UI Responsiveness)
-    setConversationStream((previousStream) => [
-      ...previousStream,
-      { role: 'user', content: userInquiryContent.trim() }
-    ]);
+    return await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
+      // 1. Fase de Validación: ADN de Usuario
+      const userMessage = OmnisyncContracts.validate(
+        DialogueMessageSchema, 
+        { role: 'user', content: cleanContent }, 
+        `${apparatusName}:UserMessage`
+      );
 
-    setIsProcessingNeuralInference(true);
+      setNeuralDialogueStream((prev) => [...prev, userMessage]);
+      setIsProcessingInference(true);
 
-    try {
-      /**
-       * @section Transmisión Neural
-       * Se despacha la intención bajo el contrato SSOT V2.0.
-       */
-      const neuralFlowResult = await NeuralBridge.request<INeuralFlowResult>(
-        '/v1/neural/chat',
-        tenantOrganizationIdentifier,
-        {
-          id: window.crypto.randomUUID(),
+      try {
+        /**
+         * @section Construcción de Intención Neural (Sovereign Dispatch)
+         * Inyectamos la huella digital persistente como ID de usuario externo.
+         */
+        const neuralIntent: INeuralIntent = {
+          id: crypto.randomUUID(),
           channel: 'WEB_CHAT',
-          externalUserId: 'web_anonymous_session',
-          tenantId: tenantOrganizationIdentifier,
+          externalUserId: sovereignFingerprint, 
+          tenantId: tenantId,
           payload: {
             type: 'TEXT',
-            content: userInquiryContent,
+            content: cleanContent,
             metadata: {
               originUrl: window.location.href,
-              userAgent: window.navigator.userAgent
+              userAgent: navigator.userAgent,
+              fingerprintVersion: 'V3.2-ELITE'
             }
           },
           timestamp: new Date().toISOString()
-        } as INeuralIntent
-      );
+        };
 
-      // 2. Sincronización de Respuesta Exitosa
-      setConversationStream((previousStream) => [
-        ...previousStream,
-        {
-          role: 'assistant',
-          content: neuralFlowResult.finalMessage
-        }
-      ]);
+        const result = await NeuralBridge.request<INeuralFlowResult>(
+          '/v1/neural/chat',
+          tenantId,
+          neuralIntent
+        );
 
-    } catch (neuralCommunicationError: unknown) {
-      /**
-       * @section Gestión de Anomalías y Resiliencia
-       * RESOLUCIÓN ESLINT: Se utiliza el error en telemetría para auditoría forense.
-       */
-      OmnisyncTelemetry.verbose(
-        apparatusName,
-        operationName,
-        `Incapacidad de comunicación neural: ${String(neuralCommunicationError)}`
-      );
+        setOperationalStatus('ONLINE');
 
-      /**
-       * @note Failsafe Internacionalizado
-       * Se utiliza una llave de traducción en lugar de texto hardcodeado.
-       * Llave sugerida en es.json: "widget.errors.system_offline"
-       */
-      setConversationStream((previousStream) => [
-        ...previousStream,
-        {
+        // 2. Fase de Validación: ADN de Inteligencia Artificial
+        const assistantResponse = OmnisyncContracts.validate(
+          DialogueMessageSchema,
+          { role: 'assistant', content: result.finalMessage },
+          `${apparatusName}:AssistantResponse`
+        );
+
+        setNeuralDialogueStream((prev) => [...prev, assistantResponse]);
+
+      } catch (error: unknown) {
+        /**
+         * @section Gestión de Fallo de Red (Failsafe)
+         */
+        setOperationalStatus('OFFLINE');
+        
+        OmnisyncTelemetry.verbose(apparatusName, 'transmission_error', String(error));
+
+        setNeuralDialogueStream((prev) => [...prev, {
           role: 'assistant',
           content: translations('errors.system_offline')
-        }
-      ]);
+        }]);
+      } finally {
+        setIsProcessingInference(false);
+      }
+    });
+  }, [tenantId, isProcessingInference, translations, sovereignFingerprint]);
 
-    } finally {
-      setIsProcessingNeuralInference(false);
-    }
-  }, [tenantOrganizationIdentifier, isProcessingNeuralInference, translations]);
-
-  return {
-    conversationMessages: conversationStream,
-    isArtificialIntelligenceTyping: isProcessingNeuralInference,
+  return useMemo(() => ({
+    neuralDialogueStream,
+    isArtificialIntelligenceTyping: isProcessingInference,
+    operationalStatus,
     dispatchNeuralInquiry
-  };
+  }), [neuralDialogueStream, isProcessingInference, operationalStatus, dispatchNeuralInquiry]);
 };

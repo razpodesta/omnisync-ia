@@ -1,5 +1,5 @@
 {
-  "name": "@omnisync-ecosystem/source",
+  "name": "@omnisync/source",
   "version": "1.0.0",
   "description": "Infraestructura neural para orquestación de comunicaciones e IA generativa integrada a ERP.",
   "author": "Raz Podestá - MetaShark Tech / Florianópolis-SC - Brasil",
@@ -7,26 +7,31 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/metashark-tech/omnisync-ai-ecosystem.git"
+    "url": "https://github.com/razpodesta/omnisync-ai-ecosystem.git"
   },
   "scripts": {
-    "dev": "pnpm run internationalization:build && nx run-many --target=serve --all",
-    "build": "pnpm run internationalization:build && pnpm run persistence:generate && nx run-many --target=build --all --parallel=1",
-    "start": "nx run-many --target=serve --all",
-    "system:hydrate": "pnpm install && pnpm run internationalization:build && pnpm run persistence:generate && pnpm run build",
-    "internationalization:build": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
+    "// --- ORQUESTACIÓN PRINCIPAL ---": "",
+    "dev": "pnpm run infra:prep && nx run-many -t serve --all",
+    "build": "pnpm run infra:prep && nx build admin-dashboard --prod && nx build orchestrator-api --prod",
+    "start": "node dist/apps/orchestrator-api/main.js",
+    "// --- CAPA DE INFRAESTRUCTURA (HIDRATACIÓN) ---": "",
+    "infra:prep": "pnpm run internationalization:build && pnpm run persistence:generate",
+    "system:hydrate": "pnpm run infra:prep && pnpm run persistence:synchronize",
+    "internationalization:build": "ts-node -r tsconfig-paths/register -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
     "persistence:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
     "persistence:synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
-    "integrity:guardian": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    "// --- AUDITORÍA Y HERRAMIENTAS ---": "",
+    "integrity:guardian": "ts-node -r tsconfig-paths/register -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-guardian.ts",
     "infrastructure:check": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-connectivity.ts",
     "infrastructure:configuration": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-config-audit.ts",
     "infrastructure:dump": "ts-node -P libs/tools/internal-scripts/tsconfig.lib.json libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
     "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump",
-    "quality:test": "nx run-many --target=test --all --parallel=1",
-    "quality:lint": "nx run-many -t lint --all --parallel=1",
-    "quality:format": "prettier --write ",
+    "// --- CALIDAD Y ASEGURAMIENTO (QA) ---": "",
+    "quality:test": "nx run-many -t test --all --parallel=3",
+    "quality:lint": "nx run-many -t lint --all --parallel=3",
+    "quality:format": "prettier --write .",
     "quality:types": "tsc -p tsconfig.base.json --noEmit",
-    "audit": "pnpm audit && nx run-many -t lint --all --parallel=1 && pnpm run quality:types"
+    "audit": "pnpm audit && pnpm run quality:lint && pnpm run quality:types"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -42,6 +47,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@swc/helpers": "0.5.17",
       "lodash": "^4.17.23",
       "hono@<4.11.7": ">=4.11.7",
       "next@>=15.6.0-canary.0 <16.1.5": ">=16.1.5",
@@ -120,6 +126,7 @@
     "tailwindcss": "^4.0.0",
     "ts-jest": "^29.4.6",
     "ts-node": "10.9.1",
+    "tsconfig-paths": "^4.2.0",
     "tslib": "^2.3.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.40.0",

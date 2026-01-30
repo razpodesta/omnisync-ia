@@ -2,7 +2,7 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { OmnisyncMemory } from '@omnisync-ecosystem/persistence';
+import { OmnisyncMemory } from '@omnisync/core-persistence';
 import {
   NeuralInferenceApparatus,
   NeuralEmbeddingApparatus,

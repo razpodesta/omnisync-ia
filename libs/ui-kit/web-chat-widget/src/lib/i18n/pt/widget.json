@@ -1,0 +1,13 @@
+
+{
+  "header": "Suporte Neural",
+  "status_active": "Soberania Ativa",
+  "close": "FECHAR",
+  "welcome_message": "Infraestrutura Neural conectada. Como posso ajudá-lo hoje?",
+  "ai_typing": "Processando Inferência...",
+  "input_placeholder": "Digite uma consulta técnica...",
+  "send": "Enviar",
+  "errors": {
+    "system_offline": "Falha na comunicação neural. Por favor, tente novamente em breve."
+  }
+}

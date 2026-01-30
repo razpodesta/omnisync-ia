@@ -1,0 +1,10 @@
+{
+  "header_label": "PREVENÇÃO DE VIOLAÇÃO DE SEGURANÇA",
+  "title_part_1": "Acesso",
+  "title_part_2": "Não Autorizado.",
+  "error_code_label": "CÓDIGO_ERRO",
+  "restricted_region_message": "Soberania territorial ativa: Sua região atual ({country}) não possui permissões de consumo neural.",
+  "legal_notice": "O acesso à infraestrutura de inteligência artificial e orquestração ERP é limitado por regulamentações de soberania de dados e proteção de orçamento de tokens.",
+  "back_to_safe_zone": "Voltar ao Início Seguro",
+  "forensic_footer": "Omnisync Security Protocol Implementation // RLS Enabled"
+}

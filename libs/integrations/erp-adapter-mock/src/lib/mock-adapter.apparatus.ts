@@ -4,73 +4,135 @@ import {
   IEnterpriseResourcePlanningAdapter,
   IEnterpriseResourcePlanningActionResponse,
   EnterpriseResourcePlanningActionResponseSchema,
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
+/** 
+ * @section Sincronización de ADN Local 
+ * RESOLUCIÓN LINT: Inyección de Zod local para validación de comportamiento.
+ */
+import { 
+  MockAdapterConfigurationSchema, 
+  MockTicketInputSchema,
+  IMockAdapterConfiguration 
+} from './schemas/mock-adapter.schema';
+
 /**
  * @name MockEnterpriseResourcePlanningAdapter
- * @description Adaptador de simulación nivelado al estándar OEDP V2.0.
- * Emula la respuesta de un ERP externo validando la salida contra el contrato SSOT.
+ * @description Adaptador de infraestructura especializado en la emulación de 
+ * ecosistemas ERP (SAP/Odoo). Proporciona un entorno de pruebas controlado 
+ * con latencia sintética y validación de contratos SSOT.
  *
- * @protocol OEDP-Level: Elite (Contract-Aligned)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Simulation-Sovereignty V3.2)
+ * @vision Ultra-Holística: Zero-Dependency-Testing & Parameterized-Mock
  */
 export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourcePlanningAdapter {
-  /** Identificador nominal para telemetría */
-  public readonly providerName = 'MOCK_ENTERPRISE_SYSTEM_V2';
+  public readonly providerName = 'MOCK_ENTERPRISE_SYSTEM_V3' as const;
+  private readonly internalConfiguration: IMockAdapterConfiguration;
 
-  private static readonly SIMULATED_LATENCY_MS = 320;
+  /**
+   * @constructor
+   * @description Hidrata la configuración de la simulación bajo contrato SSOT.
+   */
+  constructor(customConfiguration: Partial<IMockAdapterConfiguration> = {}) {
+    this.internalConfiguration = OmnisyncContracts.validate(
+      MockAdapterConfigurationSchema,
+      customConfiguration,
+      'MockERPAdapter:Ignition'
+    );
+  }
 
   /**
    * @method createOperationTicket
-   * @description Simula la creación de un ticket retornando el esquema institucional.
+   * @description Simula la creación atómica de una incidencia. 
+   * Valida la carga útil entrante antes de procesar la respuesta.
+   *
+   * @param {unknown} operationalPayload - Datos crudos del despacho.
    */
   public async createOperationTicket(
-    _operationalPayload: unknown,
+    operationalPayload: unknown,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
+    const apparatusName = 'MockERPAdapter';
+    const operationName = 'createOperationTicket';
+
     return await OmnisyncTelemetry.traceExecution(
-      'MockEnterpriseResourcePlanningAdapter',
-      'createOperationTicket',
+      apparatusName,
+      operationName,
       async () => {
+        // 1. Fase de Validación de Entrada (Justifica la dependencia Zod)
+        const validatedInput = OmnisyncContracts.validate(
+          MockTicketInputSchema,
+          operationalPayload,
+          `${apparatusName}:InputAudit`
+        );
+
+        // 2. Inyección de Latencia Programada
         await this.injectNetworkLatency();
 
-        return EnterpriseResourcePlanningActionResponseSchema.parse({
+        const responsePayload: IEnterpriseResourcePlanningActionResponse = {
           success: true,
-          externalIdentifier: `MOCK-TICKET-${crypto.randomUUID().substring(0, 8)}`,
+          externalIdentifier: `${this.internalConfiguration.ticketIdPrefix}${crypto.randomUUID().substring(0, 8).toUpperCase()}`,
           syncStatus: 'SYNCED',
-          messageKey: 'integrations.erp_mock.ticket_provisioned',
-          latencyInMilliseconds:
-            MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
-          operationalMetadata: { simulated: true },
-        });
+          messageKey: 'integrations.erp_mock.operation.ticket_provisioned',
+          latencyInMilliseconds: this.internalConfiguration.simulatedLatencyMs,
+          operationalMetadata: { 
+            simulated: true, 
+            author: 'Raz Podestá',
+            engine: 'OEDP-V3.2-MOCK',
+            capturedUserId: validatedInput.userId
+          },
+        };
+
+        /**
+         * @section Sello de Integridad Final
+         */
+        return OmnisyncContracts.validate(
+          EnterpriseResourcePlanningActionResponseSchema,
+          responsePayload,
+          apparatusName
+        );
       },
     );
   }
 
   /**
    * @method validateCustomerExistence
-   * @description Simula validación de identidad basada en patrones de prueba.
+   * @description Simula la verificación de soberanía de identidad.
    */
   public async validateCustomerExistence(
     customerPhoneNumber: string,
   ): Promise<IEnterpriseResourcePlanningActionResponse> {
+    const apparatusName = 'MockERPAdapter';
+
     return await OmnisyncTelemetry.traceExecution(
-      'MockEnterpriseResourcePlanningAdapter',
+      apparatusName,
       'validateCustomerExistence',
       async () => {
         await this.injectNetworkLatency();
 
-        const isKnownCustomer = customerPhoneNumber.includes('55');
+        const isKnown = customerPhoneNumber.includes(
+          this.internalConfiguration.identitySuccessPattern
+        );
 
-        return EnterpriseResourcePlanningActionResponseSchema.parse({
-          success: isKnownCustomer,
-          externalIdentifier: isKnownCustomer ? 'MOCK-USER-001' : undefined,
+        const response: IEnterpriseResourcePlanningActionResponse = {
+          success: isKnown,
+          externalIdentifier: isKnown ? 'MOCK-PARTNER-CORE-001' : undefined,
           syncStatus: 'SYNCED',
-          messageKey: isKnownCustomer
-            ? 'integrations.erp_mock.user_found'
-            : 'integrations.erp_mock.user_not_found',
-          latencyInMilliseconds:
-            MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
-        });
+          messageKey: isKnown
+            ? 'integrations.erp_mock.identity.verified'
+            : 'integrations.erp_mock.identity.not_found',
+          latencyInMilliseconds: this.internalConfiguration.simulatedLatencyMs,
+          operationalMetadata: { searchPattern: 'fuzzy_mock_match' }
+        };
+
+        return OmnisyncContracts.validate(
+          EnterpriseResourcePlanningActionResponseSchema,
+          response,
+          apparatusName
+        );
       },
     );
   }
@@ -83,7 +145,7 @@ export class MockEnterpriseResourcePlanningAdapter implements IEnterpriseResourc
     return new Promise((resolve) =>
       setTimeout(
         resolve,
-        MockEnterpriseResourcePlanningAdapter.SIMULATED_LATENCY_MS,
+        this.internalConfiguration.simulatedLatencyMs,
       ),
     );
   }

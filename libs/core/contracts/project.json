@@ -1,5 +1,6 @@
+
 {
-  "name": "contracts",
+  "name": "core-contracts",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/contracts/src",
   "projectType": "library",
@@ -12,7 +13,26 @@
         "outputPath": "dist/libs/core/contracts",
         "main": "libs/core/contracts/src/index.ts",
         "tsConfig": "libs/core/contracts/tsconfig.lib.json",
-        "assets": ["libs/core/contracts/*.md"]
+        "assets": [
+          "libs/core/contracts/*.md",
+          {
+            "input": "libs/core/contracts",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/contracts/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

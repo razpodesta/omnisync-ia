@@ -1,14 +1,17 @@
 {
-  "name": "@omnisync-ecosystem/web-chat-driver",
-  "version": "0.0.1",
+  "name": "@omnisync/web-chat-driver",
+  "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
+  "description": "Mediador de protocolos WebSocket para el Widget Web. Transforma eventos de socket en intenciones neurales bajo el protocolo OEDP V3.2.",
+  "author": "Raz Podestá <Creator> - MetaShark Tech",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@omnisync-ecosystem/contracts": "workspace:*",
-    "@omnisync-ecosystem/telemetry": "workspace:*",
-    "@omnisync-ecosystem/sentinel": "workspace:*"
+    "zod": "^4.3.6",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*",
+    "@omnisync/core-sentinel": "workspace:*"
   }
 }

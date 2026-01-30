@@ -2,6 +2,7 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
+import { OmnisyncContracts } from './contracts.apparatus';
 import { TenantId } from './schemas/core-contracts.schema';
 import {
   NeuralBridgeConfigurationSchema,
@@ -11,123 +12,161 @@ import {
 /**
  * @name NeuralBridge
  * @description Aparato de comunicación holística de alta disponibilidad.
- * Orquesta las transmisiones de datos entre los consumidores (Dashboard/Widget)
- * y el Neural Hub aplicando blindaje de resiliencia y validación SSOT.
+ * Orquesta las transmisiones de datos entre los nodos de interfaz (Dashboard/Widget)
+ * y el Neural Hub. Implementa blindaje de resiliencia mediante el Sentinel y 
+ * validación de integridad SSOT en cada petición.
  *
- * @protocol OEDP-Level: Elite (Full Lifecycle Management)
+ * @protocol OEDP-Level: Elite (Resilient-Cloud-Bridge V3.0)
  */
 export class NeuralBridge {
-  private static bridgeConfiguration: INeuralBridgeConfiguration;
+  /**
+   * @private
+   * Almacén inmutable de configuración de red hidratado en la ignición.
+   */
+  private static sovereignBridgeConfiguration: INeuralBridgeConfiguration | null = null;
 
   /**
    * @method request
-   * @description Ejecuta una transmisión de datos hacia el orquestador neural.
-   * Implementa cancelación por timeout y reintentos automáticos vía Sentinel.
+   * @description Ejecuta una transmisión de datos hacia la infraestructura neural.
+   * Implementa el patrón 'Sovereign Dispatch' con reintentos automáticos y timeout.
    *
-   * @template TResponse - Estructura esperada de la respuesta.
-   * @param {string} resourceEndpoint - Ruta del servicio (ej: '/v1/neural/chat').
-   * @param {TenantId} tenantOrganizationIdentifier - Identificador nominal del nodo.
-   * @param {unknown} neuralTransmissionPayload - Cuerpo de la petición.
-   * @param {'POST' | 'GET' | 'PUT'} protocolMethod - Método de red (Default: POST).
+   * @template TResponse - Interfaz esperada del ADN de respuesta.
+   * @param {string} resourceEndpoint - Ruta técnica del servicio (ej: '/v1/neural/chat').
+   * @param {TenantId} tenantOrganizationIdentifier - Sello de soberanía del suscriptor.
+   * @param {unknown} payloadData - Carga útil de la petición.
+   * @param {'POST' | 'GET' | 'PUT' | 'PATCH'} method - Verbo HTTP de red.
+   * @returns {Promise<TResponse>} Respuesta validada y tipada.
    */
   public static async request<TResponse>(
     resourceEndpoint: string,
     tenantOrganizationIdentifier: TenantId,
-    neuralTransmissionPayload: unknown,
-    protocolMethod: 'POST' | 'GET' | 'PUT' = 'POST',
+    payloadData: unknown,
+    method: 'POST' | 'GET' | 'PUT' | 'PATCH' = 'POST',
   ): Promise<TResponse> {
-    this.initializeSovereignConfiguration();
+    const bridgeConfig = this.initializeSovereignConfiguration();
+    const apparatusName = 'NeuralBridge';
+    const operationName = `request:${method}:${resourceEndpoint}`;
 
     return await OmnisyncTelemetry.traceExecution(
-      'NeuralBridge',
-      `request:${resourceEndpoint}`,
+      apparatusName,
+      operationName,
       async () => {
+        /**
+         * @section Control de Ciclo de Vida de Petición
+         * Orquestamos la señal de aborto para proteger el presupuesto de tiempo.
+         */
         const transmissionController = new AbortController();
         const timeoutReference = setTimeout(
           () => transmissionController.abort(),
-          this.bridgeConfiguration.timeoutInMilliseconds,
+          bridgeConfig.timeoutInMilliseconds,
         );
 
         try {
+          /**
+           * @section Ejecución con Blindaje de Resiliencia
+           * El Sentinel aplica backoff exponencial si el Hub está en 'Cold Start'.
+           */
           return await OmnisyncSentinel.executeWithResilience(
             async () => {
-              const absoluteUrl = `${this.bridgeConfiguration.baseUrl}${resourceEndpoint}`;
+              const absoluteUrl = `${bridgeConfig.baseUrl}${resourceEndpoint}`;
 
               const networkResponse = await fetch(absoluteUrl, {
-                method: protocolMethod,
+                method: method,
                 signal: transmissionController.signal,
                 headers: {
                   'Content-Type': 'application/json',
-                  Accept: 'application/json',
+                  'Accept': 'application/json',
                   'x-omnisync-tenant': tenantOrganizationIdentifier,
+                  'x-omnisync-framework-version': 'OEDP-V3.0',
                 },
-                body:
-                  protocolMethod !== 'GET'
-                    ? JSON.stringify(neuralTransmissionPayload)
-                    : undefined,
+                body: method !== 'GET' ? JSON.stringify(payloadData) : undefined,
               });
 
               if (!networkResponse.ok) {
-                throw new Error(`bridge.status.${networkResponse.status}`);
+                throw new Error(`bridge.status_error.${networkResponse.status}`);
               }
 
               return (await networkResponse.json()) as TResponse;
             },
-            'NeuralBridge',
-            `fetch:${resourceEndpoint}`,
+            apparatusName,
+            `network_fetch:${resourceEndpoint}`,
           );
-        } catch (criticalError: unknown) {
-          await this.handleTransmissionFailure(
+        } catch (criticalTransmissionError: unknown) {
+          await this.reportTransmissionAnomaly(
             resourceEndpoint,
             tenantOrganizationIdentifier,
-            criticalError,
+            criticalTransmissionError,
           );
-          throw criticalError;
+          throw criticalTransmissionError;
         } finally {
           clearTimeout(timeoutReference);
         }
       },
+      { tenantId: tenantOrganizationIdentifier, method }
     );
   }
 
   /**
    * @method initializeSovereignConfiguration
    * @private
-   * @description Hidrata la configuración técnica validando contra el esquema SSOT.
+   * @description Hidrata y valida la configuración técnica desde las variables de entorno.
+   * Utiliza OmnisyncContracts para asegurar que el ADN de red sea íntegro.
    */
-  private static initializeSovereignConfiguration(): void {
-    if (this.bridgeConfiguration) return;
+  private static initializeSovereignConfiguration(): INeuralBridgeConfiguration {
+    if (this.sovereignBridgeConfiguration) {
+      return this.sovereignBridgeConfiguration;
+    }
 
-    this.bridgeConfiguration = NeuralBridgeConfigurationSchema.parse({
-      baseUrl:
-        process.env['NEXT_PUBLIC_API_URL'] || 'https://api.omnisync-ai.com',
+    const rawBaseUrl = process.env['NEXT_PUBLIC_API_URL'] || 'https://omnisync-orchestrator.onrender.com';
+    const sanitizedUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+
+    const rawConfig: unknown = {
+      baseUrl: sanitizedUrl,
       timeoutInMilliseconds: 15000,
-    });
+    };
+
+    /**
+     * @section Validación de Infraestructura
+     * Aseguramos que la URL del puente sea válida antes de cualquier despacho.
+     */
+    this.sovereignBridgeConfiguration = OmnisyncContracts.validate(
+      NeuralBridgeConfigurationSchema,
+      rawConfig,
+      'NeuralBridge:Ignition'
+    );
+
+    OmnisyncTelemetry.verbose(
+      'NeuralBridge', 
+      'ignition_success', 
+      `Infraestructura vinculada: ${sanitizedUrl}`
+    );
+
+    return this.sovereignBridgeConfiguration;
   }
 
   /**
-   * @method handleTransmissionFailure
+   * @method reportTransmissionAnomaly
    * @private
    */
-  private static async handleTransmissionFailure(
+  private static async reportTransmissionAnomaly(
     endpoint: string,
     tenantId: string,
-    error: unknown,
+    errorInstance: unknown,
   ): Promise<void> {
-    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    const isTimeout = errorInstance instanceof Error && errorInstance.name === 'AbortError';
 
     await OmnisyncSentinel.report({
       errorCode: 'OS-CORE-503',
       severity: 'HIGH',
       apparatus: 'NeuralBridge',
-      operation: 'execute_request',
+      operation: 'dispatch_request',
       message: isTimeout
         ? 'core.bridge.error.timeout'
         : 'core.bridge.error.connectivity_loss',
       context: {
         resourceEndpoint: endpoint,
         tenantIdentifier: tenantId,
-        originalError: String(error),
+        originalError: String(errorInstance),
       },
       isRecoverable: true,
     });

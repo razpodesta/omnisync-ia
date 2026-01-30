@@ -1,0 +1,30 @@
+/** libs/core/auditor/tsconfig.lib.json */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "declaration": true,
+    /**
+     * @section Soberanía de Definiciones
+     * Incluimos 'node' para habilitar capacidades de sistema y cálculo 
+     * requeridas por el auditor de consumo.
+     */
+    "types": ["node"],
+    /**
+     * @section Estándar de Compilación 2026
+     * Sincronizado con LibraryIntegrityAuditor para asegurar 
+     * un cumplimiento del 100% en el reporte de DNA.
+     */
+    "target": "es2022",
+    "module": "commonjs",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "jest.config.ts",
+    "jest.config.cts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
+}

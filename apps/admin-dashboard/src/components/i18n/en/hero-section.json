@@ -1,0 +1,19 @@
+{
+  "slides": {
+    "infra": {
+      "title": "Decentralized Minds.",
+      "subtitle": "Neural infrastructure for elite communications orchestration.",
+      "cta": "Explore Network"
+    },
+    "erp": {
+      "title": "Transactional Action.",
+      "subtitle": "Intelligent bridges between generative AI and your ERP core.",
+      "cta": "View Integrations"
+    },
+    "rag": {
+      "title": "Semantic Memory.",
+      "subtitle": "Eradicate hallucinations by injecting technical manuals into Gemini.",
+      "cta": "Load Knowledge"
+    }
+  }
+}

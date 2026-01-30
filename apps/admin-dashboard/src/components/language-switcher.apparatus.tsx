@@ -2,102 +2,126 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Flag from 'react-world-flags';
-import { usePathname, useRouter, routing } from '../i18n/routing';
+import { usePathname, useRouter } from '../i18n/routing';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { OmnisyncContracts } from '@omnisync/core-contracts';
 
-/**
- * @type SupportedLocale
- * @description Inferencia de los idiomas soportados por la arquitectura.
- */
-type SupportedLocale = (typeof routing.locales)[number];
+import {
+  LanguageSwitcherConfigurationSchema,
+  ILanguageSwitcherConfiguration,
+  ISupportedLocale
+} from './schemas/language-switcher.schema';
 
 /**
  * @name LanguageSwitcher
- * @description Aparato de transición semántica. Orquesta el cambio de idioma
- * en el Edge de Vercel y actualiza el contexto de internacionalización.
- * Implementa la estética Manus.io mediante iconografía reducida y tipografía técnica.
+ * @description Aparato de control de soberanía lingüística.
+ * Orquesta la transición semántica entre locales autorizados inyectando
+ * iconografía de banderas y estados de activación Obsidian & Milk.
+ *
+ * @protocol OEDP-Level: Elite (Semantic Transition)
  */
 export const LanguageSwitcher: React.FC = () => {
+  const translations = useTranslations('language-switcher');
   const router = useRouter();
   const pathname = usePathname();
   const parameters = useParams();
 
   /**
-   * @section Resolución de Identidad Lingüística
-   * Validamos que el parámetro de la URL pertenezca a los locales soportados.
+   * @section Resolución de Local Actual
    */
-  const currentLocale: SupportedLocale = routing.locales.includes(
-    parameters['locale'] as SupportedLocale,
-  )
-    ? (parameters['locale'] as SupportedLocale)
-    : routing.defaultLocale;
+  const currentLocale = (parameters['locale'] as ISupportedLocale) || 'es';
 
   /**
-   * @section Mapeo de Soberanía Territorial
+   * @section Configuración de Nodos de Idioma
+   * Validada bajo contrato SSOT para asegurar integridad visual.
    */
-  const localeToCountryMap: Record<SupportedLocale, string> = {
-    es: 'ES',
-    en: 'US',
-    pt: 'BR',
-  };
+  const configuration: ILanguageSwitcherConfiguration = useMemo(() => {
+    const rawData: unknown = {
+      locales: [
+        { id: 'es', flagCode: 'ES', labelKey: 'locales.es' },
+        { id: 'en', flagCode: 'US', labelKey: 'locales.en' },
+        { id: 'pt', flagCode: 'BR', labelKey: 'locales.pt' },
+      ]
+    };
+
+    return OmnisyncContracts.validate(
+      LanguageSwitcherConfigurationSchema,
+      rawData,
+      'LanguageSwitcherApparatus'
+    );
+  }, []);
 
   /**
-   * @method handleLanguageTransition
-   * @description Ejecuta el cambio de idioma y registra la traza de performance.
+   * @method handleLocaleTransition
+   * @description Ejecuta el cambio de idioma y registra la latencia de redirección.
    */
-  const handleLanguageTransition = (newLocale: SupportedLocale): void => {
-    if (newLocale === currentLocale) return;
+  const handleLocaleTransition = (targetLocale: ISupportedLocale): void => {
+    if (targetLocale === currentLocale) return;
 
     OmnisyncTelemetry.verbose(
       'LanguageSwitcher',
       'transition',
-      `Sovereignty change: ${currentLocale} -> ${newLocale}`,
+      `Solicitando cambio de soberanía: ${currentLocale} -> ${targetLocale}`
     );
 
-    router.replace(pathname, { locale: newLocale });
+    // Navegación preservando la ruta interna
+    router.replace(pathname, { locale: targetLocale });
   };
 
-  return (
-    <nav className="flex gap-8 items-center" aria-label="Language Selector">
-      {routing.locales.map((localeIdentifier) => (
-        <button
-          key={localeIdentifier}
-          onClick={() => handleLanguageTransition(localeIdentifier)}
-          className={`flex items-center gap-2.5 group transition-all duration-700 outline-none ${
-            currentLocale === localeIdentifier
-              ? 'opacity-100'
-              : 'opacity-20 hover:opacity-100'
-          }`}
-        >
-          {/* Contenedor de Bandera Obsidian & Milk */}
-          <div
-            className={`w-3.5 h-3.5 overflow-hidden rounded-full border border-border transition-all duration-500 ${
-              currentLocale === localeIdentifier
-                ? 'grayscale-0 scale-110 shadow-sm'
-                : 'grayscale group-hover:grayscale-0'
-            }`}
-          >
-            <Flag
-              code={localeToCountryMap[localeIdentifier]}
-              className="object-cover w-full h-full scale-125"
-              alt={`${localeIdentifier} flag`}
-            />
-          </div>
+  return OmnisyncTelemetry.traceExecutionSync('LanguageSwitcher', 'render', () => (
+    <nav className="flex items-center gap-6" aria-label={translations('selector_label')}>
+      <AnimatePresence mode="wait">
+        {configuration.locales.map((localeNode) => {
+          const isActive = currentLocale === localeNode.id;
 
-          <span
-            className={`text-[9px] font-black uppercase tracking-[0.3em] ${
-              currentLocale === localeIdentifier
-                ? 'underline decoration-1 underline-offset-4'
-                : 'group-hover:tracking-[0.4em]'
-            }`}
-          >
-            {localeIdentifier}
-          </span>
-        </button>
-      ))}
+          return (
+            <motion.button
+              key={localeNode.id}
+              onClick={() => handleLocaleTransition(localeNode.id as ISupportedLocale)}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className={`group flex items-center gap-2.5 outline-none transition-all duration-500 ${
+                isActive ? 'opacity-100' : 'opacity-30 hover:opacity-100'
+              }`}
+            >
+              {/* Contenedor de Bandera de Élite */}
+              <div className={`
+                relative w-5 h-5 rounded-full overflow-hidden border transition-all duration-700
+                ${isActive
+                  ? 'border-foreground shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.1)] grayscale-0'
+                  : 'border-border grayscale group-hover:grayscale-0'
+                }
+              `}>
+                <Flag
+                  code={localeNode.flagCode}
+                  className="w-full h-full object-cover scale-125"
+                />
+              </div>
+
+              {/* Etiqueta Técnica */}
+              <span className={`
+                text-[9px] font-black uppercase tracking-[0.3em] transition-all
+                ${isActive ? 'text-foreground' : 'text-muted-foreground group-hover:tracking-[0.4em]'}
+              `}>
+                {localeNode.id}
+              </span>
+
+              {/* Indicador de Actividad (Manus.io Signature) */}
+              {isActive && (
+                <motion.div
+                  layoutId="active-locale-dot"
+                  className="w-1 h-1 bg-foreground rounded-full"
+                />
+              )}
+            </motion.button>
+          );
+        })}
+      </AnimatePresence>
     </nav>
-  );
+  ));
 };

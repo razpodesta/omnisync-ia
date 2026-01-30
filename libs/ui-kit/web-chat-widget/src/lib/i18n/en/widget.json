@@ -1,0 +1,12 @@
+{
+  "header": "Neural Support",
+  "status_active": "Sovereignty Active",
+  "close": "CLOSE",
+  "welcome_message": "Neural Infrastructure connected. How may I assist you today?",
+  "ai_typing": "Processing Inference...",
+  "input_placeholder": "Type a technical inquiry...",
+  "send": "Send",
+  "errors": {
+    "system_offline": "Neural communication failure. Please try again shortly."
+  }
+}

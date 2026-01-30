@@ -1,0 +1,19 @@
+
+{
+  "brand_name": "OMNISYNC",
+  "brand_suffix": "AI",
+  "status_label": "SISTEMA OPERATIVO",
+  "version_label": "VERSIÓN",
+  "rights_reserved": "TODOS LOS DERECHOS RESERVADOS",
+  "sectors": {
+    "ecosystem": "ECOSISTEMA",
+    "company": "CORPORACIÓN"
+  },
+  "links": {
+    "network": "Red Neural",
+    "sovereignty": "Soberanía",
+    "sentinel": "Sentinel",
+    "metashark": "MetaShark Tech",
+    "labs": "Omnisync Labs"
+  }
+}

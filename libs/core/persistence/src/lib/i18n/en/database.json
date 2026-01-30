@@ -1,0 +1,13 @@
+
+{
+  "status": {
+    "handshake_success": "SQL_CLUSTER_HANDSHAKE_SUCCESSFUL",
+    "heartbeat_operational": "PERSISTENCE_PULSE_ACTIVE_AND_STABLE",
+    "pool_shutdown": "CONNECTION_POOL_CLOSED_CLEANLY"
+  },
+  "errors": {
+    "engine_failed": "CRITICAL_PRISMA_ENGINE_IGNITION_FAILURE",
+    "connectivity_loss": "CONNECTIVITY_LOSS_WITH_REMOTE_DATABASE",
+    "invalid_url": "SQL_INSTANCE_URL_CORRUPT_OR_MISSING"
+  }
+}

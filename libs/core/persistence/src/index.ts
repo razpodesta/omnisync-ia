@@ -1,13 +1,15 @@
 /** libs/core/persistence/src/index.ts */
 
 /**
- * @section Capa de Persistencia Relacional (SQL)
- * Manejo de la base de datos central en Supabase/Neon mediante Prisma.
+ * @section Exportación de ADN Generado
+ * Re-exportamos los tipos de Prisma para que otros aparatos (como el Builder)
+ * tengan acceso a las definiciones reales del esquema.
  */
-export * from './lib/database.apparatus';
+export * from '@prisma/client';
 
 /**
- * @section Capa de Memoria Volátil (Cache/Session)
- * Gestión de hilos de conversación y estados rápidos en Upstash Redis.
+ * @section Aparatos de Persistencia
  */
+export * from './lib/database.apparatus';
 export * from './lib/memory.apparatus';
+export { PrismaEngineBuilder } from './lib/builders/prisma-engine.builder';

@@ -1,0 +1,107 @@
+{
+  "theme-switcher": {
+    "toggle_label": "Toggle Visual Identity",
+    "modes": {
+      "light": "Activate Milk Mode",
+      "dark": "Activate Obsidian Mode",
+      "system": "Sync with System"
+    }
+  },
+  "language-switcher": {
+    "selector_label": "Change Language",
+    "locales": {
+      "es": "Spanish",
+      "en": "English",
+      "pt": "Portuguese"
+    }
+  },
+  "hero-section": {
+    "slides": {
+      "infra": {
+        "title": "Decentralized Minds.",
+        "subtitle": "Neural infrastructure for elite communications orchestration.",
+        "cta": "Explore Network"
+      },
+      "erp": {
+        "title": "Transactional Action.",
+        "subtitle": "Intelligent bridges between generative AI and your ERP core.",
+        "cta": "View Integrations"
+      },
+      "rag": {
+        "title": "Semantic Memory.",
+        "subtitle": "Eradicate hallucinations by injecting technical manuals into Gemini.",
+        "cta": "Load Knowledge"
+      }
+    }
+  },
+  "widget": {
+    "header": "Neural Support",
+    "status_active": "Sovereignty Active",
+    "close": "CLOSE",
+    "welcome_message": "Neural Infrastructure connected. How may I assist you today?",
+    "ai_typing": "Processing Inference...",
+    "input_placeholder": "Type a technical inquiry...",
+    "send": "Send",
+    "errors": {
+      "system_offline": "Neural communication failure. Please try again shortly."
+    }
+  },
+  "api-client": {
+    "errors": {
+      "network_failure": "Unable to connect to the Neural Hub.",
+      "contract_violation": "Inconsistent request DNA detected.",
+      "timeout": "Neural operation exceeded the grace timeout."
+    },
+    "telemetry": {
+      "call_initiated": "Initiating dispatch to neural endpoint: {endpoint}"
+    }
+  },
+  "database": {
+    "status": {
+      "handshake_success": "SQL_CLUSTER_HANDSHAKE_SUCCESSFUL",
+      "heartbeat_operational": "PERSISTENCE_PULSE_ACTIVE_AND_STABLE",
+      "pool_shutdown": "CONNECTION_POOL_CLOSED_CLEANLY"
+    },
+    "errors": {
+      "engine_failed": "CRITICAL_PRISMA_ENGINE_IGNITION_FAILURE",
+      "connectivity_loss": "CONNECTIVITY_LOSS_WITH_REMOTE_DATABASE",
+      "invalid_url": "SQL_INSTANCE_URL_CORRUPT_OR_MISSING"
+    }
+  },
+  "header": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "nav": {
+      "dashboard": "Dashboard",
+      "knowledge": "Knowledge"
+    }
+  },
+  "footer": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "status_label": "SYSTEM OPERATIONAL",
+    "version_label": "VERSION",
+    "rights_reserved": "ALL RIGHTS RESERVED",
+    "sectors": {
+      "ecosystem": "ECOSYSTEM",
+      "company": "CORPORATION"
+    },
+    "links": {
+      "network": "Neural Network",
+      "sovereignty": "Sovereignty",
+      "sentinel": "Sentinel",
+      "metashark": "MetaShark Tech",
+      "labs": "Omnisync Labs"
+    }
+  },
+  "unauthorized": {
+    "header_label": "SECURITY BREACH PREVENTION",
+    "title_part_1": "Unauthorized",
+    "title_part_2": "Access.",
+    "error_code_label": "ERROR_CODE",
+    "restricted_region_message": "Territorial sovereignty active: Your current region ({country}) lacks neural consumption permissions.",
+    "legal_notice": "Access to artificial intelligence infrastructure and ERP orchestration is limited by data sovereignty regulations and token budget protection.",
+    "back_to_safe_zone": "Return to Secure Genesis",
+    "forensic_footer": "Omnisync Security Protocol Implementation // RLS Enabled"
+  }
+}

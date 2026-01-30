@@ -2,119 +2,170 @@
 
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
+import { OmnisyncDatabase } from '@omnisync/core-persistence';
 import {
   ITenantConfiguration,
   TenantConfigurationSchema,
   TenantId,
+  OmnisyncContracts,
 } from '@omnisync/core-contracts';
+
+/** 
+ * @section Sincronización de ADN Local
+ * RESOLUCIÓN LINT: Inyección de Zod local para validación de fronteras.
+ */
+import { TenantResolutionContextSchema } from './schemas/tenant-manager.schema';
 
 /**
  * @name OmnisyncTenantManager
- * @description Aparato de dominio encargado de la gobernanza de identidades corporativas.
- * Orquesta la recuperación, validación y activación del ADN de cada organización (Tenant).
+ * @description Nodo maestro de gobernanza corporativa. Orquesta el ciclo de vida 
+ * de la identidad organizacional, actuando como el guardián del ADN técnico 
+ * del suscriptor. Implementa la "Aduana de Identidad" para asegurar que solo 
+ * nodos íntegros y activos participen en la inferencia neural.
  *
- * @protocol OEDP-Level: Elite (Database-Driven & SSOT-Compliant)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Identity-Governance V3.2)
+ * @vision Ultra-Holística: Multi-tenant-Isolation & Zero-Any
  */
 export class OmnisyncTenantManager {
   /**
    * @method getSovereignConfiguration
-   * @description Recupera el ADN técnico de una organización mediante su identificador único.
+   * @description Localiza y valida la configuración completa de un Tenant por su ID nominal.
+   * Implementa una validación biyectiva (SSOT) sobre el registro de SQL.
    *
-   * @param {TenantId} tenantOrganizationIdentifier - El ID nominal (Branded Type).
-   * @returns {Promise<ITenantConfiguration>} Configuración validada y lista para la acción.
+   * @param {TenantId} tenantId - Identificador nominal (Branded Type).
+   * @returns {Promise<Readonly<ITenantConfiguration>>} Configuración sellada e inmutable.
    */
   public static async getSovereignConfiguration(
-    tenantOrganizationIdentifier: TenantId,
-  ): Promise<ITenantConfiguration> {
+    tenantId: TenantId,
+  ): Promise<Readonly<ITenantConfiguration>> {
+    const apparatusName = 'OmnisyncTenantManager';
+    const operationName = 'getSovereignConfiguration';
+
     return await OmnisyncTelemetry.traceExecution(
-      'OmnisyncTenantManager',
-      'getSovereignConfiguration',
+      apparatusName,
+      operationName,
       async () => {
         try {
           /**
-           * @section Acceso a Persistencia
-           * Se utiliza el motor nivelado OmnisyncDatabase para consultar Supabase.
+           * @section Acceso a Persistencia Relacional
+           * Handshake con Supabase Cloud bajo el patrón Singleton de OmnisyncDatabase.
            */
-          const rawConfigurationRecord =
-            await OmnisyncDatabase.databaseEngine.tenant.findUnique({
-              where: { id: tenantOrganizationIdentifier },
-            });
+          const rawConfiguration = await OmnisyncDatabase.databaseEngine.tenant.findUnique({
+            where: { id: tenantId },
+          });
 
-          if (!rawConfigurationRecord) {
+          if (!rawConfiguration) {
             throw new Error('domain.tenants.errors.not_found');
           }
 
           /**
-           * @section Validación de ADN (SSOT)
-           * Asegura que el registro de la DB cumpla con las leyes del monorepo.
+           * @section Sello de Integridad SSOT
+           * Validamos que el ADN recuperado de la DB coincida con el contrato global.
            */
-          return TenantConfigurationSchema.parse(rawConfigurationRecord);
+          return OmnisyncContracts.validate(
+            TenantConfigurationSchema,
+            rawConfiguration,
+            `${apparatusName}:DatabaseAudit`
+          );
         } catch (criticalError: unknown) {
+          /**
+           * @note Resiliencia y Reporte
+           * El Sentinel intercepta el fallo para auditoría de seguridad.
+           */
           await OmnisyncSentinel.report({
             errorCode: 'OS-DOM-404',
             severity: 'HIGH',
-            apparatus: 'OmnisyncTenantManager',
-            operation: 'resolve_by_id',
+            apparatus: apparatusName,
+            operation: operationName,
             message: 'domain.tenants.errors.resolution_failure',
-            context: {
-              tenantId: tenantOrganizationIdentifier,
-              error: String(criticalError),
-            },
+            context: { tenantId, errorTrace: String(criticalError) },
             isRecoverable: true,
           });
           throw criticalError;
         }
       },
+      { tenantId }
     );
   }
 
   /**
    * @method resolveConfigurationByUrlSlug
-   * @description Localiza un nodo mediante su identificador semántico (Slug).
-   * Esencial para la personalización de la interfaz administrativa y Web Chat.
+   * @description Localiza un nodo mediante su identificador semántico (Slug). 
+   * Valida el formato del slug localmente antes de disparar la consulta SQL.
+   *
+   * @param {string} urlSlug - Identificador amigable (ej: 'metashark-tech').
+   * @returns {Promise<Readonly<ITenantConfiguration>>}
    */
   public static async resolveConfigurationByUrlSlug(
-    urlIdentifierSlug: string,
-  ): Promise<ITenantConfiguration> {
-    return await OmnisyncTelemetry.traceExecution(
-      'OmnisyncTenantManager',
-      'resolveConfigurationByUrlSlug',
-      async () => {
-        const rawConfigurationRecord =
-          await OmnisyncDatabase.databaseEngine.tenant.findFirst({
-            where: { urlSlug: urlIdentifierSlug.toLowerCase().trim() },
-          });
+    urlSlug: string,
+  ): Promise<Readonly<ITenantConfiguration>> {
+    const apparatusName = 'OmnisyncTenantManager';
+    const operationName = 'resolveConfigurationByUrlSlug';
 
-        if (!rawConfigurationRecord) {
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        /**
+         * @section Validación de Aduana (LINT Fix)
+         * Utilizamos el esquema local para sanitizar la entrada.
+         */
+        const validatedContext = OmnisyncContracts.validate(
+          TenantResolutionContextSchema,
+          { urlSlug },
+          `${apparatusName}:SlugValidation`
+        );
+
+        const rawConfiguration = await OmnisyncDatabase.databaseEngine.tenant.findFirst({
+          where: { urlSlug: validatedContext.urlSlug },
+        });
+
+        if (!rawConfiguration) {
           throw new Error('domain.tenants.errors.slug_not_found');
         }
 
-        return TenantConfigurationSchema.parse(rawConfigurationRecord);
+        return OmnisyncContracts.validate(
+          TenantConfigurationSchema,
+          rawConfiguration,
+          `${apparatusName}:SlugHandshake`
+        );
       },
+      { slug: urlSlug }
     );
   }
 
   /**
    * @method validateTenantOperationalStatus
-   * @description Verifica si una organización tiene permitido el consumo de recursos de IA.
+   * @description Sensor de seguridad de grado militar. Bloquea el consumo de tokens 
+   * si el nodo está en mantenimiento o suspendido.
    */
   public static async validateTenantOperationalStatus(
     tenantId: TenantId,
   ): Promise<boolean> {
-    const configuration = await this.getSovereignConfiguration(tenantId);
+    const apparatusName = 'OmnisyncTenantManager';
 
-    const isNodeActive = configuration.status === 'ACTIVE';
+    try {
+      /**
+       * @note Optimización de Pulso
+       * Realizamos una resolución rápida para validar el estado operativo.
+       */
+      const config = await this.getSovereignConfiguration(tenantId);
+      const isHealthy = config.status === 'ACTIVE';
 
-    if (!isNodeActive) {
-      OmnisyncTelemetry.verbose(
-        'OmnisyncTenantManager',
-        'status_check',
-        'domain.tenants.errors.inactive',
-        { tenantId },
-      );
+      if (!isHealthy) {
+        OmnisyncTelemetry.verbose(
+          apparatusName,
+          'operational_block',
+          `Consumo neural bloqueado para [${tenantId}]. Fase actual: ${config.status}.`
+        );
+      }
+
+      return isHealthy;
+    } catch (error: unknown) {
+      OmnisyncTelemetry.verbose(apparatusName, 'status_audit_error', String(error));
+      return false;
     }
-
-    return isNodeActive;
   }
 }

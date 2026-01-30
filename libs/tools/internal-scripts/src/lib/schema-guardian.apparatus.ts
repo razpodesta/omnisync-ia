@@ -1,10 +1,10 @@
 /** libs/tools/internal-scripts/src/lib/schema-guardian.apparatus.ts */
 
 import * as fileSystem from 'node:fs';
-import { z } from 'zod';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { glob } from 'glob';
+import { z } from 'zod';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import {
   SchemaIntegritySeedSchema,
@@ -19,19 +19,21 @@ import {
  * Garantiza que cada pieza lógica (Aparato) posea un contrato de validación inmutable (Schema)
  * bajo el protocolo OEDP. Actúa como el censor de calidad del ADN del monorepo.
  *
- * @protocol OEDP-Level: Elite (Sovereign Governance)
+ * @protocol OEDP-Level: Elite (Sovereign Governance V2.6)
  */
 export class SchemaGuardian {
   /**
    * @private
-   * @description Ruta de salida para los reportes de infraestructura.
+   * Ubicación institucional para la persistencia de auditorías de contrato.
    */
-  private static readonly REPORT_OUTPUT_DIRECTORY =
-    'reports/infrastructure/contracts';
+  private static readonly REPORT_BASE_PATH = path.resolve(
+    process.cwd(),
+    'reports/infrastructure/contracts'
+  );
 
   /**
    * @private
-   * @description Límite físico para considerar un esquema como válido y no un archivo dummy.
+   * Umbral físico para invalidar esquemas vacíos o corruptos.
    */
   private static readonly MINIMUM_SCHEMA_SIZE_BYTES = 50;
 
@@ -39,8 +41,6 @@ export class SchemaGuardian {
    * @method executeSovereignIntegrityAudit
    * @description Orquesta el escaneo masivo del monorepo buscando violaciones de paridad
    * entre lógica y contrato. Genera una semilla inmutable para auditoría externa.
-   *
-   * @returns {Promise<ISchemaIntegritySeed>} El reporte de integridad validado por SSOT.
    */
   public static async executeSovereignIntegrityAudit(): Promise<ISchemaIntegritySeed> {
     const apparatusName = 'SchemaGuardian';
@@ -52,10 +52,10 @@ export class SchemaGuardian {
       async () => {
         /**
          * @section Fase 1: Escaneo de Superficie
-         * Localizamos todos los archivos .apparatus.ts en la capa de librerías.
+         * Localizamos archivos .apparatus tanto en TypeScript puro como en React (tsx).
          */
-        const locatedApparatusFiles = await glob('libs/**/*.apparatus.ts', {
-          ignore: ['**/node_modules/**', '**/dist/**'],
+        const locatedApparatusFiles = await glob('libs/**/*.{apparatus.ts,apparatus.tsx}', {
+          ignore: ['**/node_modules/**', '**/dist/**', '**/internal-backups/**'],
         });
 
         const detectedOrphansCollection: ISchemaOrphan[] = [];
@@ -65,14 +65,14 @@ export class SchemaGuardian {
          * @section Fase 2: Auditoría Quirúrgica de Paridad
          */
         for (const apparatusPath of locatedApparatusFiles) {
-          const evaluationResult =
-            this.auditApparatusContractParity(apparatusPath);
+          const absoluteApparatusPath = path.resolve(process.cwd(), apparatusPath);
+          const evaluationResult = this.auditApparatusContractParity(absoluteApparatusPath);
 
           if (evaluationResult.isCompliant) {
             totalCompliantCount++;
           } else {
             detectedOrphansCollection.push({
-              apparatusName: path.basename(apparatusPath),
+              apparatusName: path.basename(absoluteApparatusPath),
               apparatusPath: apparatusPath,
               expectedSchemaPath: evaluationResult.expectedPath,
               violationType: evaluationResult.violationType as z.infer<
@@ -104,17 +104,15 @@ export class SchemaGuardian {
             isSystemCompromised: integrityPercentage < 90,
             remediationHint:
               integrityPercentage < 100
-                ? `Immediate action required: Standardize ${detectedOrphansCollection.length} orphaned components.`
-                : 'System architecture is in optimal condition. All apparatuses are protected.',
+                ? `Acción requerida: Estandarizar ${detectedOrphansCollection.length} componentes huérfanos.`
+                : 'Arquitectura óptima. Todos los aparatos poseen contratos de integridad.',
           },
         };
 
-        // Persistencia física del hallazgo
         this.persistSovereignAuditSeed(auditSeedPayload);
 
-        // Validación final contra el esquema granular antes del retorno
         return SchemaIntegritySeedSchema.parse(auditSeedPayload);
-      },
+      }
     );
   }
 
@@ -122,36 +120,43 @@ export class SchemaGuardian {
    * @method auditApparatusContractParity
    * @private
    * @description Implementa la heurística de localización de esquemas espejo.
+   * Soporta la transición de extensiones .tsx a .schema.ts.
    */
-  private static auditApparatusContractParity(apparatusPath: string) {
-    const parentDirectory = path.dirname(apparatusPath);
-    const componentBaseName = path.basename(apparatusPath, '.apparatus.ts');
+  private static auditApparatusContractParity(absoluteApparatusPath: string) {
+    const parentDirectory = path.dirname(absoluteApparatusPath);
+    
+    // Normalización: Extraemos el nombre sin importar si es .ts o .tsx
+    const fileName = path.basename(absoluteApparatusPath);
+    const componentBaseName = fileName.replace(/\.apparatus\.(ts|tsx)$/, '');
+    
     const expectedSchemaFilePath = path.join(
       parentDirectory,
       'schemas',
-      `${componentBaseName}.schema.ts`,
+      `${componentBaseName}.schema.ts`
     );
+
+    const relativeExpectedPath = path.relative(process.cwd(), expectedSchemaFilePath);
 
     // 1. Verificación de Existencia Física
     if (!fileSystem.existsSync(expectedSchemaFilePath)) {
       return {
         isCompliant: false,
-        expectedPath: expectedSchemaFilePath,
+        expectedPath: relativeExpectedPath,
         violationType: 'MISSING_FILE',
       };
     }
 
-    // 2. Verificación de Densidad (Evita archivos vacíos)
+    // 2. Verificación de Densidad (Evita archivos dummy)
     const fileMetadata = fileSystem.statSync(expectedSchemaFilePath);
     if (fileMetadata.size < this.MINIMUM_SCHEMA_SIZE_BYTES) {
       return {
         isCompliant: false,
-        expectedPath: expectedSchemaFilePath,
+        expectedPath: relativeExpectedPath,
         violationType: 'EMPTY_CONTRACT',
       };
     }
 
-    return { isCompliant: true, expectedPath: expectedSchemaFilePath };
+    return { isCompliant: true, expectedPath: relativeExpectedPath };
   }
 
   /**
@@ -159,34 +164,28 @@ export class SchemaGuardian {
    * @private
    * @description Vuelca el resultado en el repositorio de reportes del sistema.
    */
-  private static persistSovereignAuditSeed(
-    auditSeed: ISchemaIntegritySeed,
-  ): void {
+  private static persistSovereignAuditSeed(auditSeed: ISchemaIntegritySeed): void {
     const reportFileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-schema-audit.json`;
-    const absoluteFilePath = path.join(
-      process.cwd(),
-      this.REPORT_OUTPUT_DIRECTORY,
-      reportFileName,
-    );
+    const absoluteFilePath = path.join(this.REPORT_BASE_PATH, reportFileName);
 
     try {
-      fileSystem.mkdirSync(path.dirname(absoluteFilePath), { recursive: true });
+      if (!fileSystem.existsSync(this.REPORT_BASE_PATH)) {
+        fileSystem.mkdirSync(this.REPORT_BASE_PATH, { recursive: true });
+      }
+
       fileSystem.writeFileSync(
         absoluteFilePath,
         JSON.stringify(auditSeed, null, 2),
-        'utf-8',
+        'utf-8'
       );
 
       OmnisyncTelemetry.verbose(
         'SchemaGuardian',
-        'persist_seed',
-        `Reporte inmutable generado: ${reportFileName}`,
+        'persistence',
+        `Semilla de integridad generada: ${reportFileName}`
       );
-    } catch (criticalFileSystemError: unknown) {
-      console.error(
-        '[CRITICAL-IO-FAILURE]: No se pudo persistir la semilla de auditoría.',
-        criticalFileSystemError,
-      );
+    } catch (criticalIOError: unknown) {
+      console.error('[CRITICAL-IO-FAILURE]: Error al persistir auditoría.', criticalIOError);
     }
   }
 }

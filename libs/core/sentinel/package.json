@@ -1,5 +1,5 @@
 {
-  "name": "@omnisync-ecosystem/sentinel",
+  "name": "@omnisync/core-sentinel",
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
@@ -8,6 +8,6 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "zod": "^4.3.6",
-    "@omnisync-ecosystem/telemetry": "workspace:*"
+    "@omnisync/core-telemetry": "workspace:*"
   }
 }

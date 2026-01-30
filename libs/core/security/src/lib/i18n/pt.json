@@ -1,0 +1,107 @@
+{
+  "theme-switcher": {
+    "toggle_label": "Alternar Identidade Visual",
+    "modes": {
+      "light": "Ativar modo Milk",
+      "dark": "Ativar modo Obsidian",
+      "system": "Sincronizar com o Sistema"
+    }
+  },
+  "language-switcher": {
+    "selector_label": "Alterar Idioma",
+    "locales": {
+      "es": "Espanhol",
+      "en": "Inglês",
+      "pt": "Português"
+    }
+  },
+  "hero-section": {
+    "slides": {
+      "infra": {
+        "title": "Mentes Descentralizadas.",
+        "subtitle": "Infraestrutura neural para orquestração de comunicações de elite.",
+        "cta": "Explorar Rede"
+      },
+      "erp": {
+        "title": "Ação Transacional.",
+        "subtitle": "Pontes inteligentes entre IA generativa e seu núcleo operacional ERP.",
+        "cta": "Ver Integrações"
+      },
+      "rag": {
+        "title": "Memória Semântica.",
+        "subtitle": "Elimine alucinações injetando manuais técnicos no motor Gemini.",
+        "cta": "Carregar Conhecimento"
+      }
+    }
+  },
+  "header": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "nav": {
+      "dashboard": "Painel",
+      "knowledge": "Conhecimento"
+    }
+  },
+  "footer": {
+    "brand_name": "OMNISYNC",
+    "brand_suffix": "AI",
+    "status_label": "SISTEMA OPERACIONAL",
+    "version_label": "VERSÃO",
+    "rights_reserved": "TODOS OS DIREITOS RESERVADOS",
+    "sectors": {
+      "ecosystem": "ECOSSISTEMA",
+      "company": "CORPORAÇÃO"
+    },
+    "links": {
+      "network": "Rede Neural",
+      "sovereignty": "Soberania",
+      "sentinel": "Sentinel",
+      "metashark": "MetaShark Tech",
+      "labs": "Omnisync Labs"
+    }
+  },
+  "widget": {
+    "header": "Suporte Neural",
+    "status_active": "Soberania Ativa",
+    "close": "FECHAR",
+    "welcome_message": "Infraestrutura Neural conectada. Como posso ajudá-lo hoje?",
+    "ai_typing": "Processando Inferência...",
+    "input_placeholder": "Digite uma consulta técnica...",
+    "send": "Enviar",
+    "errors": {
+      "system_offline": "Falha na comunicação neural. Por favor, tente novamente em breve."
+    }
+  },
+  "api-client": {
+    "errors": {
+      "network_failure": "Incapacidade de conectar com o Neural Hub.",
+      "contract_violation": "ADN de petição inconsistente detectado.",
+      "timeout": "A operação neural excedeu o tempo de limite."
+    },
+    "telemetry": {
+      "call_initiated": "Iniciando despacho para endpoint neural: {endpoint}"
+    }
+  },
+  "database": {
+    "status": {
+      "handshake_success": "HANDSHAKE_COM_O_CLUSTER_SQL_BEM_SUCEDIDO",
+      "heartbeat_operational": "PULSO_DE_PERSISTÊNCIA_ATIVO_E_ESTÁVEL",
+      "pool_shutdown": "POOL_DE_CONEXÕES_ENCERRADO_LIMPAMENTE"
+    },
+    "errors": {
+      "engine_failed": "FALHA_CRÍTICA_NA_IGNIÇÃO_DO_MOTOR_PRISMA",
+      "connectivity_loss": "PERDA_DE_CONEXÃO_COM_O_BANCO_DE_DADOS_REMOTO",
+      "invalid_url": "URL_DA_INSTÂNCIA_SQL_CORROMPIDA_OU_INEXISTENTE"
+    }
+  },
+  "unauthorized": {
+    "header_label": "PREVENÇÃO DE VIOLAÇÃO DE SEGURANÇA",
+    "title_part_1": "Acesso",
+    "title_part_2": "Não Autorizado.",
+    "error_code_label": "CÓDIGO_ERRO",
+    "restricted_region_message": "Soberania territorial ativa: Sua região atual ({country}) não possui permissões de consumo neural.",
+    "legal_notice": "O acesso à infraestrutura de inteligência artificial e orquestração ERP é limitado por regulamentações de soberania de dados e proteção de orçamento de tokens.",
+    "back_to_safe_zone": "Voltar ao Início Seguro",
+    "forensic_footer": "Omnisync Security Protocol Implementation // RLS Enabled"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "slides": {
+    "infra": {
+      "title": "Mentes Descentralizadas.",
+      "subtitle": "Infraestrutura neural para orquestração de comunicações de elite.",
+      "cta": "Explorar Rede"
+    },
+    "erp": {
+      "title": "Ação Transacional.",
+      "subtitle": "Pontes inteligentes entre IA generativa e seu núcleo operacional ERP.",
+      "cta": "Ver Integrações"
+    },
+    "rag": {
+      "title": "Memória Semântica.",
+      "subtitle": "Elimine alucinações injetando manuais técnicos no motor Gemini.",
+      "cta": "Carregar Conhecimento"
+    }
+  }
+}

@@ -1,34 +1,32 @@
-# render.yaml - Omnisync Infrastructure Blueprint
 services:
   - type: web
     name: orchestrator-api
     runtime: node
-    plan: free
+    plan: free # Nivelado para Tier Gratuito (MVP)
 
-    # Comandos de Élite: Instalación -> Agregación de Idiomas -> Generación de Base de Datos -> Build
-    buildCommand: pnpm install && pnpm run internationalization:build && pnpm run persistence:generate && npx nx build orchestrator-api --prod
+    # 🚀 COMANDO DE ÉLITE:
+    # Utilizamos el script 'system:hydrate' del package.json para garantizar
+    # que los idiomas, la DB y el build de Nx se ejecuten en orden atómico.
+    buildCommand: pnpm run system:hydrate && npx nx build orchestrator-api --prod
 
-    # Punto de entrada del binario compilado
+    # 🏁 PUNTO DE ENTRADA:
+    # Apunta al bundle generado por Webpack/Nx.
     startCommand: node dist/apps/orchestrator-api/main.js
 
     envVars:
       - key: NODE_ENV
         value: production
-
-      # Persistencia de Élite (Sincronizado con Supabase)
       - key: DATABASE_URL
-        sync: false # Se debe configurar manualmente en el Dashboard de Render para seguridad
-
-      # Inteligencia Artificial
+        sync: false # Cargar manualmente en Render Dashboard
       - key: GOOGLE_GEMINI_API_KEY
         sync: false
-
-      # Memoria Volátil (Upstash Redis)
       - key: UPSTASH_REDIS_REST_URL
         sync: false
       - key: UPSTASH_REDIS_REST_TOKEN
         sync: false
-
-      # Configuración de Monorepo
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
       - key: SKIP_INSTALL_DEPS_CHECK
         value: 'true'

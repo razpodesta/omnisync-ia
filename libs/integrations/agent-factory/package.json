@@ -1,0 +1,16 @@
+{
+  "name": "@omnisync/agent-factory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "zod": "^4.3.6",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*",
+    "@omnisync/core-sentinel": "workspace:*"
+  },
+  "description": "Orquestador de Swarm Intelligence para despacho de sub-agentes especializados. Nivelado para OEDP V3.2."
+}

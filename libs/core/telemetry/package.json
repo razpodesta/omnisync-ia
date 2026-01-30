@@ -1,6 +1,6 @@
 {
-  "name": "@omnisync-ecosystem/telemetry",
-  "version": "0.0.1",
+  "name": "@omnisync/core-telemetry",
+  "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",

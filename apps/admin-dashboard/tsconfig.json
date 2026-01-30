@@ -4,13 +4,14 @@
   "compilerOptions": {
     /**
      * @section Configuración de Renderizado JSX
-     * Se mantiene 'preserve' ya que Next.js y el motor SWC/Turbopack
-     * asumen la responsabilidad de la transformación final.
+     * Se mantiene 'preserve' delegando la transformación final al motor
+     * SWC/Turbopack optimizado para React 19.
      */
     "jsx": "preserve",
 
     /**
-     * @section Estándares de Tipado Estricto (Protocolo OEDP)
+     * @section Estándares de Tipado Estricto (Protocolo OEDP V2.5)
+     * Garantiza la erradicación de 'any' implícitos y la seguridad de nulabilidad.
      */
     "strict": true,
     "noEmit": true,
@@ -22,16 +23,16 @@
     "isolatedModules": true,
 
     /**
-     * @section Soberanía de Entorno
-     * Definición de librerías de tiempo de ejecución para capacidades de DOM y ESModern.
+     * @section Soberanía de Entorno de Ejecución
+     * Habilita capacidades modernas de DOM y ESNext para el Dashboard.
      */
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
 
     /**
      * @property allowSyntheticDefaultImports
-     * @description Necesario para la interoperabilidad de módulos de React 19
-     * y bibliotecas de terceros que no exportan un default nativo.
+     * @description Crítico para la interoperabilidad con librerías CJS
+     * y el estándar de importación de React 19.
      */
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -39,8 +40,7 @@
 
     /**
      * @section Soberanía de Tipado de Frontera
-     * Se añaden 'react' y 'react-dom' para resolver la discrepancia del namespace JSX.
-     * Al incluir 'node', garantizamos que los scripts de infraestructura sigan siendo válidos.
+     * Se añaden definiciones core para asegurar la coherencia del namespace global.
      */
     "types": ["node", "react", "react-dom"],
 
@@ -57,6 +57,11 @@
     "src/**/*.jsx",
     ".next/types/**/*.ts",
     "next-env.d.ts",
+    /**
+     * @note Inyección de Soberanía de Tipos
+     * Permite la resolución de módulos externos sin tipos nativos y activos estáticos.
+     */
+    "index.d.ts",
     "../../libs/ui-kit/**/*.tsx"
   ],
   "exclude": [

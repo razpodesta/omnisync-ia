@@ -3,8 +3,15 @@
 import * as fileSystem from 'node:fs';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
-import { OmnisyncDatabase } from '@omnisync-ecosystem/persistence';
+/** 
+ * @section Sincronización de Persistencia
+ * RESOLUCIÓN TS2307: Se actualiza al alias nominal soberano.
+ */
+import { OmnisyncDatabase } from '@omnisync/core-persistence';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { OmnisyncContracts } from '@omnisync/core-contracts';
+import { OmnisyncSentinel } from '@omnisync/core-sentinel';
+
 import {
   ConnectivityReportSchema,
   IConnectivityReport,
@@ -14,24 +21,25 @@ import {
 /**
  * @name ConnectivityIntegrity
  * @description Aparato de auditoría profunda de infraestructura Cloud.
- * Realiza sondas de integridad sobre los pilares de la red neural (SQL, Redis, Vector DB)
- * para generar semillas de conocimiento arquitectónico.
+ * Realiza sondas de integridad (Handshakes) sobre los pilares de la red neural
+ * para medir latencia, disponibilidad y consistencia de secretos.
  *
- * @protocol OEDP-Level: Elite (Ultra-Holistic Monitoring)
+ * @protocol OEDP-Level: Elite (Cloud-Health-Audit V3.0)
  */
 export class ConnectivityIntegrity {
   /**
    * @private
-   * @description Ruta de persistencia para reportes de salud consumibles por IA.
+   * Ubicación institucional para la persistencia de semillas de salud.
    */
-  private static readonly REPORT_BASE_PATH =
-    'reports/infrastructure/connectivity';
+  private static readonly REPORT_BASE_PATH = path.resolve(
+    process.cwd(),
+    'reports/infrastructure/connectivity'
+  );
 
   /**
    * @method executeSovereignAudit
-   * @description Orquesta una inspección síncrona de 360° sobre la nube Omnisync.
-   *
-   * @returns {Promise<IConnectivityReport>} Reporte validado por contrato SSOT.
+   * @description Orquesta una inspección síncrona de 360° sobre la nube.
+   * Genera un reporte inmutable consumible por el Dashboard de Administración.
    */
   public static async executeSovereignAudit(): Promise<IConnectivityReport> {
     const apparatusName = 'ConnectivityIntegrity';
@@ -43,7 +51,10 @@ export class ConnectivityIntegrity {
       async () => {
         const auditStartTime = performance.now();
 
-        // Ejecución concurrente de sondas de integridad
+        /**
+         * @section Ejecución de Sondas Paralelas
+         * Validamos los tres estados de materia de datos: Relacional, Volátil y Vectorial.
+         */
         const [databaseStatus, memoryStatus, vectorStatus] = await Promise.all([
           this.probeSupabaseCloud(),
           this.probeUpstashRedis(),
@@ -74,10 +85,17 @@ export class ConnectivityIntegrity {
           },
         };
 
-        // Vuelco inmutable de la semilla de conocimiento
+        // Persistencia física del hallazgo para auditoría forense
         this.persistSovereignReportSeed(auditPayload);
 
-        return ConnectivityReportSchema.parse(auditPayload);
+        /**
+         * @section Sello de Integridad (SSOT)
+         */
+        return OmnisyncContracts.validate(
+          ConnectivityReportSchema, 
+          auditPayload, 
+          apparatusName
+        );
       },
     );
   }
@@ -89,13 +107,16 @@ export class ConnectivityIntegrity {
   private static async probeSupabaseCloud(): Promise<IConnectivityNodeHealth> {
     const probeStartTime = performance.now();
     try {
-      // Sonda de bajo nivel contra PostgreSQL
+      /**
+       * Handshake físico con la persistencia relacional.
+       * Si falla, el orquestador no podrá resolver identidades de Tenants.
+       */
       await OmnisyncDatabase.databaseEngine.$queryRaw`SELECT 1`;
 
       return {
         status: 'OPERATIONAL',
-        latencyInMilliseconds: performance.now() - probeStartTime,
-        provider: 'Supabase Cloud (PostgreSQL 15+)',
+        latencyInMilliseconds: Number((performance.now() - probeStartTime).toFixed(2)),
+        provider: 'Supabase Cloud (PostgreSQL)',
         remediationHint: 'Handshake successful.',
       };
     } catch (criticalError: unknown) {
@@ -103,8 +124,7 @@ export class ConnectivityIntegrity {
         status: 'CRITICAL_FAILURE',
         provider: 'Supabase Cloud',
         error: String(criticalError),
-        remediationHint:
-          'Verify DATABASE_URL and Supabase project state. Possible IP Geofencing block.',
+        remediationHint: 'Verify DATABASE_URL environment variable and IP White-listing.',
       };
     }
   }
@@ -119,28 +139,24 @@ export class ConnectivityIntegrity {
       const cloudRestUrl = process.env['UPSTASH_REDIS_REST_URL'];
       const cloudRestToken = process.env['UPSTASH_REDIS_REST_TOKEN'];
 
-      if (!cloudRestUrl || !cloudRestToken)
-        throw new Error('OS-SEC-004: Missing Cloud Memory Credentials.');
+      if (!cloudRestUrl || !cloudRestToken) throw new Error('Missing Cloud Memory Credentials');
 
-      const networkResponse = await fetch(`${cloudRestUrl}/ping`, {
+      const response = await fetch(`${cloudRestUrl}/ping`, {
         headers: { Authorization: `Bearer ${cloudRestToken}` },
       });
 
       return {
-        status: networkResponse.ok ? 'OPERATIONAL' : 'DEGRADED',
-        latencyInMilliseconds: performance.now() - probeStartTime,
-        provider: 'Upstash Redis (REST Interface)',
-        remediationHint: networkResponse.ok
-          ? 'Heartbeat active.'
-          : 'Check Upstash quota or token expiration.',
+        status: response.ok ? 'OPERATIONAL' : 'DEGRADED',
+        latencyInMilliseconds: Number((performance.now() - probeStartTime).toFixed(2)),
+        provider: 'Upstash Redis (REST)',
+        remediationHint: response.ok ? 'Stable Connection' : 'Check REST API Quotas',
       };
-    } catch (criticalError: unknown) {
+    } catch (error: unknown) {
       return {
         status: 'CRITICAL_FAILURE',
         provider: 'Upstash Memory',
-        error: String(criticalError),
-        remediationHint:
-          'Verify UPSTASH environment variables and network egress.',
+        error: String(error),
+        remediationHint: 'Verify UPSTASH_REDIS_REST environment variables.',
       };
     }
   }
@@ -153,41 +169,31 @@ export class ConnectivityIntegrity {
     const probeStartTime = performance.now();
     try {
       const vectorUrl = process.env['QDRANT_URL'];
-      if (!vectorUrl)
-        throw new Error('OS-SEC-004: Qdrant URL is not configured.');
+      if (!vectorUrl) throw new Error('Qdrant Endpoint not defined');
 
-      const networkResponse = await fetch(`${vectorUrl}/healthz`);
+      const response = await fetch(`${vectorUrl}/healthz`);
 
       return {
-        status: networkResponse.ok ? 'OPERATIONAL' : 'FAILING',
-        latencyInMilliseconds: performance.now() - probeStartTime,
-        provider: 'Qdrant Cloud (Rust Vector Engine)',
-        remediationHint: networkResponse.ok
-          ? 'Cluster healthy.'
-          : 'Check Qdrant dashboard for maintenance alerts.',
+        status: response.ok ? 'OPERATIONAL' : 'FAILING',
+        latencyInMilliseconds: Number((performance.now() - probeStartTime).toFixed(2)),
+        provider: 'Qdrant Cloud (Rust)',
+        remediationHint: response.ok ? 'Healthy Cluster' : 'Verify API Key and Cluster Status.',
       };
-    } catch (criticalError: unknown) {
+    } catch (error: unknown) {
       return {
         status: 'CRITICAL_FAILURE',
         provider: 'Qdrant Cloud',
-        error: String(criticalError),
-        remediationHint:
-          'If using Free Tier, cluster might be in hibernation mode.',
+        error: String(error),
+        remediationHint: 'Ensure QDRANT_URL is accessible from this node.',
       };
     }
   }
 
-  /**
-   * @method calculateConsolidatedHealth
-   * @private
-   */
   private static calculateConsolidatedHealth(
     nodeStatuses: string[],
   ): IConnectivityReport['overallStatus'] {
-    if (nodeStatuses.every((current) => current === 'OPERATIONAL'))
-      return 'HEALTHY';
-    if (nodeStatuses.some((current) => current === 'CRITICAL_FAILURE'))
-      return 'FAILING';
+    if (nodeStatuses.every((current) => current === 'OPERATIONAL')) return 'HEALTHY';
+    if (nodeStatuses.some((current) => current === 'CRITICAL_FAILURE')) return 'FAILING';
     return 'DEGRADED';
   }
 
@@ -196,31 +202,28 @@ export class ConnectivityIntegrity {
    * @private
    */
   private static persistSovereignReportSeed(report: IConnectivityReport): void {
-    const reportFileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-connectivity-audit.json`;
-    const absolutePath = path.join(
-      process.cwd(),
-      this.REPORT_BASE_PATH,
-      reportFileName,
-    );
-
     try {
-      fileSystem.mkdirSync(path.dirname(absolutePath), { recursive: true });
-      fileSystem.writeFileSync(
-        absolutePath,
-        JSON.stringify(report, null, 2),
-        'utf-8',
-      );
+      if (!fileSystem.existsSync(this.REPORT_BASE_PATH)) {
+        fileSystem.mkdirSync(this.REPORT_BASE_PATH, { recursive: true });
+      }
 
-      OmnisyncTelemetry.verbose(
-        'ConnectivityIntegrity',
-        'persist_seed',
-        `Semilla de salud generada: ${reportFileName}`,
-      );
-    } catch (criticalFileSystemError: unknown) {
-      console.error(
-        '[CRITICAL-IO-FAILURE]: No se pudo persistir el reporte de conectividad.',
-        criticalFileSystemError,
-      );
+      const reportFileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-connectivity-audit.json`;
+      const absolutePath = path.join(this.REPORT_BASE_PATH, reportFileName);
+
+      fileSystem.writeFileSync(absolutePath, JSON.stringify(report, null, 2), 'utf-8');
+    } catch (persistenceError: unknown) {
+      /**
+       * @section Gestión de Anomalía en Script
+       * Reportamos al Sentinel que la herramienta de auditoría no puede persistir sus propios resultados.
+       */
+      OmnisyncSentinel.report({
+        errorCode: 'OS-CORE-001',
+        severity: 'LOW',
+        apparatus: 'ConnectivityIntegrity',
+        operation: 'persist_report',
+        message: 'Incapacidad de escribir semilla de conectividad en disco.',
+        context: { error: String(persistenceError) }
+      });
     }
   }
 }

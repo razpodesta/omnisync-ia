@@ -1,5 +1,5 @@
 {
-  "name": "sentinel",
+  "name": "core-sentinel",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/sentinel/src",
   "projectType": "library",
@@ -12,7 +12,26 @@
         "outputPath": "dist/libs/core/sentinel",
         "main": "libs/core/sentinel/src/index.ts",
         "tsConfig": "libs/core/sentinel/tsconfig.lib.json",
-        "assets": ["libs/core/sentinel/*.md"]
+        "assets": [
+          "libs/core/sentinel/*.md",
+          {
+            "input": "libs/core/sentinel",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/sentinel/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

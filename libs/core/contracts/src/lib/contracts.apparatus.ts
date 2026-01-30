@@ -6,38 +6,45 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 /**
  * @name OmnisyncContracts
- * @description Aparato fundamental para la validación de integridad del ADN del dato (SSOT).
- * Actúa como el guardián de entrada de todos los aparatos del ecosistema, garantizando
- * que ningún dato corrupto procese lógicas de negocio o inferencias de IA.
- *
- * @protocol OEDP-Level: Elite (Atomized & Immutable)
+ * @description Aparato guardián de la integridad del ADN del dato (SSOT).
+ * Actúa como el motor de validación centralizado del framework, garantizando 
+ * que solo información íntegra y tipada circule por las venas del sistema.
+ * 
+ * @protocol OEDP-Level: Elite (Full-Sovereign Validation V3.0)
  */
 export class OmnisyncContracts {
   /**
    * @method validate
-   * @description Realiza una validación estricta de una entidad única.
-   * Si el contrato se viola, reporta al Sentinel con severidad HIGH.
-   *
-   * @template T - Tipo esperado del esquema.
-   * @param {ZodSchema<T>} schema - Esquema de validación Zod.
-   * @param {unknown} data - Datos a inspeccionar.
-   * @param {string} contextName - Identificador del aparato consumidor para trazabilidad.
-   * @returns {Readonly<T>} Datos validados y marcados como inmutables.
+   * @description Realiza una validación estricta y sella la inmutabilidad del objeto.
+   * Si detecta una violación de contrato, orquesta un reporte forense al Sentinel.
+   * 
+   * @template T - Interfaz del contrato esperada.
+   * @param {ZodSchema<T>} schema - Esquema Zod de validación.
+   * @param {unknown} data - ADN crudo a inspeccionar.
+   * @param {string} apparatusContext - Identificador del aparato que invoca la aduana.
+   * @returns {Readonly<T>} Datos validados bajo estándar Readonly.
    */
   public static validate<T>(
     schema: ZodSchema<T>,
     data: unknown,
-    contextName: string,
+    apparatusContext: string,
   ): Readonly<T> {
+    const operationName = `validate:${apparatusContext}`;
+
     return OmnisyncTelemetry.traceExecutionSync(
       'OmnisyncContracts',
-      `validate:${contextName}`,
+      operationName,
       () => {
         try {
+          /**
+           * @section Ejecución de Aduana
+           * El parseo de Zod garantiza que las transformaciones (trim, lowercase)
+           * se apliquen antes de entregar el dato validado.
+           */
           return schema.parse(data) as Readonly<T>;
-        } catch (error: unknown) {
-          this.reportViolation(error, data, contextName);
-          throw error;
+        } catch (criticalValidationError: unknown) {
+          this.reportSovereignViolation(criticalValidationError, data, apparatusContext);
+          throw criticalValidationError;
         }
       },
     );
@@ -45,28 +52,30 @@ export class OmnisyncContracts {
 
   /**
    * @method validateCollection
-   * @description Variante optimizada para la validación de arrays de datos.
-   * Útil para resultados de búsqueda vectorial o listados de ERP.
+   * @description Especialista en la validación de lotes de datos (Batch Validation).
+   * Vital para procesos RAG donde se recuperan múltiples fragmentos semánticos.
    */
   public static validateCollection<T>(
     schema: ZodSchema<T>,
     dataCollection: unknown[],
-    contextName: string,
+    apparatusContext: string,
   ): ReadonlyArray<T> {
+    const operationName = `validateCollection:${apparatusContext}`;
+
     return OmnisyncTelemetry.traceExecutionSync(
       'OmnisyncContracts',
-      `validateCollection:${contextName}`,
+      operationName,
       () => {
         const collectionSchema = z.array(schema);
         try {
           return collectionSchema.parse(dataCollection) as ReadonlyArray<T>;
-        } catch (error: unknown) {
-          this.reportViolation(
-            error,
-            `Collection[${dataCollection.length}]`,
-            contextName,
+        } catch (criticalCollectionError: unknown) {
+          this.reportSovereignViolation(
+            criticalCollectionError,
+            `Collection[Length: ${dataCollection.length}]`,
+            apparatusContext,
           );
-          throw error;
+          throw criticalCollectionError;
         }
       },
     );
@@ -74,8 +83,8 @@ export class OmnisyncContracts {
 
   /**
    * @method safeValidate
-   * @description Variante de alto rendimiento para validaciones en caliente (Middlewares/Edge).
-   * No lanza excepciones ni dispara reportes al Sentinel.
+   * @description Variante reactiva de alta performance. 
+   * Diseñada para validaciones en el Edge o Middlewares donde no se desea lanzar excepciones.
    */
   public static safeValidate<T>(
     schema: ZodSchema<T>,
@@ -95,26 +104,27 @@ export class OmnisyncContracts {
   }
 
   /**
-   * @method reportViolation
+   * @method reportSovereignViolation
    * @private
-   * @description Centraliza la comunicación con el Sentinel ante fallos de integridad.
+   * @description Transforma errores de esquema en reportes diagnósticos para el Sentinel.
    */
-  private static reportViolation(
-    error: unknown,
-    data: unknown,
-    context: string,
+  private static reportSovereignViolation(
+    errorInstance: unknown,
+    payloadSnapshot: unknown,
+    contextIdentifier: string,
   ): void {
-    if (error instanceof z.ZodError) {
+    if (errorInstance instanceof z.ZodError) {
       OmnisyncSentinel.report({
         errorCode: 'OS-CORE-400',
         severity: 'HIGH',
         apparatus: 'OmnisyncContracts',
-        operation: `violation_at:${context}`,
+        operation: `integrity_breach_at:${contextIdentifier}`,
         message: 'core.contracts.error.ssot_violation',
         context: {
-          apparatusContext: context,
-          validationIssues: error.issues,
-          payloadSnapshot: String(data).substring(0, 250),
+          invokingApparatus: contextIdentifier,
+          validationIssues: errorInstance.issues,
+          // Truncamos el snapshot para no saturar la telemetría
+          dnaPreview: String(JSON.stringify(payloadSnapshot)).substring(0, 300),
         },
         isRecoverable: false,
       });

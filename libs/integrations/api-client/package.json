@@ -1,0 +1,16 @@
+{
+  "name": "@omnisync/api-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "description": "Cliente de despacho neural de alta fidelidad. Orquesta las peticiones desde la UI hacia el Hub mediante el protocolo seguro OEDP V3.2.",
+  "author": "Raz Podestá <Creator> - MetaShark Tech",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "zod": "^4.3.6",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*"
+  }
+}

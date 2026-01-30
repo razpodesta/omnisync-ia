@@ -1,5 +1,5 @@
 {
-  "name": "internal-scripts",
+  "name": "core-internal-scripts",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/tools/internal-scripts/src",
   "projectType": "library",
@@ -12,8 +12,19 @@
         "outputPath": "dist/libs/tools/internal-scripts",
         "main": "libs/tools/internal-scripts/src/index.ts",
         "tsConfig": "libs/tools/internal-scripts/tsconfig.lib.json",
-        "assets": ["libs/tools/internal-scripts/*.md"]
+        "assets": [
+          "libs/tools/internal-scripts/*.md",
+          {
+            "input": "libs/tools/internal-scripts",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

@@ -1,15 +1,18 @@
 {
-  "name": "@omnisync-ecosystem/tenants",
+  "name": "@omnisync/tenants",
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
+  "description": "Gobernador de identidades corporativas (Tenants). Orquesta la resolución de soberanía y configuración de nodos bajo el protocolo OEDP V3.2.",
+  "author": "Raz Podestá <Creator> - MetaShark Tech",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@omnisync-ecosystem/contracts": "workspace:*",
-    "@omnisync-ecosystem/telemetry": "workspace:*",
-    "@omnisync-ecosystem/sentinel": "workspace:*",
-    "@omnisync-ecosystem/persistence": "workspace:*"
+    "zod": "^4.3.6",
+    "@omnisync/core-contracts": "workspace:*",
+    "@omnisync/core-telemetry": "workspace:*",
+    "@omnisync/core-sentinel": "workspace:*",
+    "@omnisync/core-persistence": "workspace:*"
   }
 }

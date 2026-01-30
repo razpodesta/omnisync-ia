@@ -64,14 +64,14 @@ export class WorkspaceConfigurationAuditor {
 
           /**
            * @section Validación de Soberanía de Rutas
-           * Se exige que todo alias inicie con @omnisync o @omnisync-ecosystem
+           * Se exige que todo alias inicie con @omnisync o @omnisync
            * para mantener la jerarquía de marca y evitar colisiones.
            */
           Object.keys(mappedConfigurationPaths).forEach(
             (pathAliasIdentifier) => {
               const isStandardAlias =
                 pathAliasIdentifier.startsWith('@omnisync/') ||
-                pathAliasIdentifier.startsWith('@omnisync-ecosystem/');
+                pathAliasIdentifier.startsWith('@omnisync/');
 
               if (!isStandardAlias) {
                 detectedConfigurationAnomalies.push(

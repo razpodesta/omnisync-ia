@@ -11,7 +11,7 @@ import {
 } from '@omnisync/core-contracts';
 
 /**
- * @section Traductores Atómicos
+ * @section Traductores Atómicos (Lego Pieces)
  */
 import { WhatsAppTranslatorApparatus } from './translators/whatsapp-translator.apparatus';
 import { WebChatTranslatorApparatus } from './translators/web-chat-translator.apparatus';
@@ -27,40 +27,46 @@ import {
 
 /**
  * @name GatewayOrchestrator
- * @description El Cerebro de Comunicaciones Omnicanal (v8.0).
- * Orquesta la transformación de tráfico de red heterogéneo en intenciones neurales
- * inmutables. Implementa una arquitectura de despacho polimórfico y triaje
- * lingüístico dinámico para garantizar la soberanía del mensaje.
+ * @description Nodo maestro de comunicaciones del ecosistema Omnisync-AI. 
+ * Orquesta la transformación de tráfico de red heterogéneo en intenciones neurales 
+ * inmutables. Implementa una arquitectura de despacho polimórfico y triaje 
+ * lingüístico dinámico para garantizar la soberanía del mensaje y la 
+ * persistencia forense sin afectar la latencia de respuesta.
  *
- * @protocol OEDP-Level: Elite (Zero-Any & Multimodal-Ready)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Omnichannel-Gateway V3.2)
+ * @vision Ultra-Holística: Zero-Latency-Normalization & Resilient-Persistence
  */
 export class GatewayOrchestrator {
   /**
    * @private
-   * @description Registro inmutable de traductores autorizados.
-   * RESOLUCIÓN TS2741: Mapeo uno a uno con la taxonomía de ChannelTypeSchema.
+   * @description Registro inmutable de traductores autorizados. 
+   * Mapeo estricto con la taxonomía de ChannelType para despacho polimórfico.
    */
-  private static readonly AUTHORIZED_TRANSLATOR_REGISTRY: Record<
-    string,
-    IOmnichannelTranslator
-  > = {
+  private static readonly AUTHORIZED_TRANSLATOR_REGISTRY: Readonly<Record<string, IOmnichannelTranslator>> = {
     WHATSAPP: new WhatsAppTranslatorApparatus(),
     WEB_CHAT: new WebChatTranslatorApparatus(),
+    /** 
+     * @note Extensibilidad 2026
+     * Los canales TELEGRAM y VOICE_CALL se añadirán tras la nivelación de sus drivers.
+     */
   };
 
   /**
    * @method executeSovereignStandardization
-   * @description Punto de entrada maestro. Transforma, valida y audita el tráfico omnicanal.
+   * @description Punto de entrada maestro. Transforma tráfico crudo en ADN neural. 
+   * Ejecuta el pipeline de validación, traducción y activación de persistencia asíncrona.
    *
-   * @param {unknown} rawNetworkPayload - Datos brutos recibidos por el endpoint (Webhook/Socket).
-   * @param {string} channelIdentifier - El vector de origen (ej: 'WHATSAPP').
-   * @param {TenantId} tenantOrganizationIdentifier - Sello de soberanía del suscriptor.
-   * @returns {Promise<INeuralIntent>} Intención normalizada y lista para el Neural Hub.
+   * @param {unknown} rawNetworkPayload - Datos brutos (Webhook/Socket).
+   * @param {string} channelIdentifier - Vector de origen (ej: 'WHATSAPP').
+   * @param {TenantId} tenantId - Sello de soberanía del suscriptor.
+   * @returns {Promise<INeuralIntent>} Intención normalizada bajo contrato SSOT.
    */
   public static async executeSovereignStandardization(
     rawNetworkPayload: unknown,
     channelIdentifier: string,
-    tenantOrganizationIdentifier: TenantId,
+    tenantId: TenantId,
   ): Promise<INeuralIntent> {
     const apparatusName = 'GatewayOrchestrator';
     const operationName = 'executeSovereignStandardization';
@@ -71,79 +77,74 @@ export class GatewayOrchestrator {
       async () => {
         try {
           /**
-           * @section 1. Validación de Soberanía de Frontera
-           * Verificamos que el canal esté permitido en el contrato base del ecosistema.
+           * @section 1. Resolución de Canal y Traductor
            */
           const validatedChannel = OmnisyncContracts.validate(
             ChannelTypeSchema,
             channelIdentifier.toUpperCase().trim(),
-            `${apparatusName}:ChannelValidation`,
+            `${apparatusName}:ChannelHandshake`
           );
 
-          const translator =
-            this.AUTHORIZED_TRANSLATOR_REGISTRY[validatedChannel];
+          const translator = this.AUTHORIZED_TRANSLATOR_REGISTRY[validatedChannel];
 
           if (!translator) {
-            throw new Error(
-              `OS-INTEG-404: El traductor para [${validatedChannel}] no está provisionado.`,
-            );
+            throw new Error(`OS-INTEG-404: El traductor para [${validatedChannel}] no está provisionado.`);
           }
 
           /**
-           * @section 2. Resolución de ADN Lingüístico (Triaje)
-           * Recuperamos las llaves de urgencia específicas para el Tenant.
+           * @section 2. Triaje Lingüístico y Normalización
+           * Recuperamos el contexto de urgencia y delegamos la traducción al especialista.
            */
-          const localizedUrgencyKeys = await this.resolveTenantUrgencyContext(
-            tenantOrganizationIdentifier,
+          const localizedUrgencyKeys = await this.resolveTenantUrgencyContext(tenantId);
+
+          const translationResult: IOmnichannelTranslationResult = translator.translate(
+            rawNetworkPayload,
+            tenantId,
+            localizedUrgencyKeys,
           );
 
           /**
-           * @section 3. Ejecución de Traducción Polimórfica
-           * El traductor asume la responsabilidad de normalizar según su protocolo (Meta, Web, etc).
+           * @section 3. Consolidación de ADN (SSOT)
+           * Sellamos la intención con marca de tiempo e ID único para trazabilidad biyectiva.
            */
-          const translationResult: IOmnichannelTranslationResult =
-            translator.translate(
-              rawNetworkPayload,
-              tenantOrganizationIdentifier,
-              localizedUrgencyKeys,
-            );
-
-          /**
-           * @section 4. Consolidación de Intención Neural (SSOT)
-           * Sellamos el ADN del mensaje con un identificador único y marca de tiempo.
-           */
-          const finalizedNeuralIntent: INeuralIntent = NeuralIntentSchema.parse(
+          const finalizedNeuralIntent: INeuralIntent = OmnisyncContracts.validate(
+            NeuralIntentSchema,
             {
               ...translationResult,
               id: crypto.randomUUID(),
-              tenantId: tenantOrganizationIdentifier,
+              tenantId: tenantId,
               timestamp: new Date().toISOString(),
             },
+            `${apparatusName}:FinalSeal`
           );
 
           /**
-           * @section 5. Sincronización Forense Asíncrona (Non-Blocking)
-           * Disparamos el volcado a la persistencia dual sin afectar la latencia de respuesta.
+           * @section 4. Persistencia Forense No-Bloqueante
+           * Disparamos el volcado a la persistencia dual sin añadir latencia a la IA.
            */
-          this.executePersistenceSideEffects(finalizedNeuralIntent);
+          this.triggerAsyncPersistenceSideEffects(finalizedNeuralIntent);
 
           OmnisyncTelemetry.verbose(
             apparatusName,
             'standardization_complete',
-            `Mensaje estandarizado [${finalizedNeuralIntent.id}] desde canal [${validatedChannel}].`,
+            `Mensaje [${finalizedNeuralIntent.id}] normalizado desde [${validatedChannel}].`
           );
 
           return finalizedNeuralIntent;
         } catch (criticalStandardizationError: unknown) {
+          /**
+           * @note Protocolo de Desastre
+           * El Sentinel captura fallos de red o de esquema durante la estandarización.
+           */
           await OmnisyncSentinel.report({
             errorCode: 'OS-INTEG-500',
             severity: 'HIGH',
             apparatus: apparatusName,
             operation: operationName,
-            message: 'integrations.omnichannel.standardization_failure',
+            message: 'tools.orchestrator.standardization_failure',
             context: {
               targetChannel: channelIdentifier,
-              tenantId: tenantOrganizationIdentifier,
+              tenantId: tenantId,
               errorDetail: String(criticalStandardizationError),
             },
             isRecoverable: true,
@@ -152,62 +153,43 @@ export class GatewayOrchestrator {
           throw criticalStandardizationError;
         }
       },
+      { channel: channelIdentifier, tenantId }
     );
   }
 
   /**
    * @method resolveTenantUrgencyContext
    * @private
-   * @description Resuelve el contexto de triaje para el analista lingüístico.
-   * NIVELACIÓN V3.0: Preparado para consumir desde el TenantManager.
+   * @description Resuelve el diccionario de triaje lingüístico. 
+   * Preparado para integración SQL con el TenantManager en la Fase 3.3.
    */
-  private static async resolveTenantUrgencyContext(
-    _tenantId: TenantId,
-  ): Promise<string[]> {
-    /**
-     * @note Visión de Futuro
-     * En la Fase 3.2, esto consultará la base de datos para obtener palabras clave
-     * personalizadas por departamento (Soporte vs Ventas).
-     */
+  private static async resolveTenantUrgencyContext(_tenantId: TenantId): Promise<string[]> {
     return [
-      'urgente',
-      'emergencia',
-      'falla',
-      'error',
-      'ayuda',
-      'ahora',
-      'inmediato',
-      'auxilio',
-      'roto',
-      'problema',
-      'urgencia',
-      'crítico',
-      'no funciona',
-      'caído',
+      'urgente', 'emergencia', 'falla', 'error', 'ayuda', 'ahora',
+      'inmediato', 'auxilio', 'roto', 'problema', 'crítico', 'caído'
     ];
   }
 
   /**
-   * @method executePersistenceSideEffects
+   * @method triggerAsyncPersistenceSideEffects
    * @private
-   * @description Orquesta el registro de auditoría y memoria sin bloquear el flujo principal.
+   * @description Orquesta el registro de auditoría y memoria bajo el patrón "Fire and Forget".
    */
-  private static executePersistenceSideEffects(intent: INeuralIntent): void {
-    const apparatusName = 'GatewayOrchestrator:SideEffects';
+  private static triggerAsyncPersistenceSideEffects(intent: INeuralIntent): void {
+    const apparatusName = 'GatewayOrchestrator:PersistencePipe';
 
     OmnichannelHistoryOrchestrator.synchronizeIntent(intent).catch(
       async (persistenceError: unknown) => {
-        // Si la persistencia falla, el canal sigue vivo, pero reportamos la brecha de auditoría.
         await OmnisyncSentinel.report({
           errorCode: 'OS-CORE-003',
           severity: 'MEDIUM',
           apparatus: apparatusName,
-          operation: 'synchronize',
-          message: 'integrations.omnichannel.persistence_failure',
+          operation: 'async_sync',
+          message: 'tools.orchestrator.persistence_leak',
           context: { intentId: intent.id, error: String(persistenceError) },
           isRecoverable: true,
         });
-      },
+      }
     );
   }
 }

@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "network_failure": "Unable to connect to the Neural Hub.",
+    "contract_violation": "Inconsistent request DNA detected.",
+    "timeout": "Neural operation exceeded the grace timeout."
+  },
+  "telemetry": {
+    "call_initiated": "Initiating dispatch to neural endpoint: {endpoint}"
+  }
+}

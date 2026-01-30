@@ -2,68 +2,122 @@
 
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { Sun, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { OmnisyncContracts } from '@omnisync/core-contracts';
+
+import {
+  ThemeSwitcherConfigurationSchema,
+  IThemeSwitcherConfiguration
+} from './schemas/theme-switcher.schema';
 
 /**
  * @name ThemeSwitcher
- * @description Aparato de control de identidad visual. Orquesta la transición
- * entre los modos Obsidian (#000) y Milk (#FFF) sincronizando las variables
- * del motor Tailwind CSS v4.
+ * @description Aparato de control de fase lumínica.
+ * Orquesta la transición entre Obsidian (#000) y Milk (#FFF) mediante un
+ * mecanismo de deslizamiento cinético.
  *
- * @protocol OEDP-Level: Elite (Accessible & Traceable)
+ * @protocol OEDP-Level: Elite (Kinetic UI)
  */
 export const ThemeSwitcher: React.FC = () => {
-  const translations = useTranslations('common.accessibility');
-  const { theme, setTheme } = useTheme();
-  const [isMounted, setIsMounted] = useState(false);
+  const translations = useTranslations('theme-switcher');
+  const {setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   /**
-   * @section Ciclo de Vida de Hidratación
-   * Evita discrepancias entre el renderizado del servidor (SSR) y el cliente.
+   * @section Ciclo de Hidratación
+   * Previene discrepancias de renderizado entre servidor y cliente.
    */
   useEffect(() => {
-    setIsMounted(true);
+    setMounted(true);
+  }, []);
+
+  /**
+   * @section Configuración de Élite
+   */
+  const configuration: IThemeSwitcherConfiguration = useMemo(() => {
+    return OmnisyncContracts.validate(
+      ThemeSwitcherConfigurationSchema,
+      { iconSize: 13, transitionDuration: 0.6 },
+      'ThemeSwitcherApparatus'
+    );
   }, []);
 
   /**
    * @method handleThemeTransition
-   * @description Ejecuta el cambio de tema y registra la traza de preferencia.
+   * @description Ejecuta el cambio de identidad visual y registra la traza de performance.
    */
   const handleThemeTransition = useCallback((): void => {
-    const targetTheme = theme === 'dark' ? 'light' : 'dark';
+    const targetTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
 
     OmnisyncTelemetry.verbose(
       'ThemeSwitcher',
       'transition',
-      `Identidad visual actualizada a: ${targetTheme.toUpperCase()}`
+      `Fase lumínica actualizada a: ${targetTheme.toUpperCase()}`
     );
 
     setTheme(targetTheme);
-  }, [theme, setTheme]);
+  }, [resolvedTheme, setTheme]);
 
-  if (!isMounted) {
-    return <div className="w-4 h-4" aria-hidden="true" />;
-  }
+  if (!mounted) return <div className="w-12 h-6" />;
 
-  return (
+  const isDark = resolvedTheme === 'dark';
+
+  return OmnisyncTelemetry.traceExecutionSync('ThemeSwitcher', 'render', () => (
     <button
       onClick={handleThemeTransition}
-      className="hover:scale-110 transition-transform active:rotate-12 focus-visible:ring-1 ring-border outline-none p-1 rounded-sm"
-      /**
-       * @section Accesibilidad de Élite
-       * Se utiliza la llave i18n: 'common.accessibility.toggle_theme'
-       */
-      aria-label={translations('toggle_theme')}
+      aria-label={translations('toggle_label')}
+      title={isDark ? translations('modes.light') : translations('modes.dark')}
+      className="relative flex items-center w-14 h-7 rounded-full border border-border bg-neutral-50 dark:bg-neutral-900 transition-colors duration-700 outline-none group"
     >
-      {theme === 'dark' ? (
-        <Sun size={14} strokeWidth={3} className="text-foreground animate-in zoom-in duration-500" />
-      ) : (
-        <Moon size={14} strokeWidth={3} className="text-foreground animate-in zoom-in duration-500" />
-      )}
+      {/* Carril de Desplazamiento */}
+      <div className="absolute inset-0 flex justify-between items-center px-2 opacity-20 group-hover:opacity-40 transition-opacity">
+        <Sun size={10} strokeWidth={3} />
+        <Moon size={10} strokeWidth={3} />
+      </div>
+
+      {/* Nodo Cinético (El Desplazador) */}
+      <motion.div
+        animate={{ x: isDark ? 28 : 4 }}
+        transition={{
+          type: 'spring',
+          stiffness: 400,
+          damping: 30,
+          duration: configuration.transitionDuration
+        }}
+        className="z-10 flex items-center justify-center w-5 h-5 rounded-full bg-foreground shadow-xl border border-border/50"
+      >
+        <AnimatePresence mode="wait">
+          {isDark ? (
+            <motion.div
+              key="moon"
+              initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Moon size={configuration.iconSize} className="text-background fill-current" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="sun"
+              initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Sun size={configuration.iconSize} className="text-background fill-current" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Sello Manus.io (Borde de Enfoque) */}
+      <span className="absolute inset-[-2px] rounded-full border border-foreground/0 group-focus-visible:border-foreground/50 transition-all" />
     </button>
-  );
+  ));
 };

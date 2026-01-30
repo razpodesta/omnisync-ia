@@ -1,5 +1,5 @@
 {
-  "name": "media-orchestrator",
+  "name": "core-media-orchestrator",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/core/media-orchestrator/src",
   "projectType": "library",
