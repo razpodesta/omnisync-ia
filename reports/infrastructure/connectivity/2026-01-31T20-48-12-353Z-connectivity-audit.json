@@ -1,0 +1,30 @@
+{
+  "reportId": "4d5024cd-ed12-4b96-ac6f-954cbc8e242a",
+  "timestamp": "2026-01-31T20:48:12.191Z",
+  "environment": "development",
+  "overallStatus": "FAILING",
+  "nodes": {
+    "relational_persistence": {
+      "status": "CRITICAL_FAILURE",
+      "provider": "Supabase Cloud",
+      "error": "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"relationalDatabaseUrl\"\n    ],\n    \"message\": \"Invalid input: expected string, received undefined\"\n  }\n]",
+      "remediationHint": "Verify DATABASE_URL environment variable and IP White-listing."
+    },
+    "volatile_memory": {
+      "status": "CRITICAL_FAILURE",
+      "provider": "Upstash Memory",
+      "error": "Error: Missing Cloud Memory Credentials",
+      "remediationHint": "Verify UPSTASH_REDIS_REST environment variables."
+    },
+    "semantic_vector_engine": {
+      "status": "CRITICAL_FAILURE",
+      "provider": "Qdrant Cloud",
+      "error": "Error: Qdrant Endpoint not defined",
+      "remediationHint": "Ensure QDRANT_URL is accessible from this node."
+    }
+  },
+  "aiContext": {
+    "summary": "Audit finished in 2062.93ms.",
+    "isActionRequired": true
+  }
+}
