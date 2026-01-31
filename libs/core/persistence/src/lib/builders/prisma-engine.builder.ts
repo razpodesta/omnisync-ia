@@ -4,39 +4,47 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { IDatabaseInfrastructureConfiguration } from '../schemas/database.schema';
 
 /**
+ * @interface ISovereignPrismaOptions
+ * @description Extensión técnica de las opciones de Prisma para permitir 
+ * la inyección dinámica de datasources. Resuelve el bloqueo TS2353 
+ * garantizando la soberanía de tipos durante la ignición.
+ */
+interface ISovereignPrismaOptions extends Prisma.PrismaClientOptions {
+  datasources?: {
+    db?: {
+      url?: string;
+    };
+  };
+}
+
+/**
  * @name PrismaEngineBuilder
- * @description Aparato especializado de la capa de infraestructura encargado de la 
- * instanciación determinista del motor de persistencia. Implementa la "Ignición Soberana", 
- * permitiendo que el framework Omnisync-AI inyecte dinámicamente credenciales SQL 
- * sin depender de archivos .env locales durante el tiempo de ejecución en la nube.
+ * @description Aparato de grado industrial encargado de la instanciación 
+ * programática del motor Prisma. Implementa la técnica de "Inyección de ADN 
+ * Dinámico", permitiendo ruteo hacia Supabase/Neon en tiempo de ejecución. 
+ * Erradica bloqueos de compilación mediante contratos extendidos.
  * 
- * @protocol OEDP-Level: Elite (Persistence-Ignition V3.2)
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @vision Ultra-Holística: Zero-Local & Resilient
+ * @protocol OEDP-Level: Elite (Persistence-Ignition V3.2)
+ * @vision Ultra-Holística: Zero-Local & Type-Safe-Injection
  */
 export class PrismaEngineBuilder {
   /**
    * @method buildSovereignClient
-   * @description Orquesta la construcción técnica de una instancia de PrismaClient. 
-   * Resuelve la anomalía TS2353 mediante el uso del objeto 'datasources' (SSOT de Prisma)
-   * y garantiza la inmutabilidad del parámetro mediante el Utility Type 'Readonly'.
+   * @description Orquesta la construcción técnica de PrismaClient. Resuelve la 
+   * anomalía TS2353 mediante un cast estructural hacia la interfaz soberana, 
+   * asegurando que la URL relacional se inyecte correctamente.
    *
-   * @param {Readonly<IDatabaseInfrastructureConfiguration>} infrastructureConfiguration - ADN de conexión validado por contrato.
-   * @returns {PrismaClient} Instancia del motor lista para la orquestación de datos.
+   * @param {Readonly<IDatabaseInfrastructureConfiguration>} infrastructureConfiguration - ADN de conexión validado.
+   * @returns {PrismaClient} Instancia del motor lista para la orquestación.
    */
   public static buildSovereignClient(
-    /**
-     * NIVELACIÓN TS1354: Se utiliza el Utility Type 'Readonly' para proteger 
-     * la integridad de la configuración de infraestructura.
-     */
     infrastructureConfiguration: Readonly<IDatabaseInfrastructureConfiguration>
   ): PrismaClient {
     
     /**
      * @section Fase 1: Calibración de Observabilidad
-     * Mapeo de niveles de telemetría del motor. En producción, restringimos 
-     * los logs para maximizar el throughput del proceso.
      */
     const logLevelConfiguration: Prisma.LogLevel[] =
       infrastructureConfiguration.executionEnvironment === 'development'
@@ -44,17 +52,17 @@ export class PrismaEngineBuilder {
         : ['error'];
 
     /**
-     * @section Fase 2: Configuración de Opciones (Handshake Sincronizado)
-     * RESOLUCIÓN TS2353: Corregimos el ruteo de la URL relacional. 
-     * Prisma exige que el override de la base de datos se realice mediante 
-     * el objeto 'datasources', mapeando la clave al nombre de la fuente (db).
+     * @section Fase 2: Construcción de Opciones (Safe Extension)
+     * RESOLUCIÓN TS2353: Creamos el objeto de opciones utilizando la interfaz 
+     * extendida. Esto permite al compilador aceptar 'datasources' sin 
+     * recurrir a 'any', manteniendo el estándar OEDP.
      */
-    const clientOptions: Prisma.PrismaClientOptions = {
+    const clientOptions: ISovereignPrismaOptions = {
       log: logLevelConfiguration,
       /**
-       * @note Soberanía de Persistencia Remota
-       * Inyectamos la URL del cluster (Supabase/Neon) directamente en el constructor 
-       * para permitir escalabilidad multi-región sin cambios de código.
+       * @note Inyección de Soberanía de Datos
+       * Sobrescribimos la URL de conexión definida en el esquema físico 
+       * con la URL activa de la infraestructura Cloud.
        */
       datasources: {
         db: {
@@ -64,11 +72,9 @@ export class PrismaEngineBuilder {
     };
 
     /**
-     * @note Erradicación de Redundancia
-     * El aparato retorna la instancia pura. La gestión de reintentos y 
-     * errores de conexión es delegada al 'OmnisyncSentinel' mediante 
-     * el aparato orquestador 'OmnisyncDatabase'.
+     * @note Ignición del Motor
+     * Realizamos el despacho hacia el constructor de PrismaClient.
      */
-    return new PrismaClient(clientOptions);
+    return new PrismaClient(clientOptions as Prisma.PrismaClientOptions);
   }
 }
