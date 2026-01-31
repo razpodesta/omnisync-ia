@@ -1,8 +1,18 @@
 {
   "name": "@omnisync/web-chat-ui",
   "version": "1.0.0",
+  "description": "Aparato de interfaz neural de alta gama para soporte omnicanal. Implementa el estándar visual Obsidian & Milk bajo el protocolo OEDP V3.2.",
+  "author": "Raz Podestá <Creator> - MetaShark Tech",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "peerDependencies": {
@@ -10,10 +20,17 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "tslib": "^2.3.0",
+    "tslib": "^2.8.1",
     "@omnisync/core-contracts": "workspace:*",
     "@omnisync/core-telemetry": "workspace:*",
-    "framer-motion": "^12.0.0",
-    "next-intl": "^4.0.0"
-  }
+    "framer-motion": "^12.29.0",
+    "next-intl": "^4.7.0"
+  },
+  "keywords": [
+    "omnisync",
+    "neural-ui",
+    "web-chat",
+    "obsidian-milk",
+    "oedp-elite"
+  ]
 }

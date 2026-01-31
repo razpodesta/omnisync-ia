@@ -33,7 +33,10 @@ import {
  * la resolución de soberanía, la recuperación semántica (RAG), la inferencia cognitiva
  * y el despacho de acciones operativas en sistemas externos.
  *
- * @protocol OEDP-Level: Elite (Full Contract Synchronization)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Full-Sovereign-Orchestration V3.2)
+ * @vision Ultra-Holística: Zero-Discrepancy-DNA & Financial-Sovereignty
  */
 export class NeuralFlowOrchestrator {
   /**
@@ -59,7 +62,7 @@ export class NeuralFlowOrchestrator {
         try {
           /**
            * 1. FASE DE SOBERANÍA (Identity & Configuration)
-           * Resolvemos el ADN técnico de la organización suscriptora.
+           * Resolvemos el ADN técnico de la organización suscriptora con soporte de Caché L1.
            */
           const tenantConfiguration =
             await SovereigntyResolverApparatus.resolveTenantSovereignty(
@@ -68,7 +71,7 @@ export class NeuralFlowOrchestrator {
 
           /**
            * 2. FASE DE HIDRATACIÓN (Memory Retrieval)
-           * Recuperamos el hilo de conversación para mantener la coherencia semántica.
+           * Recuperamos el hilo de conversación desde Upstash Redis para coherencia semántica.
            */
           const sessionIdentifier = `os:session:${tenantConfiguration.id}:${incomingNeuralIntent.externalUserId}`;
           const conversationHistory =
@@ -76,7 +79,7 @@ export class NeuralFlowOrchestrator {
 
           /**
            * 3. FASE DE COGNICIÓN (RAG & Neural Inference)
-           * Ejecutamos el ciclo de pensamiento asistido por base de conocimientos.
+           * Ejecutamos el ciclo de pensamiento asistido por base de conocimientos y auditoría financiera.
            */
           const artificialIntelligenceResponse =
             await this.executeCognitiveCycle(
@@ -87,7 +90,7 @@ export class NeuralFlowOrchestrator {
 
           /**
            * 4. FASE DE ACCIÓN (ERP/CRM Dispatching)
-           * Si la IA determina una necesidad operativa, el dispatcher activa el ERP.
+           * Si la IA emite la señal 'ESCALATED_TO_ERP', el dispatcher activa el puente operativo.
            */
           const enterpriseResourcePlanningAction =
             await ActionDispatcherApparatus.dispatchOperationalAction(
@@ -98,7 +101,7 @@ export class NeuralFlowOrchestrator {
 
           /**
            * 5. FASE DE SINCRONIZACIÓN (Symmetry Persistence)
-           * Persistimos la interacción en la memoria volátil para futuros turnos.
+           * Persistimos la interacción en la memoria volátil para futuros turnos de diálogo.
            */
           await this.persistNeuralSymmetry(
             sessionIdentifier,
@@ -108,7 +111,7 @@ export class NeuralFlowOrchestrator {
 
           /**
            * @section Consolidación de Resultado Soberano (SSOT)
-           * Validamos que la salida cumpla estrictamente con el contrato de orquestación.
+           * Validamos que la salida cumpla estrictamente con el contrato maestro de orquestación.
            */
           return NeuralFlowResultSchema.parse({
             neuralIntentIdentifier: incomingNeuralIntent.id,
@@ -145,7 +148,7 @@ export class NeuralFlowOrchestrator {
   /**
    * @method executeCognitiveCycle
    * @private
-   * @description Orquesta la recuperación de contexto (RAG) y la inferencia generativa.
+   * @description Orquesta la recuperación de contexto (RAG) y la inferencia generativa auditada.
    */
   private static async executeCognitiveCycle(
     neuralIntent: INeuralIntent,
@@ -158,6 +161,7 @@ export class NeuralFlowOrchestrator {
 
     /**
      * 3a. Generación de Firma Vectorial (Query Embedding)
+     * Transforma el lenguaje natural en coordenadas para el motor Rust de Qdrant.
      */
     const queryVectorCoordinates =
       await NeuralEmbeddingApparatus.generateVectorEmbeddings(
@@ -167,6 +171,7 @@ export class NeuralFlowOrchestrator {
 
     /**
      * 3b. Recuperación Semántica (Vector Retrieval)
+     * Localiza los fragmentos de manuales técnicos más relevantes para el Tenant.
      */
     const knowledgeContext =
       await OmnisyncVectorEngine.retrieveRelevantKnowledgeContext(
@@ -179,6 +184,7 @@ export class NeuralFlowOrchestrator {
 
     /**
      * 3c. Construcción de Prompt Enriquecido
+     * Ensambla Directiva de Sistema + RAG Context + Historial + Consulta.
      */
     const enrichedPrompt = NeuralPromptApparatus.buildEnrichedInferencePrompt(
       tenantConfiguration.artificialIntelligence.systemPrompt,
@@ -189,19 +195,22 @@ export class NeuralFlowOrchestrator {
 
     /**
      * 3d. Inferencia Generativa Propietaria
+     * RESOLUCIÓN TS2554: Se inyecta 'tenantConfiguration.id' como 5to argumento
+     * para habilitar la soberanía financiera y auditoría de tokens.
      */
     return await NeuralInferenceApparatus.executeGenerativeInference(
       aiDriver,
       enrichedPrompt,
       tenantConfiguration.artificialIntelligence.modelConfiguration,
       neuralIntent.id,
+      tenantConfiguration.id,
     );
   }
 
   /**
    * @method persistNeuralSymmetry
    * @private
-   * @description Registra biyectivamente el diálogo en la capa de memoria.
+   * @description Registra biyectivamente el diálogo en la capa de memoria volátil.
    */
   private static async persistNeuralSymmetry(
     sessionIdentifier: string,

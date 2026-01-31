@@ -3,7 +3,7 @@
 import { PrismaClient } from '@prisma/client';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
-import { OmnisyncContracts } from '@omnisync/core-contracts';
+import { OmnisyncContracts, TenantId } from '@omnisync/core-contracts';
 
 import {
   DatabaseInfrastructureConfigurationSchema,
@@ -13,25 +13,29 @@ import { PrismaEngineBuilder } from './builders/prisma-engine.builder';
 
 /**
  * @name OmnisyncDatabase
- * @description Aparato de soberanía de persistencia relacional (SQL).
- * Gestiona el ciclo de vida del motor Prisma bajo un patrón Singleton Resiliente.
- * Orquesta la validación de infraestructura y la salud del cluster en la nube.
- *
- * @protocol OEDP-Level: Elite (Persistence Sovereignty V2.6)
+ * @description Aparato maestro de soberanía de persistencia relacional (SQL). 
+ * Gestiona el ciclo de vida del motor Prisma bajo un patrón Singleton Resiliente. 
+ * Implementa el protocolo de "Aislamiento de Capas Cruzadas" mediante la inyección 
+ * de variables de sesión RLS (Row Level Security) para entornos Supabase/PostgreSQL.
+ * 
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Persistence-Sovereignty V3.2)
+ * @vision Ultra-Holística: Zero-Trust-Isolation & High-Availability
  */
 export class OmnisyncDatabase {
   /**
    * @private
-   * Instancia única del motor preservada en el heap del proceso para evitar
-   * el agotamiento de sockets en entornos Serverless/Containerized.
+   * Instancia única del motor preservada para optimizar el pool de conexiones 
+   * en infraestructuras Cloud-Native.
    */
   private static relationalDatabaseEngineInstance: PrismaClient | null = null;
 
   /**
    * @method databaseEngine
-   * @description Punto de acceso único a la persistencia. Orquesta la validación
-   * de infraestructura y la ignición del motor mediante el Builder atomizado.
-   *
+   * @description Punto de acceso único a la persistencia. Orquesta la ignición 
+   * mediante el Builder atomizado y valida el ADN de configuración.
+   * 
    * @returns {PrismaClient} Motor Prisma validado y activo.
    */
   public static get databaseEngine(): PrismaClient {
@@ -40,8 +44,7 @@ export class OmnisyncDatabase {
 
     if (!this.relationalDatabaseEngineInstance) {
       /**
-       * @section 1. Auditoría de Soberanía (Infrastructure Verification)
-       * Validamos que las variables de entorno existan y cumplan con el contrato SSOT.
+       * @section 1. Auditoría de Infraestructura (SSOT)
        */
       const infrastructureConfiguration: IDatabaseInfrastructureConfiguration =
         OmnisyncContracts.validate(
@@ -55,8 +58,7 @@ export class OmnisyncDatabase {
 
       try {
         /**
-         * @section 2. Ignición mediante Builder Atomizado
-         * Delegamos la construcción física al especialista para mantener SRP.
+         * @section 2. Ignición mediante Especialista
          */
         this.relationalDatabaseEngineInstance = OmnisyncTelemetry.traceExecutionSync(
           apparatusName,
@@ -66,21 +68,21 @@ export class OmnisyncDatabase {
 
         OmnisyncTelemetry.verbose(
           apparatusName,
-          'initialization',
-          'database.status.handshake_success',
+          'ignition_success',
+          'persistence.database.status.handshake_success',
           { environment: infrastructureConfiguration.executionEnvironment }
         );
       } catch (criticalInitializationError: unknown) {
         /**
-         * @section Protocolo de Desastre
-         * El Sentinel captura el fallo de ignición (ej. Credenciales inválidas).
+         * @note Gestión de Desastres
+         * El Sentinel captura el fallo de ignición (ej. DNS SQL inalcanzable).
          */
         OmnisyncSentinel.report({
           errorCode: 'OS-CORE-002',
           severity: 'CRITICAL',
           apparatus: apparatusName,
           operation: 'engine_ignition',
-          message: 'database.errors.engine_failed',
+          message: 'persistence.database.errors.engine_failed',
           context: { errorTrace: String(criticalInitializationError) },
           isRecoverable: false,
         });
@@ -92,9 +94,55 @@ export class OmnisyncDatabase {
   }
 
   /**
+   * @method executeSovereignTask
+   * @description Ejecuta una lógica de datos bajo el blindaje de Row Level Security. 
+   * Inyecta el identificador del Tenant en la sesión local de PostgreSQL antes 
+   * de procesar la tarea, garantizando aislamiento total a nivel de motor.
+   *
+   * @template T - Tipo de dato de retorno.
+   * @param {TenantId} tenantId - Identificador nominal de soberanía.
+   * @param {(client: PrismaClient) => Promise<T>} task - Función que consume el cliente.
+   * @returns {Promise<T>} Resultado de la tarea auditada.
+   */
+  public static async executeSovereignTask<T>(
+    tenantId: TenantId,
+    task: (client: PrismaClient) => Promise<T>
+  ): Promise<T> {
+    const apparatusName = 'OmnisyncDatabase';
+    const operationName = 'executeSovereignTask';
+
+    return await OmnisyncTelemetry.traceExecution(
+      apparatusName,
+      operationName,
+      async () => {
+        /**
+         * @section Protocolo RLS (PostgreSQL Standard)
+         * El comando SET LOCAL debe ejecutarse dentro de una transacción ($transaction)
+         * para asegurar que el ID de inquilino se mantenga ligado al socket de red actual.
+         */
+        return await this.databaseEngine.$transaction(async (sovereignClient) => {
+          // 1. Inyección de Soberanía en la sesión SQL
+          await sovereignClient.$executeRawUnsafe(
+            `SET LOCAL app.current_tenant = '${tenantId}';`
+          );
+
+          OmnisyncTelemetry.verbose(
+            apparatusName,
+            'rls_enforced',
+            `Escudo RLS activado para Tenant: ${tenantId}`
+          );
+
+          // 2. Ejecución de la lógica de negocio blindada
+          return await task(sovereignClient as PrismaClient);
+        });
+      },
+      { tenantId }
+    );
+  }
+
+  /**
    * @method validateInfrastructureConnectivity
    * @description Ejecuta una sonda de integridad profunda (Heartbeat).
-   * Valida la latencia y la disponibilidad del cluster remoto (Supabase/Neon).
    */
   public static async validateInfrastructureConnectivity(): Promise<void> {
     const apparatusName = 'OmnisyncDatabase';
@@ -107,10 +155,6 @@ export class OmnisyncDatabase {
         try {
           await OmnisyncSentinel.executeWithResilience(
             async () => {
-              /**
-               * Handshake físico con la base de datos remota.
-               * Se ejecuta una consulta trivial para medir latencia de red.
-               */
               await this.databaseEngine.$connect();
               await this.databaseEngine.$queryRaw`SELECT 1`;
             },
@@ -121,7 +165,7 @@ export class OmnisyncDatabase {
           OmnisyncTelemetry.verbose(
             apparatusName,
             'connectivity_audit',
-            'database.status.heartbeat_operational'
+            'persistence.database.status.heartbeat_operational'
           );
         } catch (connectivityError: unknown) {
           await OmnisyncSentinel.report({
@@ -129,7 +173,7 @@ export class OmnisyncDatabase {
             severity: 'CRITICAL',
             apparatus: apparatusName,
             operation: operationName,
-            message: 'database.errors.connectivity_loss',
+            message: 'persistence.database.errors.connectivity_loss',
             context: { errorDetail: String(connectivityError) },
             isRecoverable: true,
           });
@@ -141,8 +185,7 @@ export class OmnisyncDatabase {
 
   /**
    * @method terminatePersistenceEngine
-   * @description Cierre elegante del pool de conexiones para evitar fugas de recursos.
-   * Crucial para el ciclo de vida de despliegue en Render.
+   * @description Cierre elegante del pool de conexiones.
    */
   public static async terminatePersistenceEngine(): Promise<void> {
     const apparatusName = 'OmnisyncDatabase';
@@ -154,7 +197,7 @@ export class OmnisyncDatabase {
       OmnisyncTelemetry.verbose(
         apparatusName,
         'termination',
-        'database.status.pool_shutdown'
+        'persistence.database.status.pool_shutdown'
       );
     }
   }
