@@ -4,15 +4,13 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
-    /**
-     * @section Soberanía de Definiciones
-     * RESOLUCIÓN TS2580: Se incluye 'node' explícitamente para habilitar el objeto 'process'.
-     */
     "types": ["node"],
     "target": "es2022",
-    "module": "commonjs",
+    "module": "esnext",
+    "moduleResolution": "node",
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts"]
