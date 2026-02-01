@@ -2,39 +2,90 @@
 
 import { InternationalizationAggregator } from './i18n-aggregator.apparatus';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
+import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 
 /**
  * @name runInternationalizationBuild
- * @description Punto de entrada soberano para la agregación de diccionarios JSON.
- * Garantiza que todos los fragmentos i18n del monorepo se unifiquen en el SSOT de seguridad.
+ * @description Punto de ignición soberano para la agregación de ADN lingüístico.
+ * Orquesta la fusión de fragmentos JSON distribuidos en el monorepo hacia la 
+ * bóveda de seguridad core, garantizando que el build de producción posea 
+ * diccionarios íntegros y sincronizados.
+ * 
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (ESM-Native-Ignition V3.6.6)
+ * @vision Ultra-Holística: Zero-Loader-Dependency & Forensic-Triage
  */
 async function runInternationalizationBuild(): Promise<void> {
-  const processStartTime = performance.now();
+  const apparatusName = 'I18nBuildRunner';
+  const operationName = 'executeBuild';
+  const executionStartTime = performance.now();
+
+  console.log('\n--- 🌐 OMNISYNC I18N: AGGREGATION ENGINE START ---');
 
   try {
-    console.log('--- 🌐 OMNISYNC I18N: AGGREGATION ENGINE START ---');
+    /**
+     * @section Fase 1: Registro de Intención
+     * Notificamos al sistema de telemetría el inicio de la hidratación de ADN.
+     */
+    OmnisyncTelemetry.verbose(apparatusName, operationName, 'Iniciando compilación de diccionarios soberanos...');
 
+    /**
+     * @section Fase 2: Ejecución del Agregador
+     * El aparato especialista realiza el escaneo recursivo y la fusión de namespaces.
+     */
     await InternationalizationAggregator.executeInternationalizationDictionaryAggregation();
 
-    const duration = (performance.now() - processStartTime).toFixed(2);
+    const durationInMilliseconds = (performance.now() - executionStartTime).toFixed(2);
 
-    // CORRECCIÓN LINT: Uso proactivo de Telemetry para registrar el éxito del build
-    OmnisyncTelemetry.verbose(
-      'I18nRunner',
-      'build_success',
-      `Aggregation completed in ${duration}ms`,
-    );
+    /**
+     * @section Fase 3: Consolidación y Telemetría
+     * Sellamos el éxito del build inyectando la métrica de performance.
+     */
+    OmnisyncTelemetry.verbose(apparatusName, 'build_success', `ADN Lingüístico sincronizado exitosamente.`, {
+      latency: `${durationInMilliseconds}ms`,
+      engine: 'tsx/esm',
+      version: 'OEDP-V3.6.6'
+    });
 
-    console.log(`--- ✅ I18N SYNC COMPLETE [${duration}ms] ---`);
+    console.log(`--- ✅ I18N SYNC COMPLETE [${durationInMilliseconds}ms] --- \n`);
+    
+    /**
+     * @note Terminación Limpia
+     * Informamos al SO del éxito de la tarea para continuar la cadena de despliegue.
+     */
     process.exit(0);
-  } catch (criticalError: unknown) {
-    console.error(
-      '--- ❌ I18N AGGREGATION CRITICAL FAILURE ---',
-      criticalError,
-    );
+
+  } catch (criticalAggregationError: unknown) {
+    /**
+     * @section Gestión de Desastres (Sentinel Bridge)
+     * Ante un colapso (JSON corrupto, permisos de disco), el Sentinel reporta
+     * la anomalía con severidad HIGH para bloquear el deploy.
+     */
+    const errorTrace = String(criticalAggregationError);
+    
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-CORE-001',
+      severity: 'HIGH',
+      apparatus: apparatusName,
+      operation: operationName,
+      message: 'Fallo crítico en la agregación de fragmentos i18n.',
+      context: { errorTrace },
+      isRecoverable: false
+    });
+
+    console.error('\n--- ❌ I18N AGGREGATION CRITICAL FAILURE ---');
+    console.error(errorTrace);
+    
     process.exit(1);
   }
 }
 
-// Ejecución inmediata controlada
-runInternationalizationBuild();
+/**
+ * @section Ignición Inmediata
+ * Ejecución controlada con captura de excepciones no controladas del kernel.
+ */
+runInternationalizationBuild().catch((kernelError) => {
+  console.error('[KERNEL-FAILURE]: Error no controlado en el runner i18n.', kernelError);
+  process.exit(1);
+});

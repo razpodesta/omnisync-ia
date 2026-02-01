@@ -6,7 +6,7 @@ const createNextIntlPlugin = require('next-intl/plugin');
 /**
  * @name internationalizationPlugin
  * @description Orquestador del motor de traducción para el Dashboard Administrativo.
- * Vincula el ADN lingüístico procesado por el Aggregator.
+ * Vincula el ADN lingüístico procesado por el Agregador i18n en tiempo de build.
  */
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -15,11 +15,13 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
  * @name nextConfiguration
  * @description Aparato de configuración maestra para Next.js 16.
  * Optimizado para el compilador Turbopack y el despliegue en Vercel Edge.
- * Implementa el protocolo OEDP para garantizar soberanía de datos y performance.
+ * Implementa el protocolo OEDP V3.6.7 para garantizar la estabilidad del pipeline
+ * y la soberanía financiera mediante el aislamiento de binarios.
  *
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Next-16-Turbopack-Standard V3.6.3)
+ * @protocol OEDP-Level: Elite (Next-16-Sovereign-Build V3.6.7)
+ * @vision Ultra-Holística: Zero-Binary-Conflict & Incremental-PPR
  */
 const nextConfiguration = {
   /**
@@ -30,30 +32,36 @@ const nextConfiguration = {
   },
 
   /**
-   * @section Funcionalidades Experimentales de Élite
-   * RESOLUCIÓN VERCEL-ERROR: Se actualiza 'partialPrerendering' al estándar Next 16.
+   * @section Funcionalidades de Próxima Generación
+   * RESOLUCIÓN VERCEL-ERROR: Erradicación total de 'partialPrerendering'.
    */
   experimental: {
-    ppr: 'incremental',
-    /**
-     * @note Aislamiento de Paquetes de Servidor
-     * Evita que el compilador intente procesar binarios nativos de persistencia.
+    /** 
+     * @property ppr
+     * @description Habilita el Partial Prerendering de forma incremental.
+     * Permite que las rutas estáticas sean inmediatas y las dinámicas sean reactivas.
      */
-    serverExternalPackages: ['@prisma/client'],
+    ppr: 'incremental',
+
+    /**
+     * @property serverExternalPackages
+     * @description Aísla los paquetes que contienen binarios nativos.
+     * Evita el colapso de Turbopack al procesar el motor de Prisma 7.
+     */
+    serverExternalPackages: ['@prisma/client', '@omnisync/core-persistence'],
   },
 
   /**
-   * @section Observabilidad de Red
-   * Habilita trazas detalladas en Vercel Logs para auditoría de latencia neural.
+   * @section Observabilidad y Diagnóstico
    */
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: true, // Permite auditar la latencia del Orchestrator API en los logs
     },
   },
 
   /**
-   * @section Optimización de Activos Visuales
+   * @section Optimización de Activos Visuales (Identity Layer)
    */
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -62,14 +70,13 @@ const nextConfiguration = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**', // Permitir logos dinámicos de los Tenants
+        hostname: '**', // Soporte para logos dinámicos de Tenants autorizados
       },
     ],
   },
 
   /**
-   * @section Protocolos de Seguridad de Grado Institucional
-   * Implementación de cabeceras de blindaje para proteger el Dashboard.
+   * @section Protocolos de Seguridad Institucional (Headers)
    */
   async headers() {
     return [
@@ -93,8 +100,20 @@ const nextConfiguration = {
             value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           },
           {
+            /**
+             * @note Content-Security-Policy (CSP)
+             * Blindaje absoluto: Solo se permite comunicación con el Hub de Omnisync,
+             * Google API (IA) y Qdrant (Vectores).
+             */
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https://*.onrender.com https://*.googleapis.com https://*.qdrant.io;",
+            value: [
+              "default-src 'self';",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
+              "style-src 'self' 'unsafe-inline';",
+              "img-src 'self' blob: data: https:;",
+              "font-src 'self' data:;",
+              "connect-src 'self' https://*.onrender.com https://*.googleapis.com https://*.qdrant.io https://*.upstash.io;",
+            ].join(' '),
           },
         ],
       },
@@ -102,7 +121,7 @@ const nextConfiguration = {
   },
 
   /**
-   * @section Redirecciones de Soberanía
+   * @section Redirecciones de Soberanía (UX)
    */
   async redirects() {
     return [

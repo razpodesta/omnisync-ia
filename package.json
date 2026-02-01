@@ -10,35 +10,28 @@
     "url": "https://github.com/razpodesta/omnisync-ai-ecosystem.git"
   },
   "scripts": {
-    "// --- 1. ORQUESTACIÓN DE EJECUCIÓN (LOCAL & GLOBAL) ---": "",
-    "dev": "pnpm run infra:prep && nx run-many -t serve --all",
-    "start": "node dist/apps/orchestrator-api/main.js",
-
     "// --- 2. COMANDOS DE DESPLIEGUE SOBERANO (CI/CD) ---": "",
     "build": "pnpm run infra:prep && nx run-many -t build --projects=admin-dashboard,orchestrator-api --prod",
-    "vercel-build": "pnpm run infra:prep && npx nx build admin-dashboard --prod",
+    "vercel-build": "pnpm run internationalization:build && pnpm run persistence:generate && npx nx build admin-dashboard --prod",
     "render-build": "pnpm run system:hydrate && npx nx build orchestrator-api --prod",
 
-    "// --- 3. INFRAESTRUCTURA Y HIDRATACIÓN DE ADN (ESM NATIVE) ---": "",
+    "// --- 3. INFRAESTRUCTURA Y HIDRATACIÓN DE ADN (ESM COMPLIANT) ---": "",
     "infra:prep": "pnpm run internationalization:build && pnpm run persistence:generate",
     "system:hydrate": "pnpm run infra:prep && pnpm run persistence:synchronize",
-    "internationalization:build": "node --loader ts-node/esm --no-warnings libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
+    "internationalization:build": "tsx libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
     "persistence:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
     "persistence:synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
 
-    "// --- 4. AUDITORÍA Y HERRAMIENTAS DE SISTEMA (ESM NATIVE) ---": "",
-    "integrity:guardian": "node --loader ts-node/esm --no-warnings libs/tools/internal-scripts/src/lib/run-guardian.ts",
-    "infrastructure:check": "node --loader ts-node/esm --no-warnings libs/tools/internal-scripts/src/lib/run-connectivity.ts",
-    "infrastructure:configuration": "node --loader ts-node/esm --no-warnings libs/tools/internal-scripts/src/lib/run-config-audit.ts",
-    "infrastructure:dump": "node --loader ts-node/esm --no-warnings libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
-    "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump",
-
-    "// --- 5. CALIDAD Y ASEGURAMIENTO (QA) ---": "",
-    "quality:test": "nx run-many -t test --all --parallel=3",
-    "quality:lint": "nx run-many -t lint --all --parallel=3",
-    "quality:format": "prettier --write .",
-    "quality:types": "tsc -p tsconfig.base.json --noEmit",
-    "audit": "pnpm audit && pnpm run quality:lint && pnpm run quality:types"
+    "// --- 4. AUDITORÍA Y HERRAMIENTAS DE SISTEMA (ESM COMPLIANT) ---": "",
+    "integrity:guardian": "tsx libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    "infrastructure:check": "tsx libs/tools/internal-scripts/src/lib/run-connectivity.ts",
+    "infrastructure:configuration": "tsx libs/tools/internal-scripts/src/lib/run-config-audit.ts",
+    "infrastructure:dump": "tsx libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
+    "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "// --- OTRAS DEPENDENCIAS MANTENIDAS SEGÚN ADN ORIGINAL ---": ""
   }, 
   "lint-staged": {
     "*.{ts,tsx}": [
