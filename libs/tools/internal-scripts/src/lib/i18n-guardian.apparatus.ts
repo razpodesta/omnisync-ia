@@ -2,6 +2,7 @@
 
 import * as fileSystem from 'node:fs';
 import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import { glob } from 'glob';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncContracts } from '@omnisync/core-contracts';
@@ -9,25 +10,24 @@ import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 
 /** 
  * @section Sincronización de ADN Local 
- * Implementación de esquemas para garantizar reportes de auditoría íntegros.
  */
 import { 
-  II18nAnomaly, 
   I18nIntegrityReportSchema,
-  II18nIntegrityReport
+  II18nIntegrityReport,
+  II18nAnomaly
 } from './schemas/i18n-guardian.schema';
 
 /**
  * @name I18nSymmetryGuardian
  * @description Aparato de élite encargado de velar por la paridad absoluta 
  * entre los silos lingüísticos del monorepo. Realiza una auditoría biyectiva 
- * comparando archivos físicos y claves JSON internas entre los idiomas de 
- * soberanía (ES, EN, PT), garantizando un deploy libre de textos faltantes.
+ * profunda comparando estructuras JSON, presencia de archivos y densidad de 
+ * contenido entre los idiomas de soberanía (ES, EN, PT).
  * 
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Linguistic-Symmetry V3.2)
- * @vision Ultra-Holística: Zero-Missing-Translations & Forensic-Audit
+ * @protocol OEDP-Level: Elite (Linguistic-Symmetry V4.0)
+ * @vision Ultra-Holística: Zero-Missing-Translations & Content-Density-Check
  */
 export class I18nSymmetryGuardian {
   private static readonly SOVEREIGN_LOCALES = ['es', 'en', 'pt'] as const;
@@ -35,191 +35,206 @@ export class I18nSymmetryGuardian {
 
   /**
    * @method executeSovereignAudit
-   * @description Orquesta la inspección profunda de los diccionarios. 
-   * Genera un reporte validado por contrato SSOT.
+   * @description Orquesta la inspección profunda de la arquitectura lingüística.
+   * Retorna un reporte inmutable validado por contrato SSOT.
    */
-  public static async executeSovereignAudit(): Promise<void> {
+  public static async executeSovereignAudit(): Promise<II18nIntegrityReport> {
     const apparatusName = 'I18nSymmetryGuardian';
-    
-    return await OmnisyncTelemetry.traceExecution(apparatusName, 'executeSovereignAudit', async () => {
-      console.log('\n🛡️  [I18N_GUARDIAN]: Iniciando auditoría forense de paridad estructural...');
+    const operationName = 'executeSovereignAudit';
 
+    return await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
+      OmnisyncTelemetry.verbose(apparatusName, 'audit_initiation', 'Iniciando escaneo biyectivo de silos i18n...');
+
+      // 1. Localización de fragmentos ignorando artefactos de construcción
       const dictionaryFragmentsFound = await glob(`{libs,apps}/**/i18n/**/*.json`, {
-        ignore: ['node_modules/**', 'dist/**', '**/core/security/**']
+        ignore: [
+          '**/node_modules/**', 
+          '**/dist/**', 
+          '**/.next/**', 
+          '**/core/security/src/lib/i18n/**' // Evitamos auditar el bundle consolidado
+        ]
       });
 
-      const auditAnomalies: II18nAnomaly[] = [];
-      const analyzedGroups = this.groupFilesByComponent(dictionaryFragmentsFound);
-
-      for (const [componentPath, locales] of Object.entries(analyzedGroups)) {
-        this.auditComponentSilos(componentPath, locales, auditAnomalies);
-      }
+      const detectedAnomaliesCollection: II18nAnomaly[] = [];
+      const componentGroups = this.groupLinguisticAssetsByApparatus(dictionaryFragmentsFound);
 
       /**
-       * @section Generación de Semilla de Integridad
+       * @section Fase de Inspección Granular
        */
+      for (const [apparatusPath, localeMap] of Object.entries(componentGroups)) {
+        await this.auditApparatusLinguisticIntegrity(
+          apparatusPath, 
+          localeMap, 
+          detectedAnomaliesCollection
+        );
+      }
+
+      const totalNamespaces = Object.keys(componentGroups).length;
+      const isSymmetric = detectedAnomaliesCollection.length === 0;
+
       const rawReport: II18nIntegrityReport = {
         reportIdentifier: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
-        isSymmetric: auditAnomalies.length === 0,
-        auditedNamespacesCount: Object.keys(analyzedGroups).length,
-        anomalies: auditAnomalies,
+        isSymmetric,
+        auditedNamespacesCount: totalNamespaces,
+        anomalies: detectedAnomaliesCollection,
         aiContext: {
-          summary: `Audit finished for ${Object.keys(analyzedGroups).length} namespaces.`,
-          remediationPath: auditAnomalies.length > 0 ? 'FIX_REPORTED_ANOMALIES' : 'NONE'
+          summary: `Auditoría finalizada para ${totalNamespaces} namespaces. ${detectedAnomaliesCollection.length} anomalías detectadas.`,
+          remediationPath: isSymmetric ? 'NONE' : 'REPAIR_IDENTIFIED_DNA_GAPS'
         }
       };
 
-      // Validación del reporte contra el esquema local
-      const validatedReport = OmnisyncContracts.validate(
+      /**
+       * @section Validación de Soberanía (SSOT)
+       */
+      return OmnisyncContracts.validate(
         I18nIntegrityReportSchema,
         rawReport,
         apparatusName
       );
-
-      this.evaluateFinalIntegrity(validatedReport);
     });
   }
 
   /**
-   * @method auditComponentSilos
+   * @method auditApparatusLinguisticIntegrity
    * @private
    */
-  private static auditComponentSilos(
-    componentBase: string, 
-    localesFound: Record<string, string>, 
-    anomalies: II18nAnomaly[]
-  ): void {
-    const namespace = path.basename(Object.values(localesFound)[0], '.json');
+  private static async auditApparatusLinguisticIntegrity(
+    apparatusBaseIdentifier: string,
+    localeFileMap: Record<string, string>,
+    anomaliesAccumulator: II18nAnomaly[]
+  ): Promise<void> {
+    const linguisticNamespace = path.basename(Object.values(localeFileMap)[0], '.json');
 
     for (const targetLocale of this.SOVEREIGN_LOCALES) {
-      if (!localesFound[targetLocale]) {
-        console.error(`❌ [SILO_MISSING]: El aparato en [${componentBase}] carece de ADN [${targetLocale.toUpperCase()}].`);
-        anomalies.push({ 
-          apparatusIdentifier: componentBase,
-          targetLocale, 
-          namespace,
+      // 1. Verificación de Presencia Física
+      if (!localeFileMap[targetLocale]) {
+        anomaliesAccumulator.push({
+          apparatusIdentifier: apparatusBaseIdentifier,
+          targetLocale,
+          namespace: linguisticNamespace,
           severity: 'CRITICAL',
           anomalyType: 'MISSING_FILE',
-          technicalDetails: `Falta archivo físico para el local: ${targetLocale}`
+          technicalDetails: `El aparato carece del silo para el idioma: ${targetLocale.toUpperCase()}`
         });
         continue;
       }
 
-      if (targetLocale !== this.MASTER_LOCALE && localesFound[this.MASTER_LOCALE]) {
-        this.compareJsonKeys(
-          localesFound[this.MASTER_LOCALE],
-          localesFound[targetLocale],
+      // 2. Verificación de Simetría de Contrato contra el Master (ES)
+      if (targetLocale !== this.MASTER_LOCALE && localeFileMap[this.MASTER_LOCALE]) {
+        this.performBiyectiveDnaComparison(
+          localeFileMap[this.MASTER_LOCALE],
+          localeFileMap[targetLocale],
           targetLocale,
-          namespace,
-          anomalies
+          linguisticNamespace,
+          anomaliesAccumulator
         );
       }
     }
   }
 
   /**
-   * @method compareJsonKeys
+   * @method performBiyectiveDnaComparison
    * @private
    */
-  private static compareJsonKeys(
-    masterPath: string, 
-    targetPath: string, 
-    locale: string, 
-    namespace: string, 
+  private static performBiyectiveDnaComparison(
+    masterFilePath: string,
+    targetFilePath: string,
+    targetLocale: string,
+    namespace: string,
     anomalies: II18nAnomaly[]
   ): void {
     try {
-      const masterContent = JSON.parse(fileSystem.readFileSync(masterPath, 'utf-8')) as Record<string, unknown>;
-      const targetContent = JSON.parse(fileSystem.readFileSync(targetPath, 'utf-8')) as Record<string, unknown>;
+      const masterContent = JSON.parse(fileSystem.readFileSync(masterFilePath, 'utf-8'));
+      const targetContent = JSON.parse(fileSystem.readFileSync(targetFilePath, 'utf-8'));
 
-      const masterKeys = this.extractFlatKeys(masterContent);
-      const targetKeys = this.extractFlatKeys(targetContent);
+      const masterKeys = this.flattenLinguisticKeys(masterContent);
+      const targetKeys = this.flattenLinguisticKeys(targetContent);
 
-      for (const key of masterKeys) {
-        if (!targetKeys.includes(key)) {
-          console.error(`⚠️  [KEY_MISMATCH]: Llave "${key}" inexistente en [${locale.toUpperCase()}] | Namespace: ${namespace}.`);
-          anomalies.push({ 
-            apparatusIdentifier: targetPath,
-            targetLocale: locale, 
-            namespace, 
-            severity: 'WARNING',
+      // Auditoría de llaves faltantes
+      for (const masterKey of masterKeys) {
+        if (!targetKeys.includes(masterKey)) {
+          anomalies.push({
+            apparatusIdentifier: targetFilePath,
+            targetLocale,
+            namespace,
+            severity: 'CRITICAL',
             anomalyType: 'KEY_MISMATCH',
-            technicalDetails: `La clave de ADN [${key}] presente en Master ('es') no existe en este local.`
+            technicalDetails: `La clave [${masterKey}] está ausente en el silo ${targetLocale.toUpperCase()}.`
           });
+        } else {
+          // Auditoría de Densidad: Verificar que no sea un string vacío o placeholder
+          const value = this.resolveKeyPath(targetContent, masterKey);
+          if (!value || String(value).trim().length === 0) {
+            anomalies.push({
+              apparatusIdentifier: targetFilePath,
+              targetLocale,
+              namespace,
+              severity: 'WARNING',
+              anomalyType: 'EMPTY_CONTENT',
+              technicalDetails: `La clave [${masterKey}] existe pero su valor de ADN está vacío.`
+            });
+          }
         }
       }
-    } catch (parsingError: unknown) {
-      /**
-       * RESOLUCIÓN LINT: Consumimos el error para aportar valor forense al reporte.
-       */
-      const errorString = String(parsingError);
-      
-      anomalies.push({ 
-        apparatusIdentifier: targetPath,
-        targetLocale: locale, 
-        namespace, 
+    } catch (criticalParsingError: unknown) {
+      anomalies.push({
+        apparatusIdentifier: targetFilePath,
+        targetLocale,
+        namespace,
         severity: 'CRITICAL',
         anomalyType: 'INVALID_JSON',
-        technicalDetails: `Error de parseo estructural: ${errorString}`
-      });
-
-      OmnisyncSentinel.report({
-        errorCode: 'OS-CORE-001',
-        severity: 'MEDIUM',
-        apparatus: 'I18nSymmetryGuardian',
-        operation: 'compareKeys',
-        message: 'JSON_CORRUPTION_DETECTED',
-        context: { path: targetPath, error: errorString }
+        technicalDetails: `Error de sintaxis JSON: ${String(criticalParsingError)}`
       });
     }
   }
 
   /**
-   * @method extractFlatKeys
+   * @method flattenLinguisticKeys
    * @private
    */
-  private static extractFlatKeys(obj: Record<string, unknown>, prefix = ''): string[] {
-    return Object.keys(obj).reduce((keys: string[], k) => {
-      const name = prefix ? `${prefix}.${k}` : k;
-      const value = obj[k];
+  private static flattenLinguisticKeys(dictionary: Record<string, unknown>, prefix = ''): string[] {
+    return Object.keys(dictionary).reduce((accumulator: string[], key) => {
+      const keyPath = prefix ? `${prefix}.${key}` : key;
+      const value = dictionary[key];
+      
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        keys.push(...this.extractFlatKeys(value as Record<string, unknown>, name));
+        accumulator.push(...this.flattenLinguisticKeys(value as Record<string, unknown>, keyPath));
       } else {
-        keys.push(name);
+        accumulator.push(keyPath);
       }
-      return keys;
+      return accumulator;
     }, []);
   }
 
   /**
-   * @method groupFilesByComponent
+   * @method resolveKeyPath
    * @private
    */
-  private static groupFilesByComponent(files: string[]): Record<string, Record<string, string>> {
-    const groups: Record<string, Record<string, string>> = {};
-
-    for (const file of files) {
-      const parts = file.split(/[\\/]/);
-      const localeIndex = parts.indexOf('i18n') + 1;
-      const locale = parts[localeIndex];
-      const componentKey = parts.slice(0, localeIndex - 1).join('/');
-
-      if (!groups[componentKey]) groups[componentKey] = {};
-      groups[componentKey][locale] = file;
-    }
-    return groups;
+  private static resolveKeyPath(obj: any, path: string): unknown {
+    return path.split('.').reduce((prev, curr) => prev && prev[curr], obj);
   }
 
   /**
-   * @method evaluateFinalIntegrity
+   * @method groupLinguisticAssetsByApparatus
    * @private
    */
-  private static evaluateFinalIntegrity(report: II18nIntegrityReport): void {
-    if (!report.isSymmetric) {
-      console.log(`\n❌ [AUDITORÍA_FALLIDA]: Se detectaron ${report.anomalies.length} violaciones de simetría en ${report.auditedNamespacesCount} aparatos.`);
-      process.exit(1);
+  private static groupLinguisticAssetsByApparatus(filePaths: string[]): Record<string, Record<string, string>> {
+    const groups: Record<string, Record<string, string>> = {};
+
+    for (const filePath of filePaths) {
+      const normalizedPath = filePath.replace(/\\/g, '/');
+      const parts = normalizedPath.split('/');
+      const i18nIndex = parts.indexOf('i18n');
+      
+      if (i18nIndex === -1) continue;
+
+      const localeIdentifier = parts[i18nIndex + 1];
+      const apparatusKey = parts.slice(0, i18nIndex).join('/');
+
+      if (!groups[apparatusKey]) groups[apparatusKey] = {};
+      groups[apparatusKey][localeIdentifier] = filePath;
     }
-    console.log(`\n✅ [SIMETRÍA_DE_ÉLITE]: ${report.auditedNamespacesCount} aparatos validados con paridad de ADN 1:1.\n`);
+    return groups;
   }
 }

@@ -1,0 +1,34 @@
+{
+  "categories": {
+    "label": "Semantic Taxonomy",
+    "TECHNICAL": "Technical Support",
+    "LEGAL": "Legal Regulatory",
+    "ADMINISTRATIVE": "Administration",
+    "COMMERCIAL": "Sales Strategy"
+  },
+  "placeholders": {
+    "title": "KNOWLEDGE RESOURCE TITLE...",
+    "content": "PASTE TEXTUAL DNA HERE (MIN 100 CHARACTERS)..."
+  },
+  "phases": {
+    "INITIAL_VALIDATION": "CONTRACT_AUDIT",
+    "COGNITIVE_TRIAGE": "AI_TRIAGE",
+    "SEMANTIC_FRAGMENTATION": "FRAGMENTATION",
+    "VECTOR_GENERATION": "VECTORIZATION",
+    "CLOUD_PERSISTENCE": "SYNCHRONIZATION",
+    "COMPLETED": "SOVEREIGNTY_ESTABLISHED"
+  },
+  "actions": {
+    "ingest": "Start Ingestion"
+  },
+  "status": {
+    "idle": "Idle",
+    "processing": "Processing",
+    "success": "Success",
+    "failure": "Anomaly"
+  },
+  "errors": {
+    "validation_failure": "Discrepancy in input DNA.",
+    "insufficient_density": "Insufficient density for vector fragmentation."
+  }
+}

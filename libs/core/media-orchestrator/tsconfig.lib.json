@@ -1,12 +1,40 @@
-/** libs/[any-lib]/tsconfig.lib.json */
+/** libs/domain/tenants/tsconfig.lib.json */
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
+    /**
+     * @section Soberanía de Entorno (Standard 2026)
+     */
     "types": ["node"],
-    "target": "es2022"
+    "target": "esnext",
+    "module": "esnext",
+
+    /**
+     * @section Motor de Resolución de Élite
+     * RESOLUCIÓN DEFINITIVA: 'bundler' es el estándar para monorepos ESM.
+     * Permite resolver alias @omnisync sin requerir extensiones .ts/.js explícitas.
+     */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    
+    /**
+     * @section Blindaje de Integridad Estructural
+     */
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noEmit": true,
+
+    /**
+     * @section Compatibilidad con NestJS & Metadatos
+     */
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "jest.config.ts"]
 }

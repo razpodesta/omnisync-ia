@@ -1,0 +1,48 @@
+{
+  "header": {
+    "title": "Centro de Governança Cognitiva",
+    "subtitle": "Gestão de diretrizes de sistema, otimização de tokens e evolução Darwiniana.",
+    "active_context": "Contexto_Ativo: {name}",
+    "engine_status": "Motor de Inferência: OEDP-V4.8-NextGen"
+  },
+  "editor": {
+    "label": "Diretriz Mestra (System Prompt)",
+    "placeholder": "Escreva o ADN de comportamento para este nó...",
+    "helper_text": "Uma diretriz de elite deve ser afirmativa, técnica e livre de redundâncias.",
+    "version_tag": "Etiqueta de Versão",
+    "save_action": "Selar Nova Versão",
+    "optimizing": "Analisando Entropia..."
+  },
+  "metrics": {
+    "title": "Sinais Vitais do Prompt",
+    "token_count": "Densidade de Tokens",
+    "efficiency_score": "Índice de Eficiência",
+    "projected_cost": "Custo Projetado (Input)",
+    "roi_label": "Retorno Cognitivo: {score}%",
+    "suggestions_label": "Sugestões de Remediação"
+  },
+  "ab_testing": {
+    "title": "Configuração de Experimentos",
+    "enable": "Ativar Teste A/B",
+    "traffic_split": "Divisão de Tráfego (A/B)",
+    "variant_b_label": "Diretriz de Inovação (Variante B)",
+    "winner_detected": "Variante {version} detectada como vencedora!",
+    "emergency_stop": "Kill-Switch: Parar Experimento"
+  },
+  "history": {
+    "title": "Registro de Imutabilidade",
+    "empty": "Nenhuma versão selada encontrada.",
+    "restore": "Restaurar ADN",
+    "authored_by": "Sancionado por {author}"
+  },
+  "status": {
+    "DRAFT": "Rascunho",
+    "STAGING": "Em Teste",
+    "PRODUCTION": "Produção",
+    "DEPRECATED": "Obsoleto"
+  },
+  "errors": {
+    "low_efficiency": "Eficiência crítica detectada. O sistema bloqueou o selamento para evitar desperdício de orçamento.",
+    "invalid_tag": "O formato da versão não cumpre o padrão vX.X.X"
+  }
+}

@@ -3,21 +3,33 @@
 import { z } from 'zod';
 import { TenantIdSchema } from '@omnisync/core-contracts';
 
-/**
- * @name KnowledgeIngestionPipelineSchema
- * @description Contrato maestro para la ejecución del pipeline de transformación
- * de conocimiento. Asegura que el ADN técnico sea procesable antes de la vectorización.
- */
-export const KnowledgeIngestionPipelineSchema = z
-  .object({
-    rawContent: z.string().min(100, {
-      message: 'integrations.vector_engine.errors.content_too_short',
-    }),
-    documentTitle: z.string().min(5).max(255),
-    tenantOrganizationIdentifier: TenantIdSchema,
-  })
-  .readonly();
+export const KnowledgeIngestionPhaseSchema = z.enum([
+  'INITIAL_VALIDATION',
+  'COGNITIVE_TRIAGE',
+  'SEMANTIC_FRAGMENTATION',
+  'VECTOR_GENERATION',
+  'RELATIONAL_SYNC',
+  'CLOUD_PERSISTENCE',
+  'COMPLETED'
+]);
 
-export type IKnowledgeIngestionPipeline = z.infer<
-  typeof KnowledgeIngestionPipelineSchema
->;
+/**
+ * @name KnowledgeIngestionProgressSchema
+ * @description Sella el rastro biyectivo de la ingesta para la UI reactiva.
+ */
+export const KnowledgeIngestionProgressSchema = z.object({
+  ingestionIdentifier: z.string().uuid(),
+  currentPhase: KnowledgeIngestionPhaseSchema,
+  completionPercentage: z.number().min(0).max(100),
+  statusMessageKey: z.string(),
+  /** Visión Ojos de Mosca: Auditoría Financiera y Técnica */
+  metrics: z.object({
+    accumulatedLatencyMs: z.number(),
+    calculatedTokenCostUsd: z.number(),
+    chunksGenerated: z.number().int(),
+    batchIntegritySeal: z.string().min(64),
+  }).optional(),
+  timestamp: z.string().datetime(),
+}).readonly();
+
+export type IKnowledgeIngestionProgress = z.infer<typeof KnowledgeIngestionProgressSchema>;

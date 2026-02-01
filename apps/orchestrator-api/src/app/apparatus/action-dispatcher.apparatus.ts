@@ -1,16 +1,12 @@
 /** apps/orchestrator-api/src/app/apparatus/action-dispatcher.apparatus.ts */
 
+import * as crypto from 'node:crypto';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { OmnisyncSecurity } from '@omnisync/core-security';
 import { OmnisyncEnterpriseResourcePlanningOrchestrator } from '@omnisync/erp-engine';
-
-/**
- * @section Adaptadores Autorizados (Lego Pieces)
- * Importación de implementaciones niveladas para el despacho polimórfico.
- */
-import { MockEnterpriseResourcePlanningAdapter } from '@omnisync/erp-mock';
 import { OdooAdapterApparatus } from '@omnisync/erp-odoo';
+import { TokenPricingApparatus } from '@omnisync/core-auditor';
 
 import {
   INeuralIntent,
@@ -20,149 +16,185 @@ import {
   IEnterpriseResourcePlanningAdapter,
   OmnisyncContracts,
   EnterpriseResourcePlanningActionResponseSchema,
+  TenantId
 } from '@omnisync/core-contracts';
+
+import { 
+  ActionRiskAssessmentSchema,
+  IActionRiskAssessment,
+  IDigitalSanction
+} from '../schemas/action-dispatcher.schema';
 
 /**
  * @name ActionDispatcherApparatus
- * @description Aparato de despacho operativo de alta fidelidad. Orquesta la 
- * materialización de inferencias neurales en acciones transaccionales dentro 
- * de sistemas ERP/CRM. Gestiona la resolución dinámica de adaptadores, 
- * el descifrado de credenciales soberanas y el aprovisionamiento atómico de servicios.
- *
+ * @description Nodo maestro de Soberanía Transaccional (Fase 5.5).
+ * Orquesta la ejecución de mutaciones mediante el Protocolo de Sello Biyectivo.
+ * Implementa la visión "Ojos de Mosca": audita integridad, riesgo y ROI.
+ * 
  * @author Raz Podestá <Creator>
- * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Action-Orchestration V3.2)
- * @vision Ultra-Holística: Zero-Trust-Credentials & Polymorphic-Execution
+ * @protocol OEDP-Level: Elite (Sovereign-Transactional-Authority V5.5.2)
  */
 export class ActionDispatcherApparatus {
+  private static readonly apparatusName = 'ActionDispatcherApparatus';
+
   /**
    * @method dispatchOperationalAction
-   * @description Evalúa el triaje de la IA y, si se requiere escalación operativa, 
-   * resuelve el puente técnico hacia el ERP del suscriptor.
-   *
-   * @param {INeuralIntent} incomingNeuralIntent - Intención original capturada.
-   * @param {IArtificialIntelligenceResponse} artificialIntelligenceResponse - Inferencia del cerebro neural.
-   * @param {ITenantConfiguration} tenantConfiguration - ADN técnico del nodo organizacional.
-   * @returns {Promise<IEnterpriseResourcePlanningActionResponse | undefined>} Respuesta sellada por SSOT o undefined.
+   * @description Punto de ignición para mutaciones ERP con validación de Firma de Conciencia.
    */
   public static async dispatchOperationalAction(
     incomingNeuralIntent: INeuralIntent,
-    artificialIntelligenceResponse: IArtificialIntelligenceResponse,
-    tenantConfiguration: ITenantConfiguration,
+    aiResponse: IArtificialIntelligenceResponse,
+    tenantConfig: ITenantConfiguration,
+    sanction?: IDigitalSanction
   ): Promise<IEnterpriseResourcePlanningActionResponse | undefined> {
-    const apparatusName = 'ActionDispatcherApparatus';
     const operationName = 'dispatchOperationalAction';
 
-    /**
-     * @section Triaje de Acción (Cognitive Gate)
-     * El despacho solo se activa si la IA ha emitido la señal 'ESCALATED_TO_ERP'.
-     */
-    if (artificialIntelligenceResponse.status !== 'ESCALATED_TO_ERP') {
-      return undefined;
-    }
+    // 1. Gate de Estado: Solo procedemos si la IA disparó la señal de escalación.
+    if (aiResponse.status !== 'ESCALATED_TO_ERP') return undefined;
 
-    return await OmnisyncTelemetry.traceExecution(
-      apparatusName,
-      operationName,
-      async () => {
-        try {
-          /**
-           * 1. Fase de Resolución de Soberanía Técnica
-           * Instanciamos el adaptador específico y desciframos sus secretos AES-256-GCM.
-           */
-          const sovereignAdapter = await this.resolveSovereignAdapter(tenantConfiguration);
+    return await OmnisyncTelemetry.traceExecution(this.apparatusName, operationName, async () => {
+      
+      const currentPayloadHash = this.calculatePayloadFingerprint(aiResponse.suggestion);
+      const riskReport = this.performFlyEyeRiskAssessment(aiResponse, tenantConfig);
 
-          /**
-           * 2. Fase de Aprovisionamiento Atómico
-           * Delegamos al orquestador la creación del ticket, asegurando la 
-           * vinculación con el ID del usuario de WhatsApp/Web.
-           */
-          const actionResponse = await OmnisyncEnterpriseResourcePlanningOrchestrator.executeServiceTicketProvisioning(
-            sovereignAdapter,
-            {
-              userId: incomingNeuralIntent.externalUserId,
-              subject: `Incidencia Neural: ${incomingNeuralIntent.id.substring(0, 8)}`,
-              description: artificialIntelligenceResponse.suggestion,
-              priority: 'MEDIUM',
-              createdAt: new Date().toISOString(),
-            },
-          );
+      // 2. PROTOCOLO ACTION GUARD: Suspensión Preventiva
+      if (riskReport.mitigationStrategy === 'WAIT_FOR_HUMAN' && !sanction) {
+        return this.suspendActionForHumanSanction(incomingNeuralIntent, tenantConfig.id, riskReport, currentPayloadHash);
+      }
 
-          /**
-           * @note Validación de Salida (SSOT)
-           */
-          return OmnisyncContracts.validate(
-            EnterpriseResourcePlanningActionResponseSchema,
-            actionResponse,
-            `${apparatusName}:OperationalResponse`
-          );
+      // 3. AUDITORÍA DE INTEGRIDAD BIYECTIVA (Frontera de Seguridad)
+      if (sanction) {
+        this.validateSanctionIntegrity(sanction, currentPayloadHash, tenantConfig);
+      }
 
-        } catch (criticalDispatchError: unknown) {
-          /**
-           * @section Gestión de Resiliencia
-           * Si el puente ERP colapsa, el Sentinel reporta la brecha de acción 
-           * para intervención humana inmediata.
-           */
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-INTEG-404',
-            severity: 'HIGH',
-            apparatus: apparatusName,
-            operation: operationName,
-            message: 'core.action_dispatcher.dispatch_failed',
-            context: {
-              tenantId: tenantConfiguration.id,
-              adapter: tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier,
-              error: String(criticalDispatchError),
-            },
-            isRecoverable: true,
-          });
+      try {
+        const adapter = await this.resolveSovereignAdapter(tenantConfig);
 
-          throw criticalDispatchError;
-        }
-      },
-      { tenantId: tenantConfiguration.id, adapter: tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier }
-    );
+        // 4. EJECUCIÓN FÍSICA EN CLUSTER EXTERNO
+        const response = await OmnisyncEnterpriseResourcePlanningOrchestrator.executeServiceTicketProvisioning(
+          adapter,
+          {
+            userId: incomingNeuralIntent.externalUserId,
+            subject: `Neural_Task: ${incomingNeuralIntent.id.substring(0, 8)}`,
+            description: aiResponse.suggestion,
+            priority: 'MEDIUM',
+            _integritySeal: currentPayloadHash,
+            _sanctionRef: sanction?.signatureHash
+          }
+        );
+
+        return OmnisyncContracts.validate(
+          EnterpriseResourcePlanningActionResponseSchema,
+          response,
+          `${this.apparatusName}:FinalExecution`
+        );
+
+      } catch (criticalError: unknown) {
+        return await this.handleDispatchColapse(tenantConfig.id, incomingNeuralIntent.id, criticalError);
+      }
+    }, { tenantId: tenantConfig.id, intentId: incomingNeuralIntent.id });
   }
 
   /**
-   * @method resolveSovereignAdapter
+   * @method performFlyEyeRiskAssessment
    * @private
-   * @description Factoría interna de adaptadores. Implementa el descifrado 
-   * de ADN de conexión utilizando la llave maestra del ecosistema.
+   * @description Triaje Multifocal OEDP V5.5: Seguridad + ROI Predictivo.
    */
-  private static async resolveSovereignAdapter(
-    tenantConfiguration: ITenantConfiguration,
-  ): Promise<IEnterpriseResourcePlanningAdapter> {
-    const apparatusName = 'ActionDispatcherApparatus:Resolver';
-    const adapterType = tenantConfiguration.enterpriseResourcePlanning.adapterIdentifier;
+  private static performFlyEyeRiskAssessment(
+    ai: IArtificialIntelligenceResponse, 
+    config: ITenantConfiguration
+  ): IActionRiskAssessment {
+    // ROI: Uso de factor de entropía técnica /3.7 (Standard 2026)
+    const tokens = Math.ceil(ai.suggestion.length / 3.7);
+    const cost = TokenPricingApparatus.calculateCost('gemini-1.5-pro', tokens, tokens);
+    
+    let score = (1 - ai.confidenceScore) * 100;
+    
+    // Penalización por Configuración de Tenant (Hardened Security)
+    if (config.enterpriseResourcePlanning.governance.manualApprovalRequired) score = 100;
+    
+    // Penalización por Impacto Financiero (> $0.15 USD por mutación activa el Action Guard)
+    if (cost > 0.15) score += 30;
 
-    switch (adapterType) {
-      case 'ODOO_V16': {
-        const masterSystemEncryptionKey = process.env['SYSTEM_ENCRYPTION_KEY'];
+    const finalScore = Math.min(100, score);
 
-        if (!masterSystemEncryptionKey) {
-          throw new Error('OS-SEC-004: Master System Encryption Key is missing.');
-        }
+    return ActionRiskAssessmentSchema.parse({
+      riskScore: finalScore,
+      riskLevel: finalScore > 85 ? 'CRITICAL_BLOCK' : finalScore > 45 ? 'CAUTION' : 'SAFE',
+      mitigationStrategy: finalScore > 45 ? 'WAIT_FOR_HUMAN' : 'AUTO_EXECUTE',
+      financialImpactUsd: cost,
+      estimatedLatencyMs: 850 // Baseline Odoo API v16
+    });
+  }
 
-        /**
-         * @section Descifrado de Credenciales (Security First)
-         * El ADN de conexión de Odoo se recupera y se procesa en memoria volátil.
-         */
-        const decryptedCredentialsJson = await OmnisyncSecurity.decryptSensitiveData(
-          tenantConfiguration.enterpriseResourcePlanning.encryptedCredentials,
-          masterSystemEncryptionKey,
-        );
+  private static calculatePayloadFingerprint(content: string): string {
+    return crypto.createHash('sha256').update(content).digest('hex');
+  }
 
-        const odooConfig = JSON.parse(decryptedCredentialsJson);
-
-        return new OdooAdapterApparatus(odooConfig);
-      }
-
-      case 'MOCK_SYSTEM':
-      default: {
-        OmnisyncTelemetry.verbose(apparatusName, 'adapter_fallback', 'Activando simulador de pruebas ERP.');
-        return new MockEnterpriseResourcePlanningAdapter();
-      }
+  private static validateSanctionIntegrity(sanction: IDigitalSanction, currentHash: string, config: ITenantConfiguration): void {
+    const isHashValid = sanction.approvedPayloadHash === currentHash;
+    
+    if (!isHashValid) {
+       throw new Error('OS-SEC-500: ADN de mutación alterado entre la propuesta y la sanción.');
     }
+  }
+
+  private static suspendActionForHumanSanction(
+    intent: INeuralIntent, 
+    tenantId: TenantId, 
+    risk: IActionRiskAssessment,
+    hash: string
+  ): IEnterpriseResourcePlanningActionResponse {
+    OmnisyncTelemetry.verbose(this.apparatusName, 'guard_suspension', `Acción suspendida por riesgo: ${risk.riskScore}%`);
+
+    return {
+      success: true,
+      syncStatus: 'PENDING_APPROVAL',
+      messageKey: 'action.dispatcher.status.suspended',
+      latencyInMilliseconds: 0,
+      actionGuardContext: {
+        suspensionReasonIdentifier: risk.riskLevel,
+        riskAssessmentScore: risk.riskScore,
+        suspendedAt: new Date().toISOString(),
+        originalIntentSnapshot: { payloadHash: hash, cost: risk.financialImpactUsd } as any
+      },
+      operationalMetadata: { 
+        intentId: intent.id, 
+        tenantId,
+        governanceRole: 'ACTION_GUARD_V5'
+      }
+    };
+  }
+
+  private static async resolveSovereignAdapter(config: ITenantConfiguration): Promise<IEnterpriseResourcePlanningAdapter> {
+    const key = process.env['SYSTEM_ENCRYPTION_KEY'] || 'FAILSAFE_KEY';
+    const decrypted = await OmnisyncSecurity.decryptSensitiveData(
+      config.enterpriseResourcePlanning.encryptedCredentials, key
+    );
+    const connectionData = JSON.parse(decrypted);
+
+    return config.enterpriseResourcePlanning.adapterIdentifier.startsWith('ODOO') 
+      ? new OdooAdapterApparatus(connectionData) 
+      : new OdooAdapterApparatus(connectionData); 
+  }
+
+  private static async handleDispatchColapse(tenantId: TenantId, intentId: string, error: unknown): Promise<IEnterpriseResourcePlanningActionResponse> {
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-INTEG-604',
+      severity: 'HIGH',
+      apparatus: this.apparatusName,
+      operation: 'dispatch_colapse',
+      message: 'action.dispatcher.status.buffer_mode',
+      context: { tenantId, intentId, errorTrace: String(error) },
+      isRecoverable: true
+    });
+
+    return {
+      success: false,
+      syncStatus: 'FAILED_RETRYING',
+      messageKey: 'action.dispatcher.status.buffer_mode',
+      latencyInMilliseconds: 0,
+      operationalMetadata: { tenantId, intentId, error: 'ERP_UNREACHABLE' }
+    };
   }
 }

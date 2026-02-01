@@ -1,0 +1,11 @@
+{
+  "gemini.vision.status": {
+    "optical_triage_ignition": "TRIAJE ÓPTICO: Iniciando análisis de {count} recursos visuales.",
+    "analysis_sealed": "ANÁLISIS CONSUMADO: Integridad visual verificada mediante hash {hash}."
+  },
+  "gemini.vision.errors": {
+    "cluster_unreachable": "El cluster de percepción de Google AI no responde.",
+    "malformed_asset": "Recurso visual corrupto o formato no autorizado detectado en la aduana.",
+    "integrity_mismatch": "VIOLACIÓN DE ADN: La huella digital del lote visual ha sido alterada."
+  }
+}

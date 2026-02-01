@@ -1,0 +1,8 @@
+{
+  "omnichannel.intent.errors": {
+    "malformed_payload": "ADN_INCONSISTENTE: La carga útil del mensaje no cumple con el estándar {type}.",
+    "geographic_violation": "SOBERANÍA_TERRITORIAL: El origen de la señal ({region}) no está autorizado.",
+    "integrity_breach": "VIOLACIÓN_DE_SELLO: El checksum de la intención ha sido alterado.",
+    "oversized_content": "SANGRE_DE_TOKENS: El contenido excede el umbral de seguridad cognitiva."
+  }
+}

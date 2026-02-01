@@ -1,0 +1,15 @@
+{
+  "voice": {
+    "translator": {
+      "status": {
+        "signal_intercepted": "SEÑAL CAPTURADA: Iniciando triaje prosódico de la onda sonora.",
+        "prosody_deciphered": "ADN ACÚSTICO: Emoción {emotion} detectada con {confidence}% de confianza.",
+        "integrity_sealed": "TRANSMISIÓN SELLADA: Transcripción verificada mediante firma digital."
+      },
+      "errors": {
+        "stt_corruption": "CORRUPCIÓN DE SEÑAL: La transcripción recibida no coincide con la huella digital.",
+        "acoustic_noise_high": "INTERFERENCIA CRÍTICA: Ruido de fondo impide la extracción de ADN prosódico."
+      }
+    }
+  }
+}

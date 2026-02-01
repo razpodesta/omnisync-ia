@@ -1,0 +1,19 @@
+{
+  "name": "voice-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/voice-engine/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:adapter"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/voice-engine",
+        "main": "libs/integrations/voice-engine/src/index.ts",
+        "tsConfig": "libs/integrations/voice-engine/tsconfig.lib.json",
+        "assets": ["libs/integrations/voice-engine/*.md"]
+      }
+    }
+  }
+}

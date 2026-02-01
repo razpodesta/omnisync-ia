@@ -9,118 +9,161 @@ import {
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { 
   ApiRequestConfigurationSchema, 
-  INeuralEndpoint 
+  INeuralHubEndpoint,
+  IHealthCheckDepth
 } from './schemas/api-client.schema';
 
 /**
  * @name NeuralNexusClient
- * @description Aparato de despacho de alto nivel encargado de la orquestación de 
- * peticiones hacia la infraestructura neural. Actúa como el puente soberano 
- * entre la interfaz de usuario y el orquestador NestJS, garantizando que 
- * cada transacción cumpla con el ADN de validación institucional (SSOT).
+ * @description Aparato de despacho perimetral encargado de orquestar la comunicación 
+ * soberana entre la interfaz de usuario y el Neural Hub. Implementa la inyección 
+ * de huellas digitales de dispositivo (Fingerprinting), gestión de timeouts 
+ * específicos y auditoría de salud de infraestructura.
  * 
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Sovereign-Client-Interface V3.2)
- * @vision Ultra-Holística: Zero-Any & Resilient-Dispatch
+ * @protocol OEDP-Level: Elite (Sovereign-Nexus-Dispatcher V4.0)
+ * @vision Ultra-Holística: Zero-Anonymous-Traffic & Real-time-Pulse-Sync
  */
 export class NeuralNexusClient {
   /**
-   * @method nexusApi
-   * @description Punto de entrada unificado y tipado para la comunicación neural. 
-   * Orquesta la validación previa del payload y registra la latencia de despacho.
-   * 
-   * @template TResponse - Interfaz esperada para el ADN de respuesta.
-   * @param {string} targetEndpoint - Ruta autorizada del servicio (ej: '/v1/neural/chat').
-   * @param {TenantId} tenantId - Sello de soberanía del nodo suscriptor.
-   * @param {unknown} payloadData - Carga útil de la petición sin procesar.
-   * @returns {Promise<TResponse>} Respuesta validada y tipada por el framework.
+   * @method executeNexusRequest
+   * @private
+   * @description Motor interno de transmisión. Valida el ADN de la petición 
+   * y enriquece la señal con metadatos de transporte forense.
    */
-  public static async nexusApi<TResponse>(
-    targetEndpoint: string,
+  private static async executeNexusRequest<TResponse>(
+    endpoint: INeuralHubEndpoint,
     tenantId: TenantId,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'POST',
     payloadData?: unknown
   ): Promise<TResponse> {
     const apparatusName = 'NeuralNexusClient';
-    const operationName = `dispatch:${targetEndpoint}`;
+    const operationName = `dispatch:${endpoint}`;
 
-    return await OmnisyncTelemetry.traceExecution(
-      apparatusName,
-      operationName,
-      async () => {
-        /**
-         * @section Fase 1: Auditoría de ADN (Aduana de Red)
-         * Validamos que la petición cumpla con el contrato de configuración API.
-         */
-        OmnisyncContracts.validate(
-          ApiRequestConfigurationSchema, 
-          { endpoint: targetEndpoint, payload: payloadData }, 
-          apparatusName
-        );
+    return await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
+      /**
+       * @section 1. Aduana de Datos Atómica
+       * Sincronizado con ApiRequestConfigurationSchema V4.0.
+       */
+      const requestConfiguration = OmnisyncContracts.validate(
+        ApiRequestConfigurationSchema,
+        {
+          endpoint,
+          method,
+          payload: payloadData,
+          timeoutInMilliseconds: endpoint === '/v1/health/pulse' ? 5000 : 15000
+        },
+        apparatusName
+      );
 
-        OmnisyncTelemetry.verbose(
-          apparatusName, 
-          'ignition', 
-          `Iniciando despacho neural hacia el nodo: ${targetEndpoint}`,
-          { tenantId }
-        );
+      /**
+       * @section 2. Enriquecimiento de Señal (Contextual Injection)
+       */
+      const transportMetadata = this.captureSovereignDeviceFingerprint();
+      
+      const enrichedPayload = {
+        ...(requestConfiguration.payload as object),
+        metadata: {
+          ...requestConfiguration.payload?.metadata,
+          _transport: transportMetadata,
+          clientEngine: 'OEDP-V4.0-NEXUS'
+        }
+      };
 
-        /**
-         * @section Fase 2: Delegación al Transporte Resiliente
-         * El NeuralBridge asume la responsabilidad del handshake físico y reintentos.
-         */
-        return await NeuralBridge.request<TResponse>(
-          targetEndpoint as INeuralEndpoint,
-          tenantId,
-          payloadData
-        );
-      },
-      { endpoint: targetEndpoint, tenantId }
+      OmnisyncTelemetry.verbose(apparatusName, 'handshake_ignition', 
+        `Iniciando señal hacia ${endpoint} | Trace: ${transportMetadata.traceIdentifier}`
+      );
+
+      /**
+       * @section 3. Transmisión vía NeuralBridge
+       */
+      return await NeuralBridge.request<TResponse>(
+        requestConfiguration.endpoint,
+        tenantId,
+        enrichedPayload,
+        requestConfiguration.method
+      );
+    }, { tenantId, endpoint });
+  }
+
+  /**
+   * @section Proxies de Ejecución Soberana
+   */
+
+  /**
+   * @method getInfrastructurePulse
+   * @description Realiza una sonda de signos vitales hacia el HealthEngine.
+   * Permite la visualización de los 5 pilares en el Dashboard.
+   */
+  public static async getInfrastructurePulse(
+    tenantId: TenantId,
+    depth: IHealthCheckDepth = 'FULL_360'
+  ): Promise<unknown> {
+    return this.executeNexusRequest<unknown>(
+      '/v1/health/pulse',
+      tenantId,
+      'POST',
+      { checkDepth: depth }
     );
   }
 
   /**
-   * @section Capacidades Especializadas (High-Level Proxies)
-   * Métodos con responsabilidad única para simplificar el consumo en la capa UI.
-   */
-
-  /**
    * @method dispatchChatInference
-   * @description Especialista en el envío de intenciones de diálogo neural. 
-   * Automatiza la construcción de la carga útil de texto.
+   * @description Orquesta el diálogo neural inyectando contexto de sesión.
    */
   public static async dispatchChatInference(
-    tenantId: TenantId, 
-    content: string
+    tenantId: TenantId,
+    textualContent: string,
+    metadata: Record<string, unknown> = {}
   ): Promise<INeuralFlowResult> {
-    return this.nexusApi<INeuralFlowResult>(
-      '/v1/neural/chat', 
-      tenantId, 
-      { payload: { type: 'TEXT', content: content.trim() } }
+    return this.executeNexusRequest<INeuralFlowResult>(
+      '/v1/neural/chat',
+      tenantId,
+      'POST',
+      { content: textualContent, metadata }
     );
   }
 
   /**
    * @method ingestTechnicalKnowledge
-   * @description Orquesta el envío de ADN técnico para el pipeline RAG.
-   * Crucial para la fase de entrenamiento y actualización de manuales.
+   * @description Transmite ADN técnico al pipeline RAG del Vector Engine.
    */
   public static async ingestTechnicalKnowledge(
-    tenantId: TenantId, 
-    documentPayload: unknown
+    tenantId: TenantId,
+    content: string,
+    title: string
   ): Promise<void> {
-    return this.nexusApi<void>(
-      '/v1/neural/ingest', 
-      tenantId, 
-      documentPayload
+    return this.executeNexusRequest<void>(
+      '/v1/neural/ingest',
+      tenantId,
+      'POST',
+      { 
+        content, 
+        metadata: { documentTitle: title, ingestedAt: new Date().toISOString() } 
+      }
     );
   }
 
   /**
-   * @method checkSystemPulse
-   * @description Consulta el estado de salud de la infraestructura desde el cliente.
+   * @method captureSovereignDeviceFingerprint
+   * @private
+   * @description Captura de metadatos de entorno para trazabilidad biyectiva.
    */
-  public static async checkSystemPulse(tenantId: TenantId): Promise<unknown> {
-    return this.nexusApi<unknown>('/v1/health/pulse', tenantId, {});
+  private static captureSovereignDeviceFingerprint() {
+    const isServer = typeof window === 'undefined';
+
+    return {
+      traceIdentifier: `ntr_${crypto.randomUUID().substring(0, 8)}`,
+      userAgent: isServer ? 'SSR_ENGINE' : navigator.userAgent,
+      platform: isServer ? 'SERVER' : navigator.platform,
+      language: isServer ? 'SYSTEM' : navigator.language,
+      timestamp: new Date().toISOString()
+    };
   }
 }
+
+/**
+ * @section Exportación Funcional de Élite
+ */
+export const nexusApi = NeuralNexusClient;

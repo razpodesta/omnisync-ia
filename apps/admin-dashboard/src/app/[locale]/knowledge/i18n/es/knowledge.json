@@ -1,0 +1,34 @@
+{
+  "categories": {
+    "label": "Taxonomía Semántica",
+    "TECHNICAL": "Soporte Técnico",
+    "LEGAL": "Normativa Legal",
+    "ADMINISTRATIVE": "Administración",
+    "COMMERCIAL": "Estrategia Ventas"
+  },
+  "placeholders": {
+    "title": "TÍTULO DEL RECURSO DE CONOCIMIENTO...",
+    "content": "PEGUE EL ADN TEXTUAL AQUÍ (MÍNIMO 100 CARACTERES)..."
+  },
+  "phases": {
+    "INITIAL_VALIDATION": "AUDITORÍA_CONTRATO",
+    "COGNITIVE_TRIAGE": "TRIAJE_IA",
+    "SEMANTIC_FRAGMENTATION": "FRAGMENTACIÓN",
+    "VECTOR_GENERATION": "VECTORIZACIÓN",
+    "CLOUD_PERSISTENCE": "SINCRONIZACIÓN",
+    "COMPLETED": "SOBERANÍA_ESTABLECIDA"
+  },
+  "actions": {
+    "ingest": "Iniciar Ingesta"
+  },
+  "status": {
+    "idle": "En espera",
+    "processing": "Procesando",
+    "success": "Éxito",
+    "failure": "Anomalía"
+  },
+  "errors": {
+    "validation_failure": "Discrepancia en el ADN de entrada.",
+    "insufficient_density": "Densidad insuficiente para fragmentación vectorial."
+  }
+}

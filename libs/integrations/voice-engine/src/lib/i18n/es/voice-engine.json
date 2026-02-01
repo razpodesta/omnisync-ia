@@ -1,0 +1,18 @@
+{
+  "orchestrator": {
+    "status": {
+      "synthesis_started": "Iniciando metamorfosis de ADN textual a señal acústica.",
+      "synthesis_completed": "Síntesis vocal consumada. Latencia: {latency}ms.",
+      "provider_selected": "Motor de voz asignado por triaje: {provider}"
+    },
+    "errors": {
+      "provider_unreachable": "El cluster de síntesis [{provider}] no responde al pulso.",
+      "invalid_prosody": "Incapacidad de inyectar los parámetros prosódicos solicitados.",
+      "buffer_corruption": "Detectada corrupción en la huella digital del audio generado."
+    }
+  },
+  "analyst": {
+    "emotion_detected": "Firma emocional identificada: {emotion} (Confianza: {score}%)",
+    "prosody_adjusted": "Parámetros de cadencia nivelados para modo {mode}."
+  }
+}

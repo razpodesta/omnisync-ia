@@ -1,0 +1,49 @@
+
+{
+  "header": {
+    "title": "Centro de Gobernanza Cognitiva",
+    "subtitle": "Gestión de directivas de sistema, optimización de tokens y evolución Darwiniana.",
+    "active_context": "Contexto_Activo: {name}",
+    "engine_status": "Motor de Inferencia: OEDP-V4.8-NextGen"
+  },
+  "editor": {
+    "label": "Directiva Maestra (System Prompt)",
+    "placeholder": "Escriba el ADN de comportamiento para este nodo...",
+    "helper_text": "Una directiva de élite debe ser afirmativa, técnica y libre de redundancias.",
+    "version_tag": "Etiqueta de Versión",
+    "save_action": "Sellar Nueva Versión",
+    "optimizing": "Analizando Entropía..."
+  },
+  "metrics": {
+    "title": "Signos Vitales del Prompt",
+    "token_count": "Densidad de Tokens",
+    "efficiency_score": "Índice de Eficiencia",
+    "projected_cost": "Costo Proyectado (Input)",
+    "roi_label": "Retorno Cognitivo: {score}%",
+    "suggestions_label": "Sugerencias de Remediación"
+  },
+  "ab_testing": {
+    "title": "Configuración de Experimentos",
+    "enable": "Activar Prueba A/B",
+    "traffic_split": "Reparto de Tráfico (A/B)",
+    "variant_b_label": "Directiva de Innovación (Variante B)",
+    "winner_detected": "¡Variante {version} detectada como ganadora!",
+    "emergency_stop": "Kill-Switch: Detener Experimento"
+  },
+  "history": {
+    "title": "Registro de Inmutabilidad",
+    "empty": "No hay versiones anteriores selladas.",
+    "restore": "Restaurar ADN",
+    "authored_by": "Sancionado por {author}"
+  },
+  "status": {
+    "DRAFT": "Borrador",
+    "STAGING": "En Pruebas",
+    "PRODUCTION": "En Producción",
+    "DEPRECATED": "Depreciado"
+  },
+  "errors": {
+    "low_efficiency": "Eficiencia crítica detectada. El sistema bloqueó el sellado por riesgo de desperdicio de presupuesto.",
+    "invalid_tag": "El formato de versión no cumple con el estándar vX.X.X"
+  }
+}

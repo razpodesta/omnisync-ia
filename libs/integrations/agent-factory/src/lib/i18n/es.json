@@ -1,0 +1,15 @@
+{
+  "agent": {
+    "factory": {
+      "status": {
+        "triage_initiated": "TRIAJE DARWINIANO: Evaluando aptitud del enjambre para intención {id}.",
+        "agent_selected": "AGENTE SELLADO: {name} asignado con fitness del {score}%.",
+        "fallback_active": "GÉNESIS AGENT: Activando especialista de emergencia por colapso de enjambre."
+      },
+      "errors": {
+        "registry_corrupt": "BRECHA DE INTEGRIDAD: El registro de agentes ha sido alterado o es ilegible.",
+        "insufficient_fitness": "APTITUD INSUFICIENTE: Ningún agente cumple el umbral de seguridad cognitiva."
+      }
+    }
+  }
+}

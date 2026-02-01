@@ -1,0 +1,16 @@
+{
+  "action": {
+    "dispatcher": {
+      "status": {
+        "suspended": "ACCIÓN EN SUSPENSO: Riesgo {risk}% detectado. Requiere sanción digital.",
+        "executed": "MUTACIÓN CONSUMADA: Ejecución física en ERP validada mediante hash {hash}.",
+        "buffer_mode": "MODO BUFFER: ERP inalcanzable. Acción encolada en bóveda resiliente."
+      },
+      "errors": {
+        "hash_mismatch": "action.dispatcher.errors.hash_mismatch",
+        "authority_breach": "action.dispatcher.errors.authority_breach",
+        "integrity_violation": "action.dispatcher.errors.integrity_violation"
+      }
+    }
+  }
+}

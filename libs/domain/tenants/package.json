@@ -1,14 +1,23 @@
+
 {
   "name": "@omnisync/tenants",
   "version": "1.0.0",
+  "description": "Gobernador de identidades corporativas. Orquesta la resolución de soberanía bajo el protocolo nativo ESM V3.8.",
+  "author": "Raz Podestá <Creator> - MetaShark Tech",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
-  "description": "Gobernador de identidades corporativas (Tenants). Orquesta la resolución de soberanía y configuración de nodos bajo el protocolo OEDP V3.2.",
-  "author": "Raz Podestá <Creator> - MetaShark Tech",
   "dependencies": {
-    "tslib": "^2.3.0",
+    "tslib": "^2.8.1",
     "zod": "^4.3.6",
     "@omnisync/core-contracts": "workspace:*",
     "@omnisync/core-telemetry": "workspace:*",

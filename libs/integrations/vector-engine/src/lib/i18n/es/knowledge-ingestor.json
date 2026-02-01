@@ -1,0 +1,16 @@
+/** libs/integrations/vector-engine/src/lib/i18n/es/knowledge-ingestor.json */
+{
+  "knowledge.ingestor.status": {
+    "initial_validation": "AUDITORÍA_CONTRATO: Verificando integridad del ADN técnico.",
+    "cognitive_triage": "TRIAJE_COGNITIVO: Determinando densidad y categoría.",
+    "semantic_fragmentation": "FRAGMENTACIÓN: Ejecutando segmentación elástica V5.5.",
+    "vector_generation": "VECTORIZACIÓN: Generando firmas matemáticas.",
+    "relational_sync": "ANCLAJE_RELACIONAL: Sellando copia de seguridad 'Ghost'.",
+    "cloud_persistence": "SINCRONIZACIÓN_NUBE: Transmitiendo al cluster vectorial.",
+    "completed": "SOBERANÍA_ESTABLECIDA: Ingesta atómica finalizada."
+  },
+  "knowledge.ingestor.errors": {
+    "fatal_collapse": "COLAPSO_CATASTRÓFICO: La tubería de ingesta ha sido abortada.",
+    "vector_failure_ghost_active": "MODO_FANTASMA: Nube vectorial inalcanzable. ADN persistido en SQL."
+  }
+}

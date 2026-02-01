@@ -5,29 +5,31 @@ import { KnowledgeOrganizationCategorySchema } from '@omnisync/core-contracts';
 
 /**
  * @name KnowledgeClassificationResponseSchema
- * @description Contrato inmutable que define la estructura de salida del cerebro
- * de clasificación cognitiva. Garantiza que la taxonomía del conocimiento
- * sea íntegra antes de su fragmentación.
- *
- * @protocol OEDP-Level: Elite (Granular Schema)
+ * @description Contrato maestro evolucionado para la taxonomía neural V5.5.
+ * Introduce métricas de densidad técnica e intención para guiar el Smart Chunking.
  */
-export const KnowledgeClassificationResponseSchema = z
-  .object({
-    /** Categoría técnica detectada mediante análisis semántico */
-    category: KnowledgeOrganizationCategorySchema,
+export const KnowledgeClassificationResponseSchema = z.object({
+  /** Clasificación primaria del dominio */
+  category: KnowledgeOrganizationCategorySchema,
+  
+  /** 5 Palabras clave técnicas para el espacio vectorial */
+  tags: z.array(z.string().min(2)).length(5),
 
-    /** Lista de etiquetas técnicas para optimización de búsqueda RAG */
-    tags: z.array(z.string().min(2)).length(5, {
-      message:
-        'El clasificador debe generar exactamente 5 tags para mantener la densidad vectorial.',
-    }),
+  /** Propósito del documento (ej: 'PROCEDURAL', 'INFORMATIVE', 'REGULATORY') */
+  instructionalIntent: z.enum(['PROCEDURAL', 'INFORMATIVE', 'REGULATORY', 'SPECIFICATION']),
 
-    /** Puntuación de confianza del modelo sobre la clasificación (0.0 a 1.0) */
-    confidenceScore: z.number().min(0).max(1),
-  })
-  .readonly();
+  /** 
+   * Puntuación de densidad técnica (0.0 a 1.0).
+   * Determina la fragmentación: >0.8 fuerza chunks pequeños (alta precisión).
+   */
+  technicalDensityScore: z.number().min(0).max(1),
+
+  /** Idioma detectado para paridad i18n */
+  detectedLanguage: z.enum(['es', 'en', 'pt', 'other']),
+
+  /** Sello de confianza de la inferencia */
+  confidenceScore: z.number().min(0).max(1),
+}).readonly();
 
 /** @type IKnowledgeClassificationResponse */
-export type IKnowledgeClassificationResponse = z.infer<
-  typeof KnowledgeClassificationResponseSchema
->;
+export type IKnowledgeClassificationResponse = z.infer<typeof KnowledgeClassificationResponseSchema>;

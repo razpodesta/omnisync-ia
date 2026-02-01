@@ -1,0 +1,39 @@
+{
+  "header": {
+    "title": "Sanction Center",
+    "subtitle": "Action Guard Protocol: Supervision of operational mutations.",
+    "stats": {
+      "pending_count": "{count} Pending Actions",
+      "avg_risk": "Average Risk: {score}%"
+    }
+  },
+  "card": {
+    "intent_label": "NEURAL_INTENT",
+    "risk_label": "RISK_INDEX",
+    "reason_label": "SUSPENSION_CAUSE",
+    "payload_label": "PROPOSAL_DNA",
+    "created_at": "Detected {time} ago",
+    "categories": {
+      "ERP_TICKET_CREATE": "ERP Provisioning",
+      "CRM_LEAD_UPDATE": "CRM Update",
+      "FINANCIAL_TRANSACTION": "Financial Movement"
+    }
+  },
+  "actions": {
+    "approve": "Seal Execution",
+    "reject": "Veto Action",
+    "inspect": "Inspect DNA",
+    "note_placeholder": "Add audit note (optional)...",
+    "confirm_title": "Confirm Sanction",
+    "confirm_body": "Do you authorize the physical execution of this intent in the external cluster?"
+  },
+  "empty": {
+    "title": "Pure Sovereignty",
+    "message": "There are no actions awaiting human sanction."
+  },
+  "forensic": {
+    "trace_id": "TRACE_ID",
+    "risk_high": "CRITICAL RISK",
+    "risk_low": "CONTROLLED RISK"
+  }
+}

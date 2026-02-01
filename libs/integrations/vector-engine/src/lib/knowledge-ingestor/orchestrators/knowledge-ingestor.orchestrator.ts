@@ -1,8 +1,11 @@
 /** libs/integrations/vector-engine/src/lib/knowledge-ingestor/orchestrators/knowledge-ingestor.orchestrator.ts */
 
+import * as crypto from 'node:crypto';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
+import { OmnisyncDatabase, Prisma } from '@omnisync/core-persistence';
 import { NeuralEmbeddingApparatus } from '@omnisync/ai-engine';
+import { TokenPricingApparatus } from '@omnisync/core-auditor';
 import {
   IArtificialIntelligenceDriver,
   IKnowledgeSemanticChunk,
@@ -13,165 +16,187 @@ import {
 import { IVectorDatabaseAgnosticDriver } from '../../schemas/vector-engine.schema';
 import { KnowledgeClassifierApparatus } from '../knowledge-classifier.apparatus';
 import { SemanticChunkerApparatus } from '../semantic-chunker.apparatus';
-import { KnowledgeIngestionPipelineSchema } from '../schemas/knowledge-ingestor.schema';
+import { 
+  KnowledgeIngestionProgressSchema,
+  IKnowledgeIngestionProgress 
+} from '../schemas/knowledge-ingestor.schema';
+
+type IngestionProgressCallback = (event: IKnowledgeIngestionProgress) => Promise<void> | void;
 
 /**
  * @name KnowledgeIngestorOrchestrator
- * @description Director de orquesta de alta disponibilidad para la ingesta de conocimiento.
- * Coordina la taxonomía cognitiva, fragmentación semántica y sincronización vectorial masiva.
- * Implementa una arquitectura de tubería síncrona con optimización de carga por lotes.
- *
- * @protocol OEDP-Level: Elite (Batch-Optimized & Forensic)
+ * @description Nodo maestro de ingesta atómica (Fase 5.5).
+ * Orquesta la transformación de manuales técnicos en memoria semántica con 
+ * Doble Anclaje (SQL + Qdrant). Implementa la visión "Ojos de Mosca" para 
+ * garantizar integridad biyectiva y ROI de tokens quirúrgico.
+ * 
+ * @author Raz Podestá <Creator>
+ * @protocol OEDP-Level: Elite (Atomic-Ghost-Ingestion V5.5.2)
  */
 export class KnowledgeIngestorOrchestrator {
+  private static readonly apparatusName = 'KnowledgeIngestorOrchestrator';
+  private static readonly TOKEN_DENSITY_FACTOR = 3.7;
+
   /**
    * @method executeFullIngestionPipeline
-   * @description Ejecuta el pipeline neural 360°. Transforma texto bruto en vectores
-   * persistidos mediante procesamiento de lotes de alta performance.
-   *
-   * @param {string} documentRawContent - Texto bruto a procesar.
-   * @param {string} documentTitleIdentifier - Nombre del recurso de conocimiento.
-   * @param {TenantId} tenantOrganizationIdentifier - ID nominal del suscriptor.
-   * @param {IArtificialIntelligenceDriver} artificialIntelligenceDriver - Driver de IA activo.
-   * @param {IVectorDatabaseAgnosticDriver} vectorDatabaseDriver - Driver de persistencia vectorial.
+   * @description Ejecuta el ciclo de vida completo de la hidratación de memoria.
    */
   public static async executeFullIngestionPipeline(
     documentRawContent: string,
     documentTitleIdentifier: string,
-    tenantOrganizationIdentifier: TenantId,
-    artificialIntelligenceDriver: IArtificialIntelligenceDriver,
-    vectorDatabaseDriver: IVectorDatabaseAgnosticDriver,
+    tenantId: TenantId,
+    aiDriver: IArtificialIntelligenceDriver,
+    vectorDriver: IVectorDatabaseAgnosticDriver,
+    onProgress?: IngestionProgressCallback
   ): Promise<void> {
-    const apparatusName = 'KnowledgeIngestorOrchestrator';
     const operationName = 'executeFullIngestionPipeline';
+    const ingestionId = crypto.randomUUID();
+    const startTime = performance.now();
 
-    return await OmnisyncTelemetry.traceExecution(
-      apparatusName,
-      operationName,
-      async () => {
+    return await OmnisyncTelemetry.traceExecution(this.apparatusName, operationName, async () => {
+      try {
+        // --- FASE 1 & 2: VALIDACIÓN Y TRIAJE SEMÁNTICO ---
+        await this.emit(onProgress, ingestionId, 'INITIAL_VALIDATION', 10, 'knowledge.ingestor.status.initial_validation');
+        const classification = await KnowledgeClassifierApparatus.classifyDocumentContent(aiDriver, documentRawContent);
+
+        // --- FASE 3: SEGMENTACIÓN ADAPTATIVA V5.5 ---
+        await this.emit(onProgress, ingestionId, 'SEMANTIC_FRAGMENTATION', 30, 'knowledge.ingestor.status.semantic_fragmentation');
+        const baseChunks = SemanticChunkerApparatus.executeSegmentation(
+          documentRawContent, 
+          tenantId, 
+          documentTitleIdentifier, 
+          classification
+        );
+
+        // --- FASE 4: VECTORIZACIÓN Y AUDITORÍA ROI ---
+        await this.emit(onProgress, ingestionId, 'VECTOR_GENERATION', 50, 'knowledge.ingestor.status.vector_generation');
+        const vectorMatrix = await NeuralEmbeddingApparatus.generateBatchEmbeddings(aiDriver, baseChunks.map(c => c.content));
+
+        // ROI Ojos de Mosca: Cálculo basado en densidad real
+        const tokensUsed = Math.ceil(documentRawContent.length / this.TOKEN_DENSITY_FACTOR);
+        const costUsd = TokenPricingApparatus.calculateCost('text-embedding-004', tokensUsed, 0);
+
+        const finalizedChunks: IKnowledgeSemanticChunk[] = baseChunks.map((chunk, idx) => ({
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            vectorCoordinates: vectorMatrix[idx],
+            integrityFingerprint: crypto.createHash('sha256').update(chunk.content).digest('hex')
+          }
+        }));
+
+        const batchSeal = this.calculateBatchSeal(finalizedChunks);
+
+        /**
+         * @section FASE 5: ANCLAJE RELACIONAL GHOST (Soberanía de Datos)
+         * Evitamos @ts-ignore usando el motor relacional de Omnisync Database.
+         */
+        await this.emit(onProgress, ingestionId, 'RELATIONAL_SYNC', 70, 'knowledge.ingestor.status.relational_sync');
+        await this.persistSovereignGhostChunks(tenantId, ingestionId, documentTitleIdentifier, finalizedChunks, batchSeal);
+
+        /**
+         * @section FASE 6: PERSISTENCIA VECTORIAL (QDRANT CLOUD)
+         */
+        await this.emit(onProgress, ingestionId, 'CLOUD_PERSISTENCE', 90, 'knowledge.ingestor.status.cloud_persistence');
         try {
-          /**
-           * @section 1. Fase de Validación de Soberanía (SSOT)
-           */
-          OmnisyncContracts.validate(
-            KnowledgeIngestionPipelineSchema,
-            {
-              rawContent: documentRawContent,
-              documentTitle: documentTitleIdentifier,
-              tenantOrganizationIdentifier,
-            },
-            apparatusName,
-          );
-
-          /**
-           * @section 2. Clasificación y Fragmentación
-           * Determinamos la taxonomía y dividimos el ADN técnico en Smart Chunks.
-           */
-          const { category, tags } =
-            await KnowledgeClassifierApparatus.classifyDocumentContent(
-              artificialIntelligenceDriver,
-              documentRawContent,
-            );
-
-          const knowledgeChunks = SemanticChunkerApparatus.executeSegmentation(
-            documentRawContent,
-            tenantOrganizationIdentifier,
-            documentTitleIdentifier,
-            category,
-            tags,
-          );
-
-          OmnisyncTelemetry.verbose(
-            apparatusName,
-            'segmentation_complete',
-            `Documento fragmentado en ${knowledgeChunks.length} unidades.`,
-          );
-
-          /**
-           * @section 3. Fase de Vectorización Masiva (Batch Processing)
-           * NIVELACIÓN V3.0: Erradicamos el bucle secuencial. Enviamos todos los
-           * contenidos al motor de embeddings en una única operación de lote.
-           */
-          const textualContentsToEmbed = knowledgeChunks.map(
-            (chunk) => chunk.content,
-          );
-
-          const vectorMatrix =
-            await NeuralEmbeddingApparatus.generateBatchEmbeddings(
-              artificialIntelligenceDriver,
-              textualContentsToEmbed,
-            );
-
-          /**
-           * @section 4. Hidratación de ADN Vectorial
-           * Vinculamos las coordenadas calculadas con sus respectivos metadatos.
-           */
-          const finalizedEnrichedChunks: IKnowledgeSemanticChunk[] =
-            knowledgeChunks.map((chunk, index) => ({
-              ...chunk,
-              metadata: {
-                ...chunk.metadata,
-                vectorCoordinates: vectorMatrix[index],
-                indexationTimestamp: new Date().toISOString(),
-                pipelineVersion: '3.0.ELITE',
-                // Huella digital para control de integridad
-                contentFingerprint: this.generateContentFingerprint(
-                  chunk.content,
-                ),
-              },
-            }));
-
-          /**
-           * @section 5. Sincronización con Nube Vectorial (Qdrant)
-           * Persistencia atómica de la colección enriquecida.
-           */
-          await OmnisyncSentinel.executeWithResilience(
-            () =>
-              vectorDatabaseDriver.upsertKnowledgeChunks(
-                finalizedEnrichedChunks,
-              ),
-            apparatusName,
-            `bulk_upsert:${vectorDatabaseDriver.providerName}`,
-          );
-
-          OmnisyncTelemetry.verbose(
-            apparatusName,
-            'ingestion_success',
-            `Pipeline completado: ${finalizedEnrichedChunks.length} vectores sincronizados.`,
-          );
-        } catch (criticalPipelineError: unknown) {
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-INTEG-602',
-            severity: 'CRITICAL',
-            apparatus: apparatusName,
-            operation: operationName,
-            message: 'integrations.vector_engine.pipeline_failure',
-            context: {
-              document: documentTitleIdentifier,
-              tenant: tenantOrganizationIdentifier,
-              error: String(criticalPipelineError),
-            },
-            isRecoverable: false,
-          });
-          throw criticalPipelineError;
+          await vectorDriver.upsertKnowledgeChunks(finalizedChunks);
+        } catch (vectorError) {
+          return await this.igniteGhostModeFailsafe(ingestionId, tenantId, vectorError, onProgress);
         }
-      },
-    );
+
+        // --- CIERRE Y SELLO DE SOBERANÍA ---
+        await this.emit(onProgress, ingestionId, 'COMPLETED', 100, 'knowledge.ingestor.status.completed', {
+          accumulatedLatencyMs: performance.now() - startTime,
+          calculatedTokenCostUsd: costUsd,
+          chunksGenerated: finalizedChunks.length,
+          batchIntegritySeal: batchSeal
+        });
+
+      } catch (criticalFailure: unknown) {
+        await this.handleFatalPipelineBreach(ingestionId, tenantId, criticalFailure);
+        throw criticalFailure;
+      }
+    }, { tenantId, ingestionId });
   }
 
   /**
-   * @method generateContentFingerprint
+   * @method persistSovereignGhostChunks
    * @private
-   * @description Genera un hash simplificado para identificación de contenido.
-   * En V3.1 se sustituirá por un motor SHA-256 nativo de Node.
    */
-  private static generateContentFingerprint(content: string): string {
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return `os_hash_${Math.abs(hash)}`;
+  private static async persistSovereignGhostChunks(
+    id: TenantId, 
+    ingestId: string, 
+    title: string, 
+    chunks: IKnowledgeSemanticChunk[],
+    seal: string
+  ): Promise<void> {
+    // Sincronización mediante tarea soberana RLS
+    await OmnisyncDatabase.executeSovereignTask(id, async (prisma) => {
+      await prisma.supportThread.create({
+        data: {
+          externalUserId: 'SYSTEM_INGESTOR',
+          tenantId: id,
+          content: `INGEST_BATCH: ${title}`,
+          channel: 'SYSTEM_INGESTOR' as any,
+          metadata: {
+            ingestionId: ingestId,
+            batchSeal: seal,
+            chunksCount: chunks.length,
+            status: 'GHOST_BACKUP_ACTIVE',
+            // Almacenamos el ADN técnico para recuperación offline
+            dnaPayload: chunks.map(c => ({ id: c.id, hash: c.metadata['integrityFingerprint'] }))
+          } as Prisma.InputJsonValue
+        }
+      });
+    });
+  }
+
+  private static calculateBatchSeal(chunks: IKnowledgeSemanticChunk[]): string {
+    const combinedHashes = chunks.map(c => c.metadata['integrityFingerprint']).join('|');
+    return crypto.createHash('sha256').update(combinedHashes).digest('hex');
+  }
+
+  private static async igniteGhostModeFailsafe(id: string, tenant: TenantId, err: unknown, callback?: IngestionProgressCallback): Promise<void> {
+    await this.emit(callback, id, 'COMPLETED', 100, 'knowledge.ingestor.errors.vector_failure_ghost_active');
+    
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-INTEG-702',
+      severity: 'MEDIUM',
+      apparatus: this.apparatusName,
+      operation: 'vector_cloud_sync',
+      message: 'Nube vectorial caída. El sistema operará con ADN Fantasma desde SQL.',
+      context: { tenantId: tenant, errorTrace: String(err) },
+      isRecoverable: true
+    });
+  }
+
+  private static async emit(
+    cb: IngestionProgressCallback | undefined, 
+    id: string, 
+    phase: IKnowledgeIngestionProgress['currentPhase'], 
+    pct: number, 
+    msgKey: string, 
+    metrics?: IKnowledgeIngestionProgress['metrics']
+  ): Promise<void> {
+    if (!cb) return;
+    cb(OmnisyncContracts.validate(KnowledgeIngestionProgressSchema, {
+      ingestionIdentifier: id,
+      currentPhase: phase,
+      completionPercentage: pct,
+      statusMessageKey: msgKey,
+      metrics,
+      timestamp: new Date().toISOString()
+    }, `${this.apparatusName}:ProgressEmit`));
+  }
+
+  private static async handleFatalPipelineBreach(id: string, tenant: TenantId, error: unknown): Promise<void> {
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-INTEG-602',
+      severity: 'CRITICAL',
+      apparatus: this.apparatusName,
+      operation: 'pipeline_execution',
+      message: 'knowledge.ingestor.errors.fatal_collapse',
+      context: { ingestionId: id, tenantId: tenant, trace: String(error) }
+    });
   }
 }

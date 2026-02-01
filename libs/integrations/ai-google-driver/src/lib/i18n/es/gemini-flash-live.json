@@ -1,0 +1,10 @@
+{
+  "gemini.flash_live.status": {
+    "multimodal_ignited": "IGNICIÓN MULTIMODAL: Motor Gemini 2.0 procesando señal de texto y voz.",
+    "vocal_buffer_sealed": "BUFFER SELLADO: ADN acústico generado con hash {hash}."
+  },
+  "gemini.flash_live.errors": {
+    "vocal_synthesis_failed": "FALLO ACÚSTICO: Gemini no pudo generar la hebra de voz para el prompt.",
+    "config_mismatch": "ERROR DE ADUANA: Configuración de motor incompatible con el modo Live."
+  }
+}

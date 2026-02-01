@@ -1,221 +1,157 @@
 /** libs/integrations/ai-engine/src/lib/neural-inference.apparatus.ts */
 
+import * as crypto from 'node:crypto';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { AIUsageAuditor } from '@omnisync/core-auditor';
-import {
-  OmnisyncContracts,
+import { CognitiveGovernanceOrchestrator, IResolvedDirectiveDNA } from '@omnisync/cognitive-governance';
+import { 
+  OmnisyncContracts, 
   IArtificialIntelligenceDriver,
-  IArtificialIntelligenceModelConfiguration,
-  IAIResponse,
-  AIResponseSchema,
   TenantId,
+  IAIResponse
 } from '@omnisync/core-contracts';
+import { ArtificialIntelligenceDriverFactory } from './ai-driver.factory';
+import { NeuralInferenceResponseSchema, INeuralInferenceResponse } from './schemas/ai-inference.schema';
 
 /**
  * @name NeuralInferenceApparatus
- * @description Aparato de élite encargado de la orquestación, ejecución y
- * normalización de inferencias generativas. Actúa como el puente de verdad
- * entre los drivers de bajo nivel y los orquestadores de flujo neural,
- * integrando la soberanía financiera mediante auditoría de tokens en tiempo real.
- *
+ * @description Nodo maestro de razonamiento (Fase 5.5).
+ * Orquesta la inferencia cognitiva integrando gobernanza A/B, ROI financiero 
+ * en tiempo real y sellado biyectivo de integridad de ADN.
+ * 
  * @author Raz Podestá <Creator>
- * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Financial-Cognitive-Integration V3.2.1)
- * @vision Ultra-Holística: Zero-Waste-Inference & Forensic-Traceability
+ * @protocol OEDP-Level: Elite (Autonomous-Reasoning-Nexus V5.5.2)
  */
 export class NeuralInferenceApparatus {
+  private static readonly apparatusName = 'NeuralInferenceApparatus';
+  private static readonly TOKEN_DENSITY_FACTOR = 3.7;
+
   /**
-   * @method executeGenerativeInference
-   * @description Nodo maestro de inferencia. Orquesta la resiliencia del driver,
-   * calcula el consumo energético (tokens) y sella la respuesta bajo contrato SSOT.
-   *
-   * @param {IArtificialIntelligenceDriver} driver - Implementación técnica activa (Gemini, etc).
-   * @param {string} prompt - Instrucción cognitiva enriquecida (System + RAG + Context).
-   * @param {IArtificialIntelligenceModelConfiguration} configuration - Hiperparámetros de ejecución.
-   * @param {string} conversationId - Identificador único del hilo de diálogo.
-   * @param {TenantId} tenantId - Identificador nominal para soberanía financiera.
-   * @returns {Promise<IAIResponse>} Respuesta validada bajo estándar SSOT con auditoría completada.
+   * @method executeSovereignInference
+   * @description Ejecuta el ciclo de pensamiento neural con visión "Ojos de Mosca".
    */
-  public static async executeGenerativeInference(
-    driver: IArtificialIntelligenceDriver,
-    prompt: string,
-    configuration: IArtificialIntelligenceModelConfiguration,
-    conversationId: string,
+  public static async executeSovereignInference(
     tenantId: TenantId,
-  ): Promise<IAIResponse> {
-    const apparatusName = 'NeuralInferenceApparatus';
-    const operationName = `inference:${driver.providerName}`;
+    userInquiry: string,
+    conversationId: string,
+    channelOrigin: 'WHATSAPP' | 'WEB_CHAT' | 'VOICE_CALL'
+  ): Promise<INeuralInferenceResponse> {
+    const operationName = 'executeSovereignInference';
+    const startTime = performance.now();
 
-    /**
-     * @section Resolución de ADN de Entrada (Pre-Ignición)
-     * RESOLUCIÓN TS2304: Movemos el cálculo fuera del callback para que sea accesible
-     * en el objeto de metadatos de la telemetría.
-     */
-    const inputTokensCount = driver.calculateTokens(prompt);
+    return await OmnisyncTelemetry.traceExecution(this.apparatusName, operationName, async () => {
+      try {
+        // 1. FASE DE GOBERNANZA: Resolución de ADN instruccional
+        const cognitiveDNA = await CognitiveGovernanceOrchestrator.resolveActiveDirective(tenantId, conversationId);
 
-    return await OmnisyncTelemetry.traceExecution(
-      apparatusName,
-      operationName,
-      async () => {
-        try {
-          /**
-           * @section Fase 1: Ejecución Resiliente
-           * Delegamos la ejecución al Sentinel para manejar reintentos y backoff exponencial.
-           */
-          const rawInferenceResult =
-            await OmnisyncSentinel.executeWithResilience(
-              () => driver.generateResponse(prompt, configuration),
-              apparatusName,
-              operationName,
-            );
+        // 2. TRIAJE DE MOTOR: Selección de potencia basada en complejidad
+        const optimalTier = this.selectOptimalModelTier(userInquiry);
+        const driver = ArtificialIntelligenceDriverFactory.getSovereignDriver('GOOGLE_GEMINI', optimalTier);
 
-          // 2. Post-cálculo de ADN de Salida
-          const outputTokensCount = driver.calculateTokens(rawInferenceResult);
+        // 3. EJECUCIÓN RESILIENTE: Inferencia protegida por Sentinel
+        const rawResponse = await OmnisyncSentinel.executeWithResilience(
+          () => driver.generateResponse(
+            cognitiveDNA.optimizedPrompt, 
+            { ...driver['modelConfiguration'], modelName: optimalTier } as any
+          ),
+          this.apparatusName,
+          `inference_ignition:${optimalTier}`
+        );
 
-          /**
-           * @section Fase 2: Soberanía Financiera (Auditoría)
-           * Registramos el consumo de forma asíncrona para no bloquear la respuesta al usuario.
-           */
-          this.triggerFinancialAudit(
-            tenantId,
-            driver.providerName,
-            configuration.modelName,
-            inputTokensCount,
-            outputTokensCount,
-          );
+        // 4. AUDITORÍA FINANCIERA (ROI Ojos de Mosca)
+        const inputTokens = driver.calculateTokens(cognitiveDNA.optimizedPrompt);
+        const outputTokens = driver.calculateTokens(rawResponse);
+        
+        const auditRecord = await AIUsageAuditor.auditInferenceConsumption({
+          tenantId,
+          traceId: crypto.randomUUID(),
+          model: `${driver.providerName}:${optimalTier}`,
+          inputTokens,
+          outputTokens
+        });
 
-          /**
-           * @section Fase 3: Normalización y Mapeo
-           * Transformamos el resultado crudo en un contrato de IA soberano.
-           */
-          return this.mapSuccessfulInference(
-            conversationId,
-            rawInferenceResult,
-          );
-        } catch (criticalInferenceError: unknown) {
-          /**
-           * @section Fase 4: Activación de Protocolo Failsafe
-           * Reportamos la anomalía y retornamos una respuesta de seguridad institucional.
-           */
-          return await this.handleInferenceFailure(
-            apparatusName,
-            operationName,
-            conversationId,
-            criticalInferenceError,
-          );
-        }
-      },
-      {
-        estimatedInputTokens: inputTokensCount,
-        modelTier: configuration.modelName,
-        tenantId,
-      },
-    );
+        // 5. SELLO DE SOBERANÍA Y ENSAMBLAJE (Zero-Any Policy)
+        const finalPayload = this.assembleSovereignPayload({
+          text: rawResponse,
+          conversationId,
+          dna: cognitiveDNA,
+          audit: auditRecord,
+          channel: channelOrigin,
+          latency: performance.now() - startTime
+        });
+
+        return OmnisyncContracts.validate(
+          NeuralInferenceResponseSchema,
+          finalPayload,
+          this.apparatusName
+        );
+
+      } catch (criticalFailure: unknown) {
+        return await this.handleInferenceColapse(conversationId, criticalFailure, startTime);
+      }
+    }, { tenantId, channel: channelOrigin });
+  }
+
+  private static selectOptimalModelTier(input: string): 'DEEP_THINK' | 'FLASH' {
+    const isTechnical = /(error|code|implement|fix|architecture|sql)/i.test(input);
+    return (input.length > 600 || isTechnical) ? 'DEEP_THINK' : 'FLASH';
   }
 
   /**
-   * @method mapSuccessfulInference
+   * @method assembleSovereignPayload
    * @private
-   * @description Realiza el triaje semántico de la respuesta para determinar el flujo operativo.
+   * @description Implementa la reconstrucción del ADN sin quiebre de tipos.
    */
-  private static mapSuccessfulInference(
-    conversationId: string,
-    rawText: string,
-  ): IAIResponse {
-    const apparatusName = 'NeuralInferenceApparatus:Mapper';
-    const normalizedText = rawText.trim();
-
-    /**
-     * @section Algoritmo de Triaje Operativo
-     * Identificamos si la IA requiere intervención humana o escalación a sistemas ERP.
-     */
-    const requiresHumanEscalation =
-      normalizedText.includes('ESCALATE_TO_HUMAN') ||
-      normalizedText.includes('HUMAN_REQUIRED');
-
-    const requiresERPPovisioning =
-      normalizedText.includes('TICKET_REQUIRED') ||
-      normalizedText.includes('ESCALATED_TO_ERP');
-
-    const responsePayload: unknown = {
-      conversationId,
-      suggestion: normalizedText,
-      status: requiresERPPovisioning
-        ? 'ESCALATED_TO_ERP'
-        : requiresHumanEscalation
-        ? 'NEED_HUMAN'
-        : 'RESOLVED',
-      /**
-       * NIVELACIÓN: Heurística de confianza basada en densidad.
-       */
-      confidenceScore: normalizedText.length > 10 ? 0.98 : 0.7,
-      sourceManuals: [], 
+  private static assembleSovereignPayload(params: {
+    text: string, 
+    conversationId: string, 
+    dna: IResolvedDirectiveDNA, 
+    audit: any, 
+    channel: string,
+    latency: number
+  }): unknown {
+    const isActionRequired = params.text.includes('ESCALATED_TO_ERP') || params.text.includes('TICKET_REQUIRED');
+    
+    return {
+      conversationId: params.conversationId,
+      suggestion: params.text.trim(),
+      status: isActionRequired ? 'ESCALATED_TO_ERP' : 'RESOLVED',
+      confidenceScore: 0.98,
+      integritySeal: {
+        promptFingerprint: params.dna.integrityChecksum,
+        directiveVersion: params.dna.versionTag,
+        variantIdentifier: params.dna.assignedVariant,
+      },
+      usageMetrics: {
+        totalTokens: params.audit.usageMetrics.totalTokens,
+        estimatedCostUsd: params.audit.estimatedCostUsd,
+        latencyMs: params.latency,
+      },
+      vocalContext: {
+        isVocalizable: params.channel === 'WHATSAPP' || params.channel === 'VOICE_CALL',
+        suggestedEmotion: params.text.length > 150 ? 'EMPATHETIC' : 'NEUTRAL',
+      }
     };
-
-    return OmnisyncContracts.validate(
-      AIResponseSchema,
-      responsePayload,
-      apparatusName,
-    );
   }
 
-  /**
-   * @method triggerFinancialAudit
-   * @private
-   * @description Despacha la intención de cobro al auditor de consumo.
-   */
-  private static triggerFinancialAudit(
-    tenantId: TenantId,
-    provider: string,
-    model: string,
-    input: number,
-    output: number,
-  ): void {
-    const traceId = crypto.randomUUID();
-
-    AIUsageAuditor.auditInferenceConsumption({
-      tenantId,
-      traceId,
-      model: `${provider}:${model}`,
-      inputTokens: input,
-      outputTokens: output,
-    }).catch((auditError) => {
-      OmnisyncTelemetry.verbose(
-        'NeuralInferenceApparatus',
-        'audit_leak',
-        `Incapacidad de registrar consumo: ${String(auditError)}`,
-      );
-    });
-  }
-
-  /**
-   * @method handleInferenceFailure
-   * @private
-   * @description Orquesta la respuesta del sistema ante fallos críticos del cluster de IA.
-   */
-  private static async handleInferenceFailure(
-    apparatus: string,
-    operation: string,
-    conversationId: string,
-    error: unknown,
-  ): Promise<IAIResponse> {
+  private static async handleInferenceColapse(id: string, error: unknown, start: number): Promise<INeuralInferenceResponse> {
     await OmnisyncSentinel.report({
       errorCode: 'OS-INTEG-601',
       severity: 'HIGH',
-      apparatus,
-      operation,
-      message: 'integrations.ai_engine.inference_failure',
-      context: { error: String(error), conversationId },
-      isRecoverable: true,
+      apparatus: this.apparatusName,
+      operation: 'failsafe_trigger',
+      message: 'ai.engine.inference.status.failsafe_active',
+      context: { errorTrace: String(error), latency: performance.now() - start }
     });
 
-    return AIResponseSchema.parse({
-      conversationId,
-      suggestion: 'CORE_AI_OFFLINE_RETRY_LATER',
+    return {
+      conversationId: id,
+      suggestion: 'SERVICE_TEMPORARILY_OFFLINE_RETRY_SHORTLY',
       status: 'NEED_HUMAN',
       confidenceScore: 0,
-      sourceManuals: [],
-    });
+      integritySeal: { promptFingerprint: 'FAILSAFE', directiveVersion: 'v0.0.0', variantIdentifier: 'A' },
+      usageMetrics: { totalTokens: 0, estimatedCostUsd: 0, latencyMs: performance.now() - start }
+    };
   }
 }

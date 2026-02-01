@@ -1,4 +1,3 @@
-
 {
   "compileOnSave": false,
   "compilerOptions": {
@@ -10,7 +9,7 @@
     "target": "es2022",
     "module": "esnext",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "moduleResolution": "node", 
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -25,7 +24,6 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      
       "@omnisync/core-telemetry": ["libs/core/telemetry/src/index.ts"],
       "@omnisync/core-security": ["libs/core/security/src/index.ts"],
       "@omnisync/core-contracts": ["libs/core/contracts/src/index.ts"],
@@ -33,33 +31,49 @@
       "@omnisync/core-media": ["libs/core/media-orchestrator/src/index.ts"],
       "@omnisync/core-persistence": ["libs/core/persistence/src/index.ts"],
       "@omnisync/core-auditor": ["libs/core/auditor/src/index.ts"],
-
-     
       "@omnisync/ai-engine": ["libs/integrations/ai-engine/src/index.ts"],
-      "@omnisync/ai-google": ["libs/integrations/ai-google-driver/src/index.ts"],
-      "@omnisync/agent-factory": ["libs/integrations/agent-factory/src/index.ts"],
-      "@omnisync/vector-engine": ["libs/integrations/vector-engine/src/index.ts"],
-      "@omnisync/vector-qdrant": ["libs/integrations/vector-qdrant-driver/src/index.ts"],
-      "@omnisync/erp-engine": ["libs/integrations/erp-orchestrator/src/index.ts"],
+      "@omnisync/ai-google": [
+        "libs/integrations/ai-google-driver/src/index.ts"
+      ],
+      "@omnisync/agent-factory": [
+        "libs/integrations/agent-factory/src/index.ts"
+      ],
+      "@omnisync/vector-engine": [
+        "libs/integrations/vector-engine/src/index.ts"
+      ],
+      "@omnisync/vector-qdrant": [
+        "libs/integrations/vector-qdrant-driver/src/index.ts"
+      ],
+      "@omnisync/erp-engine": [
+        "libs/integrations/erp-orchestrator/src/index.ts"
+      ],
       "@omnisync/erp-mock": ["libs/integrations/erp-adapter-mock/src/index.ts"],
       "@omnisync/erp-odoo": ["libs/integrations/erp-odoo/src/index.ts"],
-      "@omnisync/omnichannel-orchestrator": ["libs/integrations/omnichannel-orchestrator/src/index.ts"],
+      "@omnisync/omnichannel-orchestrator": [
+        "libs/integrations/omnichannel-orchestrator/src/index.ts"
+      ],
       "@omnisync/api-client": ["libs/integrations/api-client/src/index.ts"],
-      "@omnisync/health-engine": ["libs/integrations/health-engine/src/index.ts"],
-      
-      
-      "@omnisync/whatsapp-meta": ["libs/integrations/whatsapp-meta-driver/src/index.ts"],
-      "@omnisync/whatsapp-evolution": ["libs/integrations/whatsapp-evolution-driver/src/index.ts"],
-
-      
+      "@omnisync/health-engine": [
+        "libs/integrations/health-engine/src/index.ts"
+      ],
+      "@omnisync/whatsapp-meta": [
+        "libs/integrations/whatsapp-meta-driver/src/index.ts"
+      ],
+      "@omnisync/whatsapp-evolution": [
+        "libs/integrations/whatsapp-evolution-driver/src/index.ts"
+      ],
       "@omnisync/domain-tenants": ["libs/domain/tenants/src/index.ts"],
       "@omnisync/domain-support": ["libs/domain/support/src/index.ts"],
-
-      
-      "@omnisync/web-chat-driver": ["libs/integrations/web-chat-driver/src/index.ts"],
+      "@omnisync/web-chat-driver": [
+        "libs/integrations/web-chat-driver/src/index.ts"
+      ],
       "@omnisync/web-chat-ui": ["libs/ui-kit/web-chat-widget/src/index.ts"],
       "@omnisync/tools": ["libs/tools/internal-scripts/src/index.ts"],
-      "@omnisync/tests": ["tests/src/index.ts"]
+      "@omnisync/tests": ["tests/src/index.ts"],
+      "@omnisync/cognitive-governance": [
+        "libs/integrations/cognitive-governance/src/index.ts"
+      ],
+      "@omnisync/voice-engine": ["libs/integrations/voice-engine/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist", ".next"],

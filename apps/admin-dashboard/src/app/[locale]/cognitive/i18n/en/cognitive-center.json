@@ -1,0 +1,48 @@
+{
+  "header": {
+    "title": "Cognitive Governance Center",
+    "subtitle": "System directive management, token optimization, and Darwinian evolution.",
+    "active_context": "Active_Context: {name}",
+    "engine_status": "Inference Engine: OEDP-V4.8-NextGen"
+  },
+  "editor": {
+    "label": "Master System Directive (System Prompt)",
+    "placeholder": "Write the behavior DNA for this node...",
+    "helper_text": "An elite directive must be affirmative, technical, and redundancy-free.",
+    "version_tag": "Version Tag",
+    "save_action": "Seal New Version",
+    "optimizing": "Analyzing Entropy..."
+  },
+  "metrics": {
+    "title": "Prompt Vital Signs",
+    "token_count": "Token Density",
+    "efficiency_score": "Efficiency Index",
+    "projected_cost": "Projected Cost (Input)",
+    "roi_label": "Cognitive ROI: {score}%",
+    "suggestions_label": "Remediation Suggestions"
+  },
+  "ab_testing": {
+    "title": "Experiment Configuration",
+    "enable": "Activate A/B Test",
+    "traffic_split": "Traffic Split (A/B)",
+    "variant_b_label": "Innovation Directive (Variant B)",
+    "winner_detected": "Variant {version} detected as winner!",
+    "emergency_stop": "Kill-Switch: Stop Experiment"
+  },
+  "history": {
+    "title": "Immutability Log",
+    "empty": "No sealed versions found.",
+    "restore": "Restore DNA",
+    "authored_by": "Sanctioned by {author}"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "STAGING": "Staging",
+    "PRODUCTION": "Production",
+    "DEPRECATED": "Deprecated"
+  },
+  "errors": {
+    "low_efficiency": "Critical efficiency detected. System blocked sealing to prevent budget leak.",
+    "invalid_tag": "Version format does not comply with vX.X.X standard."
+  }
+}

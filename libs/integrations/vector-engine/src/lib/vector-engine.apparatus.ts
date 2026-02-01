@@ -3,7 +3,7 @@
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
-  IKnowledgeSemanticChunk, // SANEADO: Ahora se usa explícitamente en el flujo
+  IKnowledgeSemanticChunk,
   IKnowledgeSemanticSearchResult,
   KnowledgeSemanticSearchResultSchema,
   TenantId,
@@ -18,120 +18,156 @@ import {
 
 /**
  * @name OmnisyncVectorEngine
- * @description Nodo maestro de Recuperación Semántica (RAG). 
- * Orquesta el ciclo de vida de la consulta de conocimiento, actuando como 
- * puente de alta disponibilidad entre los drivers vectoriales (Qdrant/Pinecone) 
- * y el motor de inferencia. Garantiza que solo el ADN técnico más relevante 
- * sea inyectado en el prompt de la IA.
+ * @description Nodo maestro de Recuperación Semántica de Capas Cruzadas (V5.5).
+ * Implementa la visión "Ojos de Mosca" para orquestar búsquedas vectoriales 
+ * multidimensionales. No solo busca cercanía matemática, sino que audita la 
+ * afinidad entre el propósito de la consulta y la intención del ADN persistido.
  *
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (RAG-Orchestration V3.2)
- * @vision Ultra-Holística: Zero-Hallucination & Mathematical-Triage
+ * @protocol OEDP-Level: Elite (Cross-Layer-RAG V5.5)
  */
 export class OmnisyncVectorEngine {
+  private static readonly apparatusName = 'OmnisyncVectorEngine';
+
   /**
    * @method retrieveRelevantKnowledgeContext
-   * @description Ejecuta el pipeline de recuperación cognitiva. 
-   * Valida la configuración, orquesta la búsqueda resiliente y delega 
-   * el triaje de relevancia al aparato especialista.
-   *
-   * @param {IVectorDatabaseAgnosticDriver} databaseDriver - Driver vectorial activo.
-   * @param {number[]} queryVectorCoordinates - Firma matemática de la consulta.
-   * @param {TenantId} tenantId - Identificador nominal de soberanía.
-   * @param {number} maxResults - Límite de fragmentos (Default: 3).
-   * @param {number} scoreThreshold - Umbral de similitud (Default: 0.75).
-   * @returns {Promise<IKnowledgeSemanticSearchResult>} ADN de contexto validado por SSOT.
+   * @description Ejecuta el pipeline de recuperación cognitiva 360°. 
+   * Realiza un triaje de filtros antes del despacho y una re-evaluación 
+   * de relevancia post-recuperación basada en el "Intent Match".
    */
   public static async retrieveRelevantKnowledgeContext(
     databaseDriver: IVectorDatabaseAgnosticDriver,
     queryVectorCoordinates: number[],
     tenantId: TenantId,
-    maxResults = 3,
-    scoreThreshold = 0.75,
+    options: Partial<IVectorSearchConfiguration> = {}
   ): Promise<IKnowledgeSemanticSearchResult> {
-    const apparatusName = 'OmnisyncVectorEngine';
     const operationName = `retrieve:${databaseDriver.providerName}`;
 
-    return await OmnisyncTelemetry.traceExecution(
-      apparatusName,
-      operationName,
-      async () => {
-        const searchStartTime = performance.now();
+    return await OmnisyncTelemetry.traceExecution(this.apparatusName, operationName, async () => {
+      const searchStartTime = performance.now();
 
-        try {
-          /**
-           * @section Fase 1: Validación de Frontera (SSOT)
-           */
-          const config: IVectorSearchConfiguration = OmnisyncContracts.validate(
-            VectorSearchConfigurationSchema,
-            { maximumChunksToRetrieve: maxResults, similarityScoreThreshold: scoreThreshold },
-            apparatusName
-          );
+      try {
+        // 1. ADUANA DE CONFIGURACIÓN DINÁMICA
+        const config = OmnisyncContracts.validate(VectorSearchConfigurationSchema, options, this.apparatusName);
 
-          /**
-           * @section Fase 2: Recuperación Física (Resiliencia Sentinel)
-           * NIVELACIÓN LINT: Se tipa explícitamente la colección capturada para usar el import.
-           */
-          const rawChunksFound: IKnowledgeSemanticChunk[] = await OmnisyncSentinel.executeWithResilience(
-            () => databaseDriver.executeSemanticSearch(
-              queryVectorCoordinates,
-              tenantId,
-              config.maximumChunksToRetrieve
-            ),
-            apparatusName,
-            `vector_search_op:${databaseDriver.providerName}`
-          );
+        // 2. DESPACHO FILTRADO (Handshake con Driver)
+        // Inyectamos los filtros de intención en la consulta física para que el motor vectorial (Qdrant)
+        // optimice el escaneo del índice.
+        const rawChunksFound = await OmnisyncSentinel.executeWithResilience(
+          () => databaseDriver.executeSemanticSearch(
+            queryVectorCoordinates,
+            tenantId,
+            config.maximumChunksToRetrieve,
+            this.assembleMetadataFilters(config)
+          ),
+          this.apparatusName,
+          'vector_physical_fetch'
+        );
 
-          /**
-           * @section Fase 3: Triaje Cognitivo (Atomización)
-           * Delegamos la evaluación matemática al SemanticRelevanceAssessor.
-           */
-          const relevanceAudit = SemanticRelevanceAssessor.evaluateContextRelevance(
-            [...rawChunksFound],
-            config.similarityScoreThreshold
-          );
+        // 3. TRIAJE DE RESONANCIA SEMÁNTICA (Ojos de Mosca)
+        // No solo validamos el score, sino que penalizamos o premiamos según el match de intención.
+        const weightedChunks = this.applyIntentAffinityWeighting(rawChunksFound, config);
 
-          OmnisyncTelemetry.verbose(
-            apparatusName,
-            'knowledge_pulse',
-            `RAG Quality: ${relevanceAudit.averageScore.toFixed(4)} | Reliable: ${relevanceAudit.hasHighConfidenceAnchor}`,
-            { chunksProcessed: rawChunksFound.length }
-          );
+        const relevanceAudit = SemanticRelevanceAssessor.evaluateContextRelevance(
+          weightedChunks,
+          config.similarityScoreThreshold
+        );
 
-          /**
-           * @section Fase 4: Consolidación de Resultado Soberano
-           */
-          const searchResult: IKnowledgeSemanticSearchResult = {
-            chunks: [...relevanceAudit.filteredChunks],
-            relevanceScore: relevanceAudit.averageScore,
-            latencyInMilliseconds: performance.now() - searchStartTime,
-          };
+        OmnisyncTelemetry.verbose(this.apparatusName, 'semantic_resonance_established', 
+          `Resonance: ${relevanceAudit.averageScore.toFixed(4)} | Chunks: ${relevanceAudit.filteredChunks.length}`,
+          { hasAnchor: relevanceAudit.hasHighConfidenceAnchor }
+        );
 
-          return OmnisyncContracts.validate(
-            KnowledgeSemanticSearchResultSchema,
-            searchResult,
-            `${apparatusName}:FinalConsolidation`
-          );
+        // 4. SELLO DE RESULTADO SOBERANO (SSOT)
+        const searchResult: IKnowledgeSemanticSearchResult = {
+          chunks: relevanceAudit.filteredChunks,
+          relevanceScore: relevanceAudit.averageScore,
+          latencyInMilliseconds: performance.now() - searchStartTime,
+        };
 
-        } catch (criticalRetrievalError: unknown) {
-          /**
-           * @note Protocolo de Desastre
-           * El fallo en RAG es MEDIUM/HIGH: la IA puede responder pero sin contexto.
-           */
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-INTEG-601',
-            severity: 'HIGH',
-            apparatus: apparatusName,
-            operation: operationName,
-            message: 'integrations.vector_engine.retrieval_failure',
-            context: { tenantId, error: String(criticalRetrievalError) },
-            isRecoverable: true,
-          });
-          throw criticalRetrievalError;
-        }
-      },
-      { tenantId, provider: databaseDriver.providerName }
-    );
+        return OmnisyncContracts.validate(
+          KnowledgeSemanticSearchResultSchema,
+          searchResult,
+          this.apparatusName
+        );
+
+      } catch (criticalRetrievalError: unknown) {
+        return await this.handleRetrievalColapse(tenantId, criticalRetrievalError, searchStartTime);
+      }
+    }, { tenantId, provider: databaseDriver.providerName });
+  }
+
+  /**
+   * @method assembleMetadataFilters
+   * @private
+   * @description Transforma la intención de búsqueda en gramática de filtrado para el driver.
+   */
+  private static assembleMetadataFilters(config: IVectorSearchConfiguration): Record<string, unknown> {
+    const filters: Record<string, unknown> = {};
+    
+    if (config.filters?.requiredIntent) {
+      filters['instructionalIntent'] = config.filters.requiredIntent;
+    }
+
+    if (config.filters?.minimumTechnicalDensity) {
+      filters['technicalDensity'] = { gte: config.filters.minimumTechnicalDensity };
+    }
+
+    return filters;
+  }
+
+  /**
+   * @method applyIntentAffinityWeighting
+   * @private
+   * @description Algoritmo de "Afinidad de Capa". 
+   * Penaliza fragmentos que, aunque cercanos matemáticamente, no coinciden 
+   * con la intención técnica de la consulta.
+   */
+  private static applyIntentAffinityWeighting(
+    chunks: IKnowledgeSemanticChunk[],
+    config: IVectorSearchConfiguration
+  ): IKnowledgeSemanticChunk[] {
+    if (!config.filters?.requiredIntent) return chunks;
+
+    return chunks.map(chunk => {
+      const chunkMetadata = chunk.metadata as any;
+      const originalScore = chunkMetadata.score || 0;
+      
+      // Si la intención no coincide, aplicamos el Semantic Penalty Factor
+      const intentMatch = chunkMetadata.instructionalIntent === config.filters?.requiredIntent;
+      const weightedScore = intentMatch ? originalScore : originalScore * (1 - config.semanticPenaltyFactor);
+
+      return {
+        ...chunk,
+        metadata: { ...chunkMetadata, score: weightedScore }
+      };
+    });
+  }
+
+  /**
+   * @method handleRetrievalColapse
+   * @private
+   */
+  private static async handleRetrievalColapse(
+    tenantId: TenantId, 
+    error: unknown, 
+    start: number
+  ): Promise<IKnowledgeSemanticSearchResult> {
+    await OmnisyncSentinel.report({
+      errorCode: 'OS-INTEG-601',
+      severity: 'HIGH',
+      apparatus: this.apparatusName,
+      operation: 'retrieve_pipeline',
+      message: 'Colapso en la recuperación semántica de capas cruzadas.',
+      context: { tenantId, errorTrace: String(error) },
+      isRecoverable: true
+    });
+
+    return {
+      chunks: [],
+      relevanceScore: 0,
+      latencyInMilliseconds: performance.now() - start
+    };
   }
 }

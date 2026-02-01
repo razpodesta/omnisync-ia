@@ -1,0 +1,15 @@
+{
+  "knowledge": {
+    "ingestor": {
+      "status": {
+        "relational_anchor_sealed": "ANCLAJE RELACIONAL: ADN técnico salvaguardado en SQL ante posible colapso de red.",
+        "vector_sync_success": "SINCRONIZACIÓN VECTORIAL: Memoria semántica activa en cluster Qdrant.",
+        "ghost_mode_active": "MODO FANTASMA: Error en nube vectorial. El ADN persiste en el cluster relacional para auto-sanación."
+      },
+      "errors": {
+        "embedding_colapse": "COLAPSO COGNITIVO: El motor de vectorización no responde. Abortando pipeline.",
+        "storage_denied": "SOBERANÍA DE DATOS: Espacio insuficiente en el nodo del Tenant para la ingesta."
+      }
+    }
+  }
+}

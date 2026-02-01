@@ -4,14 +4,51 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
+    
+    /**
+     * @section Soberanía de Entorno (Node 20/22 Standard)
+     * Optimizamos el target para las capacidades nativas de los runners modernos,
+     * permitiendo el uso de top-level await y sintaxis ESM de vanguarda.
+     */
     "types": ["node"],
     "target": "es2022",
     "module": "esnext",
+
+    /**
+     * @section Motor de Resolución de Élite (Cross-Layer Sync)
+     * RESOLUCIÓN ERR_MODULE_NOT_FOUND: 
+     * 1. Utilizamos 'node' para garantizar que el cargador de tsx localice 
+     *    las definiciones en el árbol de dependencias local de Nx.
+     * 2. 'allowImportingTsExtensions' se mantiene en false para cumplir 
+     *    con el estándar de producción (los imports no deben llevar .ts).
+     */
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    
+    /**
+     * @section Blindaje de Integridad Estructural
+     * Erradicamos la emisión de archivos durante la auditoría para 
+     * preservar la limpieza del espacio de trabajo.
+     */
+    "noEmit": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+
+    /**
+     * @section Soporte de Metadatos y Decoradores
+     * Necesario para que los scripts puedan instanciar aparatos que 
+     * utilicen inyección de dependencias o validación avanzada.
+     */
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts"]
+  "exclude": [
+    "**/*.spec.ts", 
+    "**/*.test.ts", 
+    "jest.config.ts"
+  ]
 }

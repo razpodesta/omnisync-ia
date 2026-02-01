@@ -1,0 +1,19 @@
+{
+  "name": "cognitive-governance",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/integrations/cognitive-governance/src",
+  "projectType": "library",
+  "tags": ["scope:integrations", "type:governance"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/integrations/cognitive-governance",
+        "main": "libs/integrations/cognitive-governance/src/index.ts",
+        "tsConfig": "libs/integrations/cognitive-governance/tsconfig.lib.json",
+        "assets": ["libs/integrations/cognitive-governance/*.md"]
+      }
+    }
+  }
+}

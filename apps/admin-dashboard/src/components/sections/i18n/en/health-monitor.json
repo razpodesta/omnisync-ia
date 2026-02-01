@@ -1,0 +1,28 @@
+
+{
+  "header": {
+    "title": "Infrastructure Pulse",
+    "subtitle": "Real-time status of the 5 pillars of neural sovereignty.",
+    "freshness": "DNA updated {time}s ago",
+    "stale_warning": "Stale data detected. New audit recommended."
+  },
+  "actions": {
+    "force_audit": "Execute Forensic Audit",
+    "processing": "Transmitting Probe...",
+    "cooldown": "Server Protection Active"
+  },
+  "pillars": {
+    "RELATIONAL_PERSISTENCE": "Relational SQL",
+    "VOLATILE_MEMORY": "Volatile Redis",
+    "VECTOR_MEMORY": "Vector Cloud",
+    "COGNITIVE_ENGINE": "Cognitive Gemini",
+    "GOVERNANCE_SWARM": "Governance Swarm"
+  },
+  "status": {
+    "HEALTHY": "Operational",
+    "DEGRADED": "Degraded",
+    "THROTTLED": "Throttled",
+    "UNREACHABLE": "Offline",
+    "MAINTENANCE": "Maintenance"
+  }
+}

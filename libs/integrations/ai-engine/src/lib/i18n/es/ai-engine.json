@@ -1,0 +1,11 @@
+{
+  "ai.engine.inference.status": {
+    "ignition_success": "INFERENCIA CONSUMADA: El motor {model} ha generado una respuesta sellada.",
+    "failsafe_active": "CONCIENCIA_DE_EMERGENCIA: Fallo en el cluster primario. Activando ADN de rescate.",
+    "audit_locked": "BLOQUEO_FINANCIERO: Consumo de tokens excede el límite del Tenant."
+  },
+  "ai.engine.inference.errors": {
+    "identity_corruption": "CORRUPCIÓN_DE_IDENTIDAD: El resultado no coincide con el sello de la directiva.",
+    "engine_timeout": "LATENCIA_CRÍTICA: El motor de IA ha superado el tiempo de gracia de 15s."
+  }
+}

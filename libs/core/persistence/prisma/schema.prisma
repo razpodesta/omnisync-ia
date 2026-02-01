@@ -1,39 +1,178 @@
-/** libs/core/persistence/prisma/schema.prisma */
+/** 
+ * libs/core/persistence/prisma/schema.prisma 
+ * @protocol OEDP-Level: Elite (Next-Gen Persistence V4.8)
+ * @vision Ultra-Holística: Cognitive-Versioning & Financial-Audit-Ready
+ */
 
 generator client {
   provider = "prisma-client-js"
-  // Prisma 7 optimiza automáticamente la ubicación en node_modules
+  // Optimización Prisma 7: Soporte nativo para motores de borde (Edge/WASM)
 }
 
 datasource db {
   provider = "postgresql"
-  /** 
-   * @note Soberanía de Configuración Prisma 7
-   * La propiedad 'url' ha sido movida a 'prisma.config.ts' para permitir
-   * inyección dinámica y soporte WASM/Edge.
-   */
+  // La URL de conexión se inyecta dinámicamente vía PrismaEngineBuilder para máxima soberanía.
 }
+
+/**
+ * @section 1. NÚCLEO DE IDENTIDAD Y GOBERNANZA
+ */
 
 model Tenant {
   id               String   @id @default(uuid())
   organizationName String
   urlSlug          String   @unique
-  status           String   @default("ACTIVE")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           String   @default("ACTIVE") // ACTIVE, SUSPENDED, MAINTENANCE, PROVISIONING
+
+  /**
+   * @section Capas de Configuración Neural (SSOT)
+   * Bloques JSON validados por contratos nominales de Omnisync.
+   */
+  artificialIntelligence     Json     @default("{}") // Provider, DefaultModel, GlobalThresholds
+  enterpriseResourcePlanning Json     @default("{}") // Adapter, EncryptedCredentials, ActionGuardPolicy
+  knowledgeRetrieval         Json     @default("{}") // VectorCollectionIdentifier, SimilarityScore
+  userExperience             Json     @default("{}") // Theme (Obsidian&Milk), WelcomeMessages, Widgets
+  regionalPolicy             Json?    // Geofencing: allowedCountries, strictEnforcement
+
+  enabledChannels            String[] @default(["WEB_CHAT"]) // WHATSAPP, WEB_CHAT, TELEGRAM, VOICE
+  
+  /** @section Relaciones Estructurales */
+  threads            SupportThread[]
+  consumptionRecords TenantConsumption[]
+  pendingActions     ActionApprovalQueue[]
+  cognitiveContexts  CognitiveContext[]    // NUEVO: Nodo de Gobernanza Cognitiva
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("tenants")
 }
+
+/**
+ * @section 2. GOBERNANZA COGNITIVA Y EXPERIMENTACIÓN
+ */
+
+model CognitiveContext {
+  id               String   @id @default(uuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  name             String   // ej: "Soporte Técnico Nivel 1"
+  description      String?
+  isActive         Boolean  @default(true)
+  
+  /** @section Relaciones de Evolución */
+  versions         PromptVersion[]
+  experiments      ABTestExperiment[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("cognitive_contexts")
+}
+
+model PromptVersion {
+  id               String   @id @default(uuid())
+  contextId        String
+  context          CognitiveContext @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  
+  versionTag       String   // ej: "v1.4.2-flash"
+  systemDirective  String   @db.Text // El ADN de comportamiento de la IA
+  
+  /** @section Métricas de Performance Forense */
+  estimatedTokens  Int      @default(0)
+  avgSentimentScore Float   @default(0.0)
+  
+  metadata         Json     @default("{}") // modelTarget, providerHint, tags
+  
+  createdBy        String   // ID del Administrador
+  createdAt        DateTime @default(now())
+
+  @@index([contextId])
+  @@map("prompt_versions")
+}
+
+model ABTestExperiment {
+  id               String   @id @default(uuid())
+  contextId        String
+  context          CognitiveContext @relation(fields: [contextId], references: [id], onDelete: Cascade)
+  
+  name             String
+  versionAId       String   // Referencia a PromptVersion
+  versionBId       String   // Referencia a PromptVersion
+  
+  trafficSplit     Float    @default(0.5) // Reparto de carga (0.0 a 1.0)
+  status           String   @default("RUNNING") // RUNNING, COMPLETED, ARCHIVED
+  
+  startDate        DateTime @default(now())
+  endDate          DateTime?
+
+  @@map("ab_test_experiments")
+}
+
+/**
+ * @section 3. ACCIÓN Y MEMORIA OPERATIVA
+ */
 
 model SupportThread {
   id             String   @id @default(uuid())
   externalUserId String
   tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   content        String   @db.Text
   channel        String
+  
+  /** Metadata: role (USER/AI), intentId, tokensConsumed, sentiment */
   metadata       Json     @default("{}")
   createdAt      DateTime @default(now())
 
   @@index([tenantId, externalUserId])
   @@map("support_threads")
+}
+
+model ActionApprovalQueue {
+  id             String   @id @default(uuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  originalIntentId String   @unique
+  actionType       String   // ERP_TICKET_CREATE, FINANCIAL_REFUND
+  proposedPayload  Json     // ADN de la acción propuesta por la IA
+  
+  status           String   @default("WAITING") // WAITING, APPROVED, REJECTED
+  reason           String?  // Low Confidence, Restricted Keyword, Manual Policy
+  
+  adminIdentifier  String?
+  resolvedAt       DateTime?
+
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId, status])
+  @@map("action_approval_queue")
+}
+
+/**
+ * @section 4. LIBRO MAYOR FINANCIERO (AUDIT TRAIL)
+ */
+
+model TenantConsumption {
+  id               String   @id @default(uuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  traceId          String   @unique
+  modelIdentifier  String   // ej: "google:gemini-2.0-flash-thinking"
+  
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  totalTokens      Int      @default(0)
+  costUsd          Decimal  @db.Decimal(18, 8) // Precisión financiera absoluta
+  
+  metadata         Json     @default("{}") // pipelineVersion, reasonerStepCount
+  timestamp        DateTime @default(now())
+
+  @@index([tenantId, timestamp])
+  @@map("tenant_consumption")
 }

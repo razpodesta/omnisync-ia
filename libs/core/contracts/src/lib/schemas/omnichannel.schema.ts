@@ -5,49 +5,69 @@ import { TenantIdSchema } from './core-contracts.schema';
 
 /**
  * @name ChannelTypeSchema
- * @description Define los vectores de comunicación autorizados para el ingreso
- * de datos al ecosistema neural.
+ * @description Vectores de comunicación autorizados (V5.5).
  */
 export const ChannelTypeSchema = z.enum([
   'WHATSAPP',
   'WEB_CHAT',
   'VOICE_CALL',
   'TELEGRAM',
+  'SYSTEM_AUTO', // Intenciones generadas por procesos internos
 ]);
 
 /**
+ * @name MultimodalMetadataSchema
+ * @description Estructura el ADN técnico según el tipo de recurso.
+ * Implementa la visión "Ojos de Mosca" para cada sensor de entrada.
+ */
+const MultimodalMetadataSchema = z.object({
+  // Eje Acústico
+  audioSpecs: z.object({
+    durationSeconds: z.number().optional(),
+    samplingRate: z.number().optional(),
+    vocalEmotion: z.string().optional(), // Detectado por VoiceCallTranslator
+  }).optional(),
+  
+  // Eje Óptico
+  visionSpecs: z.object({
+    resolution: z.string().optional(),
+    opticalFingerprint: z.string().optional(), // SHA-256 del recurso binario
+  }).optional(),
+
+  // Eje de Red (Sovereign Fingerprint)
+  transport: z.object({
+    ipAddress: z.string().ip().optional(),
+    userAgent: z.string().optional(),
+    platform: z.string().optional(),
+    regionCode: z.string().length(2).toUpperCase().default('XX'), // ISO-3166
+  }),
+}).readonly();
+
+/**
  * @name NeuralIntentSchema
- * @description Contrato maestro inmutable para la normalización de mensajes omnicanal.
- * Sincronizado V2.0: Soporte expandido para flujos multimodales e interactivos.
+ * @description Contrato maestro inmutable para la normalización omnicanal.
+ * Sincronizado V5.5: Soporte para Sellos Biyectivos y ROI Predictivo.
  *
- * @protocol OEDP-Level: Elite (SSOT Master DNA)
+ * @protocol OEDP-Level: Elite (Sovereign-Master-DNA V5.5)
  */
 export const NeuralIntentSchema = z
   .object({
-    /** Identificador único universal de la intención capturada */
+    /** Identificador único universal del pulso neural */
     id: z.string().uuid(),
 
-    /** Canal de origen desde el cual se emitió la consulta */
+    /** Canal de origen validado */
     channel: ChannelTypeSchema,
 
-    /**
-     * Identificador de identidad en la plataforma de origen.
-     * Representa el punto de contacto (ej: número E.164 o session_id).
-     */
+    /** Identificador de identidad física (Teléfono o SessionUUID) */
     externalUserId: z.string().min(1),
 
-    /** Identificador de soberanía de la organización (Branded Type) */
+    /** Sello de soberanía organizacional */
     tenantId: TenantIdSchema,
 
     /**
      * @section Carga Útil Cognitiva
-     * Define la naturaleza y el contenido de la petición del usuario.
      */
     payload: z.object({
-      /**
-       * Clasificación del recurso entrante.
-       * NIVELACIÓN: Expansión de tipos para soportar la Fase 3 del Roadmap (Acción e Interacción).
-       */
       type: z.enum([
         'TEXT',
         'AUDIO',
@@ -58,22 +78,28 @@ export const NeuralIntentSchema = z
         'INTERACTIVE',
       ]),
 
-      /**
-       * Contenido textual puro, referencia URI o ID de buffer multimedia.
-       */
+      /** Contenido purificado o URI de recurso */
       content: z.string().min(1),
 
-      /** Metadatos del entorno de origen para trazabilidad y telemetría */
-      metadata: z.record(z.string(), z.unknown()).default({}),
+      /** @section Visión Ojos de Mosca: Metadatos Estructurados */
+      metadata: MultimodalMetadataSchema,
+
+      /** Previsión de costo de entrada basada en densidad /3.7 */
+      forecastCostUsd: z.number().nonnegative().default(0),
     }),
 
-    /** Marca de tiempo de sincronización bajo estándar ISO-8601 */
+    /** 
+     * @section Sello Biyectivo V5.5 
+     * Firma SHA-256 que vincula id + tenant + content.
+     * Impide ataques de inyección de intenciones entre capas.
+     */
+    dnaChecksum: z.string().min(64),
+
+    /** Marca de tiempo ISO-8601 */
     timestamp: z.string().datetime(),
   })
   .readonly();
 
-/**
- * @type INeuralIntent
- * @description Representación tipada de la intención normalizada.
- */
+/** @type INeuralIntent */
 export type INeuralIntent = z.infer<typeof NeuralIntentSchema>;
+export type IChannelType = z.infer<typeof ChannelTypeSchema>;

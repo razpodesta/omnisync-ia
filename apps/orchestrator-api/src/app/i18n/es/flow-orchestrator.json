@@ -1,0 +1,12 @@
+{
+  "flow.orchestrator.status": {
+    "intent_verified": "CADENA_DE_CUSTODIA: Sello biyectivo {hash} verificado con éxito.",
+    "swarm_selected": "ENJAMBRE_ACTIVO: Agente {agent} seleccionado. ROI predictivo: ${cost}.",
+    "multimodal_ready": "SÍNTESIS_PREPARADA: Respuesta marcada para vocalización reactiva."
+  },
+  "flow.orchestrator.errors": {
+    "integrity_breach": "VIOLACIÓN_DE_ADN: El mensaje ha sido alterado en el transporte.",
+    "sovereignty_denied": "BLOQUEO_DE_NODO: El Tenant no posee cuota para esta operación.",
+    "cognitive_collapse": "COLAPSO_NEURAL: El pipeline de inferencia no pudo ser sellado."
+  }
+}

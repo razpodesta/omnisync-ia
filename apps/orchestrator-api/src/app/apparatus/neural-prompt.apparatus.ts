@@ -8,7 +8,6 @@ import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 
 /**
  * @section Sincronización de Contratos Locales
- * Resolución del Error TS2307: Ajuste de ruta hacia la carpeta de esquemas hermana.
  */
 import {
   NeuralDialogueMessageSchema,
@@ -17,35 +16,41 @@ import {
 
 /**
  * @name NeuralPromptApparatus
- * @description Aparato de ingeniería cognitiva de alta precisión.
- * Orquesta la fusión de directivas institucionales, memoria histórica y fragmentos
- * de conocimiento técnico (RAG) para maximizar la exactitud de la inferencia AI.
- * Implementa el protocolo de "Verdad Inviolable" (SSOT) sobre la base de conocimientos.
+ * @description Aparato de ingeniería cognitiva de alta precisión. Orquesta la fusión 
+ * tridimensional de directivas de enjambre (Swarm), memoria histórica (Redis) y 
+ * conocimiento técnico (RAG). Implementa el protocolo de "Aislamiento de Contexto" 
+ * para garantizar que la IA opere exclusivamente bajo la soberanía de los datos inyectados.
  *
- * @protocol OEDP-Level: Elite (Cognitive Assembly V2.0)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Cognitive-Engineering V3.0)
+ * @vision Ultra-Holística: Situational-Awareness & Hallucination-Eradication
  */
 export class NeuralPromptApparatus {
   /**
    * @private
-   * @description Límite de mensajes históricos para preservar la ventana de contexto y el presupuesto de tokens.
+   * @description Límite de mensajes históricos para preservar la coherencia y el presupuesto de tokens.
    */
-  private static readonly MAXIMUM_HISTORY_ENTRIES_RETAINED = 8;
+  private static readonly MAXIMUM_HISTORY_ENTRIES_RETAINED = 10;
 
   /**
    * @method buildEnrichedInferencePrompt
-   * @description Construye el prompt final inyectando el historial curado y el contexto técnico recuperado.
+   * @description Construye el ADN final de la instrucción neural. Orquesta la inyección 
+   * de metadatos de transporte y la base de conocimientos RAG.
    *
-   * @param {string} systemDirective - Directiva base de personalidad y restricciones.
-   * @param {IKnowledgeSemanticChunk[]} technicalKnowledgeContext - Fragmentos vectoriales recuperados.
-   * @param {string} userCurrentInquiry - La consulta actual del usuario.
-   * @param {unknown[]} conversationHistoryRaw - Historial de la sesión sin procesar.
-   * @returns {string} Prompt final optimizado para motores de inferencia.
+   * @param {string} agentPersona - Personalidad específica resuelta por el Swarm.
+   * @param {IKnowledgeSemanticChunk[]} technicalContext - Fragmentos vectoriales recuperados.
+   * @param {string} userInquiry - La consulta activa del usuario.
+   * @param {unknown[]} historyRaw - Historial de diálogo recuperado de la persistencia.
+   * @param {Record<string, unknown>} environmentalMetadata - ADN del dispositivo y plataforma del cliente.
+   * @returns {string} Prompt estructurado de grado arquitectónico.
    */
   public static buildEnrichedInferencePrompt(
-    systemDirective: string,
-    technicalKnowledgeContext: IKnowledgeSemanticChunk[],
-    userCurrentInquiry: string,
-    conversationHistoryRaw: unknown[] = [],
+    agentPersona: string,
+    technicalContext: IKnowledgeSemanticChunk[],
+    userInquiry: string,
+    historyRaw: unknown[] = [],
+    environmentalMetadata: Record<string, unknown> = {},
   ): string {
     const apparatusName = 'NeuralPromptApparatus';
     const operationName = 'buildEnrichedInferencePrompt';
@@ -54,61 +59,75 @@ export class NeuralPromptApparatus {
       apparatusName,
       operationName,
       () => {
-        const formattedTechnicalContext = this.formatTechnicalKnowledge(
-          technicalKnowledgeContext,
-        );
-        const formattedDialogueHistory = this.formatDialogueHistory(
-          conversationHistoryRaw,
-        );
+        // 1. Formateo de Capas de Información
+        const formattedMetadata = this.formatEnvironmentalContext(environmentalMetadata);
+        const formattedKnowledge = this.formatTechnicalKnowledge(technicalContext);
+        const formattedHistory = this.formatDialogueHistory(historyRaw);
 
         /**
-         * @section Arquitectura del Prompt
-         * Utiliza una jerarquía de bloques para guiar la atención del modelo hacia la Verdad Técnica.
+         * @section Arquitectura de la Instrucción Maestra
+         * Utilizamos un formato XML-Style/Markdown para forzar al LLM a respetar las fronteras del dato.
          */
         return `
-${systemDirective.trim()}
+[SYSTEM_DIRECTIVE]
+${agentPersona.trim()}
 
-### 🧠 RECENT_DIALOGUE_MEMORY
-The following messages provide context for the ongoing conversation. Use them to resolve pronouns and references.
-${formattedDialogueHistory}
+[ENVIRONMENT_CONTEXT]
+The user is interacting through the following technical environment:
+${formattedMetadata}
 
-### 📚 TECHNICAL_KNOWLEDGE_CONTEXT (SOURCE_OF_TRUTH)
-Reference the specific data below to formulate your response. Do not hallucinate facts outside this context.
-${formattedTechnicalContext}
+[RECENT_DIALOGUE_MEMORY]
+<<<START_HISTORY>>>
+${formattedHistory}
+<<<END_HISTORY>>>
 
-### 📥 CURRENT_USER_INQUIRY
-${userCurrentInquiry.trim()}
+[TECHNICAL_KNOWLEDGE_BASE]
+Reference the data below as the ONLY SOURCE OF TRUTH (SSOT).
+${formattedKnowledge}
+
+[CURRENT_USER_INPUT]
+"${userInquiry.trim()}"
 
 ---
-### 🛠️ CRITICAL_RESPONSE_DIRECTIVES:
-1. **Dato Sovereignty**: If the answer is not present in "TECHNICAL_KNOWLEDGE_CONTEXT", inform the user you lack specific information and suggest human assistance.
-2. **Coherence**: Ensure continuity based on "RECENT_DIALOGUE_MEMORY".
-3. **Identity**: Maintain a professional, architectural, and results-oriented tone.
-4. **Restriction**: Do not mention internal terms like "Chunks", "Vectors", or "Embedding Database".
-5. **Formatting**: Use Markdown to enhance technical readability.
+[CRITICAL_EXECUTION_RULES]
+1. IDENTITY_CONSISTENCY: Respond according to the assigned Agent Persona.
+2. DATA_SOVEREIGNTY: If the answer is not in [TECHNICAL_KNOWLEDGE_BASE], state you lack info and suggest human escalation.
+3. CONTEXTUAL_AWARENESS: Use [ENVIRONMENT_CONTEXT] to provide platform-specific guidance.
+4. FORMATTING: Use Markdown for lists and technical highlights. No mentions of internal "chunks" or "metadata".
 `.trim();
       },
     );
   }
 
   /**
+   * @method formatEnvironmentalContext
+   * @private
+   * @description Serializa el ADN del dispositivo para la comprensión de la IA.
+   */
+  private static formatEnvironmentalContext(metadata: Record<string, unknown>): string {
+    if (Object.keys(metadata).length === 0) return '- No additional environmental data available.';
+    
+    return Object.entries(metadata)
+      .map(([key, value]) => `- ${key.toUpperCase()}: ${String(value)}`)
+      .join('\n');
+  }
+
+  /**
    * @method formatTechnicalKnowledge
    * @private
-   * @description Transforma fragmentos vectoriales en un bloque de texto estructurado y referenciable.
+   * @description Transforma fragmentos vectoriales en un bloque de texto referenciable.
    */
   private static formatTechnicalKnowledge(
     chunks: IKnowledgeSemanticChunk[],
   ): string {
     if (chunks.length === 0) {
-      return '[SYSTEM_ALERT]: No specific technical information was found in the knowledge base for this query.';
+      return '!!! ALERT: No technical documentation found for this query. Strictly follow the "lack of information" protocol.';
     }
 
     return chunks
       .map((chunk, index) => {
-        const sourceNameIndicator = chunk.sourceName
-          ? `(Source: ${chunk.sourceName})`
-          : '';
-        return `[TECHNICAL_RESOURCE_${index + 1}] ${sourceNameIndicator}:\n${chunk.content.trim()}`;
+        const sourceLabel = chunk.sourceName ? `[DOCUMENT_SOURCE: ${chunk.sourceName}]` : '';
+        return `### KNOWLEDGE_ENTRY_${index + 1} ${sourceLabel}\n${chunk.content.trim()}`;
       })
       .join('\n\n');
   }
@@ -116,16 +135,14 @@ ${userCurrentInquiry.trim()}
   /**
    * @method formatDialogueHistory
    * @private
-   * @description Procesa, valida y trunca el historial de conversación bajo contrato SSOT.
+   * @description Procesa y valida el historial bajo contrato SSOT.
    */
   private static formatDialogueHistory(history: unknown[]): string {
-    if (history.length === 0) {
-      return '[SYSTEM_INFO]: Starting a new neural support session.';
-    }
+    if (history.length === 0) return 'No previous interaction history.';
 
     /**
      * @section Validación de ADN de Memoria
-     * Se aplica validación de colección mediante el esquema atómico para asegurar integridad de roles.
+     * Aplicamos el esquema local para asegurar que los roles coincidan con el estándar.
      */
     const validatedHistory = OmnisyncContracts.validateCollection(
       NeuralDialogueMessageSchema,
@@ -133,15 +150,11 @@ ${userCurrentInquiry.trim()}
       'NeuralPromptApparatus:HistoryValidation',
     );
 
-    const truncatedHistory = validatedHistory.slice(
-      -this.MAXIMUM_HISTORY_ENTRIES_RETAINED,
-    );
+    const truncatedHistory = (validatedHistory as readonly INeuralDialogueMessage[])
+      .slice(-this.MAXIMUM_HISTORY_ENTRIES_RETAINED);
 
-    return (truncatedHistory as readonly INeuralDialogueMessage[])
-      .map((message) => {
-        const roleLabel = message.role.toUpperCase();
-        return `${roleLabel}: ${message.content.trim()}`;
-      })
+    return truncatedHistory
+      .map((msg) => `${msg.role.toUpperCase()}: ${msg.content.trim()}`)
       .join('\n');
   }
 }

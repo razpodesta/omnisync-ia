@@ -1,0 +1,39 @@
+{
+  "header": {
+    "title": "Centro de Sanção",
+    "subtitle": "Protocolo Action Guard: Supervisão de mutações operacionais.",
+    "stats": {
+      "pending_count": "{count} Ações em suspenso",
+      "avg_risk": "Risco médio: {score}%"
+    }
+  },
+  "card": {
+    "intent_label": "INTENÇÃO_NEURAL",
+    "risk_label": "ÍNDICE_DE_RISCO",
+    "reason_label": "CAUSA_DA_SUSPENSÃO",
+    "payload_label": "ADN_DA_PROPOSTA",
+    "created_at": "Detectado há {time}",
+    "categories": {
+      "ERP_TICKET_CREATE": "Provisionamento ERP",
+      "CRM_LEAD_UPDATE": "Atualização CRM",
+      "FINANCIAL_TRANSACTION": "Movimentação Financeira"
+    }
+  },
+  "actions": {
+    "approve": "Selar Execução",
+    "reject": "Vetar Ação",
+    "inspect": "Inspecionar ADN",
+    "note_placeholder": "Adicionar nota de auditoria (opcional)...",
+    "confirm_title": "Confirmar Sanção",
+    "confirm_body": "Você autoriza a execução física desta intenção no cluster externo?"
+  },
+  "empty": {
+    "title": "Soberania Íntegra",
+    "message": "Não há ações pendentes de aprovação humana."
+  },
+  "forensic": {
+    "trace_id": "TRACE_ID",
+    "risk_high": "RISCO CRÍTICO",
+    "risk_low": "RISCO CONTROLADO"
+  }
+}

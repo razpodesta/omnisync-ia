@@ -1,6 +1,17 @@
 /** apps/comms-gateway/src/app/app.controller.ts */
 
-import { Controller, Get, Post, Body, Query, Param, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Query, 
+  Param, 
+  Headers, 
+  HttpCode, 
+  HttpStatus, 
+  BadRequestException 
+} from '@nestjs/common';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import { TenantIdSchema } from '@omnisync/core-contracts';
@@ -8,23 +19,22 @@ import { GatewayOrchestrator } from '@omnisync/omnichannel-orchestrator';
 
 /**
  * @name WebhookGatewayController
- * @description Punto de entrada soberano para el tráfico omnicanal. 
- * Orquesta la recepción de pulsos de red desde Meta Cloud API, Evolution API 
- * y Web Chat. Actúa como la aduana primaria que valida la identidad del nodo 
- * suscriptor y normaliza eventos amorfos en Intenciones Neurales inmutables.
+ * @description Nodo maestro de ingesta perimetral. Orquesta la recepción de señales 
+ * omnicanales (WhatsApp, Web, API) extrayendo el ADN de transporte y transformándolo 
+ * en Intenciones Neurales enriquecidas. Implementa el triaje de metadatos de red 
+ * para la observabilidad holística del HealthEngine.
  * 
  * @author Raz Podestá <Creator>
  * @organization MetaShark Tech
- * @protocol OEDP-Level: Elite (Omnichannel-Ingestion V3.2.3)
- * @vision Ultra-Holística: Zero-Latency-Reception & Clean-Error-Handling
+ * @protocol OEDP-Level: Elite (Enriched-Signal-Ingestion V3.7.5)
+ * @vision Ultra-Holística: Ingress-Sovereignty & Device-Fingerprinting
  */
 @Controller('v1/ingest')
 export class AppController {
   
   /**
    * @method verifyMetaWebhookSovereignty
-   * @description Implementa el protocolo de verificación de Meta (Cloud API). 
-   * Resuelve el 'hub.challenge' para validar la propiedad del dominio ante Meta.
+   * @description Protocolo de Handshake oficial para Meta Cloud API.
    */
   @Get('whatsapp/meta/:tenantId')
   public verifyMetaWebhookSovereignty(
@@ -36,41 +46,40 @@ export class AppController {
     const apparatusName = 'WebhookGatewayController';
     
     OmnisyncTelemetry.verbose(apparatusName, 'meta_handshake_attempt', 
-      `Solicitud de verificación para el nodo: ${tenantId}`
+      `Verificando soberanía de dominio para nodo: ${tenantId}`
     );
 
     const systemVerifyToken = process.env['META_WEBHOOK_VERIFY_TOKEN'];
 
     if (mode === 'subscribe' && token === systemVerifyToken) {
-      OmnisyncTelemetry.verbose(apparatusName, 'meta_handshake_success', challenge);
       return challenge;
     }
 
-    OmnisyncTelemetry.verbose(apparatusName, 'meta_handshake_failed', 'Token de verificación inválido.');
     return 'OS-SEC-403: UNAUTHORIZED_HANDSHAKE';
   }
 
   /**
    * @method receiveWhatsAppMetaTraffic
-   * @description Capta los eventos de mensajes y multimedia de WhatsApp Oficial.
-   * 
-   * @endpoint POST /v1/ingest/whatsapp/meta/:tenantId
+   * @description Ingesta multimodal desde Meta Cloud. Captura metadatos de 
+   * plataforma para auditoría de latencia oficial.
    */
   @Post('whatsapp/meta/:tenantId')
   @HttpCode(HttpStatus.OK) 
   public async receiveWhatsAppMetaTraffic(
     @Body() networkPayload: unknown,
     @Param('tenantId') tenantId: string,
+    @Headers() transportHeaders: Record<string, string>,
   ): Promise<void> {
     const apparatusName = 'WebhookGatewayController';
     const operationName = 'receiveWhatsAppMeta';
 
     const validatedTenantId = this.validateSovereignIdentity(tenantId);
+    const enrichedMetadata = this.constructTransportMetadata(transportHeaders);
 
     await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
       try {
         await GatewayOrchestrator.executeSovereignStandardization(
-          networkPayload,
+          { ...networkPayload as object, _transport: enrichedMetadata },
           'WHATSAPP',
           validatedTenantId
         );
@@ -81,34 +90,35 @@ export class AppController {
           apparatus: apparatusName,
           operation: operationName,
           message: 'FAILED_TO_STANDARDIZE_META_TRAFFIC',
-          context: { tenantId: validatedTenantId, error: String(criticalIngestionError) },
+          context: { tenantId: validatedTenantId, error: String(criticalIngestionError), transport: enrichedMetadata },
           isRecoverable: true
         });
       }
-    });
+    }, { tenantId: validatedTenantId, platform: enrichedMetadata.platform });
   }
 
   /**
    * @method receiveEvolutionTraffic
-   * @description Nodo especializado para la integración con Evolution API.
-   * 
-   * @endpoint POST /v1/ingest/whatsapp/evolution/:tenantId
+   * @description Ingesta desde Evolution API. Captura firmas de instancia 
+   * para monitoreo de salud segmentado.
    */
   @Post('whatsapp/evolution/:tenantId')
   @HttpCode(HttpStatus.CREATED)
   public async receiveEvolutionTraffic(
     @Body() networkPayload: unknown,
     @Param('tenantId') tenantId: string,
+    @Headers() transportHeaders: Record<string, string>,
   ): Promise<void> {
     const apparatusName = 'WebhookGatewayController';
     const operationName = 'receiveEvolution';
 
     const validatedTenantId = this.validateSovereignIdentity(tenantId);
+    const enrichedMetadata = this.constructTransportMetadata(transportHeaders);
 
     await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
       try {
         await GatewayOrchestrator.executeSovereignStandardization(
-          networkPayload,
+          { ...networkPayload as object, _transport: enrichedMetadata },
           'WHATSAPP',
           validatedTenantId
         );
@@ -128,39 +138,67 @@ export class AppController {
 
   /**
    * @method receiveWebChatInquiry
-   * @description Ingesta de consultas directas desde el Widget Web.
-   * 
-   * @endpoint POST /v1/ingest/webchat/:tenantId
+   * @description Ingesta desde el Widget Web. Extrae el ADN del navegador 
+   * para optimizar la respuesta neural según capacidades de interfaz.
    */
   @Post('webchat/:tenantId')
   @HttpCode(HttpStatus.ACCEPTED)
   public async receiveWebChatInquiry(
     @Body() networkPayload: unknown,
     @Param('tenantId') tenantId: string,
+    @Headers() transportHeaders: Record<string, string>,
   ): Promise<void> {
     const apparatusName = 'WebhookGatewayController';
-    const validatedTenantId = this.validateSovereignIdentity(tenantId);
+    const operationName = 'receiveWebChat';
     
-    await OmnisyncTelemetry.traceExecution(apparatusName, 'receiveWebChat', async () => {
-      await GatewayOrchestrator.executeSovereignStandardization(
-        networkPayload,
-        'WEB_CHAT',
-        validatedTenantId
-      );
+    const validatedTenantId = this.validateSovereignIdentity(tenantId);
+    const enrichedMetadata = this.constructTransportMetadata(transportHeaders);
+
+    await OmnisyncTelemetry.traceExecution(apparatusName, operationName, async () => {
+      try {
+        await GatewayOrchestrator.executeSovereignStandardization(
+          { ...networkPayload as object, _transport: enrichedMetadata },
+          'WEB_CHAT',
+          validatedTenantId
+        );
+      } catch (webChatError: unknown) {
+        await OmnisyncSentinel.report({
+          errorCode: 'OS-INTEG-701',
+          severity: 'MEDIUM',
+          apparatus: apparatusName,
+          operation: operationName,
+          message: 'WEB_CHAT_INGESTION_FAILURE',
+          context: { tenantId: validatedTenantId, error: String(webChatError) },
+          isRecoverable: true
+        });
+      }
     });
   }
 
   /**
    * @method validateSovereignIdentity
    * @private
-   * @description Valida que el identificador de la URL cumpla con el ADN de TenantId.
-   * RESOLUCIÓN LINT: Se omite la variable del catch para evitar 'unused-vars'.
    */
   private validateSovereignIdentity(rawId: string) {
     try {
       return TenantIdSchema.parse(rawId);
     } catch {
-      throw new BadRequestException('OS-SEC-400: Identificador de nodo inválido.');
+      throw new BadRequestException('OS-SEC-400: Identificador de nodo organizacional inválido.');
     }
+  }
+
+  /**
+   * @method constructTransportMetadata
+   * @private
+   * @description Especialista en la construcción de la huella digital de red.
+   */
+  private constructTransportMetadata(headers: Record<string, string>) {
+    return {
+      userAgent: headers['user-agent'] || 'unknown_agent',
+      ipSource: headers['x-forwarded-for']?.split(',')[0] || headers['x-real-ip'] || 'unknown_ip',
+      platform: headers['sec-ch-ua-platform'] || 'generic_platform',
+      origin: headers['origin'] || headers['referer'] || 'direct_ingest',
+      ingestedAt: new Date().toISOString()
+    };
   }
 }

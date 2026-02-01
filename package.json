@@ -9,30 +9,39 @@
     "type": "git",
     "url": "https://github.com/razpodesta/omnisync-ai-ecosystem.git"
   },
-  "scripts": {
-    "// --- 2. COMANDOS DE DESPLIEGUE SOBERANO (CI/CD) ---": "",
-    "build": "pnpm run infra:prep && nx run-many -t build --projects=admin-dashboard,orchestrator-api --prod",
-    "vercel-build": "pnpm run internationalization:build && pnpm run persistence:generate && npx nx build admin-dashboard --prod",
+ "scripts": {
+    "// --- 1. ORQUESTACIÓN Y DESARROLLO (IGNICIÓN LOCAL) ---": "",
+    "dev": "pnpm run infra:prep && nx run-many -t serve --all --parallel=3",
+    "start": "node dist/apps/orchestrator-api/main.js",
+    "clean": "rimraf dist .nx/cache reports/ internal-backups/snapshots/",
+
+    "// --- 2. DESPLIEGUE SOBERANO (CI/CD CLOUD) ---": "",
+    "build": "pnpm run infra:prep && nx run-many -t build --projects=admin-dashboard,orchestrator-api,comms-gateway --prod",
+    "vercel-build": "pnpm run internationalization:build && pnpm run internationalization:audit && pnpm run persistence:generate && npx nx build admin-dashboard --prod",
     "render-build": "pnpm run system:hydrate && npx nx build orchestrator-api --prod",
 
-    "// --- 3. INFRAESTRUCTURA Y HIDRATACIÓN DE ADN (ESM COMPLIANT) ---": "",
+    "// --- 3. HIDRATACIÓN DE ADN Y PERSISTENCIA (CAPA DATOS) ---": "",
     "infra:prep": "pnpm run internationalization:build && pnpm run persistence:generate",
     "system:hydrate": "pnpm run infra:prep && pnpm run persistence:synchronize",
-    "internationalization:build": "tsx libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
     "persistence:generate": "prisma generate --schema=libs/core/persistence/prisma/schema.prisma",
     "persistence:synchronize": "prisma db push --schema=libs/core/persistence/prisma/schema.prisma",
+    "internationalization:build": "tsx libs/tools/internal-scripts/src/lib/run-i18n-build.ts",
 
-    "// --- 4. AUDITORÍA Y HERRAMIENTAS DE SISTEMA (ESM COMPLIANT) ---": "",
-    "integrity:guardian": "tsx libs/tools/internal-scripts/src/lib/run-guardian.ts",
-    "infrastructure:check": "tsx libs/tools/internal-scripts/src/lib/run-connectivity.ts",
-    "infrastructure:configuration": "tsx libs/tools/internal-scripts/src/lib/run-config-audit.ts",
-    "infrastructure:dump": "tsx libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
-    "infrastructure:all": "pnpm run infrastructure:check && pnpm run infrastructure:configuration && pnpm run infrastructure:dump"
+    "// --- 4. DIAGNÓSTICO DE NODOS E INFORMES (ATALAYA) ---": "",
+    "db:audit:connectivity": "tsx libs/tools/internal-scripts/src/lib/run-connectivity.ts",
+    "db:audit:config": "tsx libs/tools/internal-scripts/src/lib/run-config-audit.ts",
+    "db:audit:dump": "tsx libs/tools/internal-scripts/src/lib/run-data-snapshot.ts",
+    "internationalization:audit": "tsx libs/tools/internal-scripts/src/lib/run-guardian.ts",
+    "system:audit:report": "pnpm run db:audit:connectivity && pnpm run db:audit:config && pnpm run db:audit:dump",
+
+    "// --- 5. CALIDAD Y ASEGURAMIENTO SOBERANO (QA) ---": "",
+    "quality:lint": "nx run-many -t lint --all --parallel=3",
+    "quality:types": "pnpm exec tsc -p tsconfig.base.json --noEmit",
+    "quality:test": "nx run-many -t test --all --parallel=3",
+    "quality:format": "prettier --write .",
+    "integrity:guardian": "pnpm run internationalization:audit",
+    "audit:full": "pnpm run quality:types && pnpm run quality:lint && pnpm run integrity:guardian"
   },
-  "devDependencies": {
-    "tsx": "^4.19.2",
-    "// --- OTRAS DEPENDENCIAS MANTENIDAS SEGÚN ADN ORIGINAL ---": ""
-  }, 
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
@@ -128,6 +137,7 @@
     "ts-node": "10.9.1",
     "tsconfig-paths": "^4.2.0",
     "tslib": "^2.3.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.40.0",
     "webpack-cli": "^5.1.4"

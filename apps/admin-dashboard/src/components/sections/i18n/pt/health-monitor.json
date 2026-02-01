@@ -1,0 +1,28 @@
+
+{
+  "header": {
+    "title": "Pulso de Infraestrutura",
+    "subtitle": "Estado em tempo real dos 5 pilares de soberania neural.",
+    "freshness": "ADN atualizado há {time}s",
+    "stale_warning": "Dados obsoletos. Nova auditoria recomendada."
+  },
+  "actions": {
+    "force_audit": "Executar Auditoria Forense",
+    "processing": "Transmitindo Sonda...",
+    "cooldown": "Proteção de Servidor Ativa"
+  },
+  "pillars": {
+    "RELATIONAL_PERSISTENCE": "Persistência SQL",
+    "VOLATILE_MEMORY": "Memória Redis",
+    "VECTOR_MEMORY": "Nuvem Vetorial",
+    "COGNITIVE_ENGINE": "Cérebro Gemini",
+    "GOVERNANCE_SWARM": "Enxame Swarm"
+  },
+  "status": {
+    "HEALTHY": "Operacional",
+    "DEGRADED": "Degradado",
+    "THROTTLED": "Saturado",
+    "UNREACHABLE": "Desconectado",
+    "MAINTENANCE": "Manutenção"
+  }
+}
