@@ -12,7 +12,31 @@
         "outputPath": "dist/libs/core/persistence",
         "main": "libs/core/persistence/src/index.ts",
         "tsConfig": "libs/core/persistence/tsconfig.lib.json",
-        "assets": ["libs/core/persistence/*.md"]
+        "assets": [
+          "libs/core/persistence/*.md",
+          {
+            "input": "libs/core/persistence",
+            "glob": "package.json",
+            "output": "."
+          },
+          {
+            "input": "libs/core/persistence/prisma",
+            "glob": "**/*.prisma",
+            "output": "prisma"
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/persistence/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

@@ -12,7 +12,26 @@
         "outputPath": "dist/libs/core/media-orchestrator",
         "main": "libs/core/media-orchestrator/src/index.ts",
         "tsConfig": "libs/core/media-orchestrator/tsconfig.lib.json",
-        "assets": ["libs/core/media-orchestrator/*.md"]
+        "assets": [
+          "libs/core/media-orchestrator/*.md",
+          {
+            "input": "libs/core/media-orchestrator",
+            "glob": "package.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/core/media-orchestrator/jest.config.cts",
+        "passWithNoTests": true
       }
     }
   }

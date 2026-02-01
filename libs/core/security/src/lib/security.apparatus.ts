@@ -1,6 +1,5 @@
 /** libs/core/security/src/lib/security.apparatus.ts */
 
-import * as crypto from 'node:crypto';
 import { OmnisyncTelemetry } from '@omnisync/core-telemetry';
 import { OmnisyncSentinel } from '@omnisync/core-sentinel';
 import {
@@ -11,41 +10,51 @@ import {
 /**
  * @name OmnisyncSecurity
  * @description Aparato de élite para criptografía, gestión de identidad y anonimización de datos.
- * Utiliza AES-256-GCM para garantizar que los datos no solo sean secretos, sino íntegros.
+ * Implementa una arquitectura Dual-Engine (Node.js & Web Crypto API) para garantizar
+ * la compatibilidad entre el backend NestJS y el Edge Runtime de Vercel (Middlewares).
  *
- * @protocol OEDP-Level: Elite (Integrity-First)
+ * @author Raz Podestá <Creator>
+ * @organization MetaShark Tech
+ * @protocol OEDP-Level: Elite (Dual-Runtime-Sovereignty V3.6.2)
+ * @vision Ultra-Holística: Zero-Node-Dependency-in-Edge & High-Entropia
  */
 export class OmnisyncSecurity {
   private static readonly ENCRYPTION_ALGORITHM = 'aes-256-gcm';
-  /** Salt estático para derivación de llave técnica (Nivelación 2026) */
   private static readonly DERIVATION_SALT = 'omnisync_neural_salt_v1';
 
   /**
    * @method encryptSensitiveData
-   * @description Cifra datos sensibles (ej. llaves de ERP o datos de clientes) antes de persistir.
-   *
-   * @param {string} plainText - El contenido a proteger.
-   * @param {string} encryptionKey - Llave maestra del ecosistema.
-   * @returns {Promise<IEncryptedPayload>} Objeto cifrado validado por SSOT.
+   * @description Cifra datos con AES-256-GCM. Detecta el entorno para usar el motor adecuado.
+   * Solo disponible en entornos Node.js para la gestión de secretos ERP.
    */
   public static async encryptSensitiveData(
     plainText: string,
     encryptionKey: string,
   ): Promise<IEncryptedPayload> {
+    const apparatusName = 'OmnisyncSecurity';
+    const operationName = 'encryptSensitiveData';
+
     return await OmnisyncTelemetry.traceExecution(
-      'OmnisyncSecurity',
-      'encryptSensitiveData',
+      apparatusName,
+      operationName,
       async () => {
+        // 1. Verificación de Soberanía de Entorno
+        if (!this.isNodeEnvironment()) {
+          throw new Error('OS-SEC-501: Operación de cifrado pesado no permitida en el Edge Runtime.');
+        }
+
         try {
-          const initializationVector = crypto.randomBytes(16);
-          // Derivación de llave de alta entropía
-          const derivedKey = crypto.scryptSync(
+          // Importación dinámica para evitar el colapso de Turbopack en el build
+          const nodeCrypto = await import('node:crypto');
+          
+          const initializationVector = nodeCrypto.randomBytes(16);
+          const derivedKey = nodeCrypto.scryptSync(
             encryptionKey,
             this.DERIVATION_SALT,
             32,
           );
 
-          const cipher = crypto.createCipheriv(
+          const cipher = nodeCrypto.createCipheriv(
             this.ENCRYPTION_ALGORITHM,
             derivedKey,
             initializationVector,
@@ -62,14 +71,7 @@ export class OmnisyncSecurity {
             authTag: authTag,
           });
         } catch (error: unknown) {
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-SEC-001',
-            severity: 'CRITICAL',
-            apparatus: 'OmnisyncSecurity',
-            operation: 'encrypt',
-            message: 'security.encryption.failure',
-            context: { error: String(error) },
-          });
+          await this.reportSecurityBreach('OS-SEC-001', 'encrypt_failed', error);
           throw error;
         }
       },
@@ -78,12 +80,7 @@ export class OmnisyncSecurity {
 
   /**
    * @method decryptSensitiveData
-   * @description Realiza la operación inversa de cifrado validando la integridad del payload.
-   * Esencial para recuperar credenciales de Odoo en tiempo de ejecución.
-   *
-   * @param {string | IEncryptedPayload} encryptedInput - Datos cifrados (JSON string o Objeto).
-   * @param {string} encryptionKey - Llave maestra del ecosistema.
-   * @returns {Promise<string>} Texto plano recuperado.
+   * @description Realiza la operación inversa de cifrado. Requiere motor Node.js.
    */
   public static async decryptSensitiveData(
     encryptedInput: string | IEncryptedPayload,
@@ -93,14 +90,19 @@ export class OmnisyncSecurity {
       'OmnisyncSecurity',
       'decryptSensitiveData',
       async () => {
+        if (!this.isNodeEnvironment()) {
+          throw new Error('OS-SEC-501: Descifrado prohibido en capas de interfaz/borde.');
+        }
+
         try {
-          // Normalización y Validación de ADN
+          const nodeCrypto = await import('node:crypto');
+          
           const payload: IEncryptedPayload =
             typeof encryptedInput === 'string'
               ? EncryptedPayloadSchema.parse(JSON.parse(encryptedInput))
               : EncryptedPayloadSchema.parse(encryptedInput);
 
-          const derivedKey = crypto.scryptSync(
+          const derivedKey = nodeCrypto.scryptSync(
             encryptionKey,
             this.DERIVATION_SALT,
             32,
@@ -111,7 +113,7 @@ export class OmnisyncSecurity {
           );
           const authTag = Buffer.from(payload.authTag, 'hex');
 
-          const decipher = crypto.createDecipheriv(
+          const decipher = nodeCrypto.createDecipheriv(
             this.ENCRYPTION_ALGORITHM,
             derivedKey,
             initializationVector,
@@ -128,18 +130,8 @@ export class OmnisyncSecurity {
 
           return decrypted;
         } catch (error: unknown) {
-          await OmnisyncSentinel.report({
-            errorCode: 'OS-SEC-002',
-            severity: 'CRITICAL',
-            apparatus: 'OmnisyncSecurity',
-            operation: 'decrypt',
-            message: 'security.encryption.integrity_violation',
-            context: { error: String(error) },
-            isRecoverable: false,
-          });
-          throw new Error(
-            'OS-SEC-002: Fallo crítico de integridad en desencriptación.',
-          );
+          await this.reportSecurityBreach('OS-SEC-002', 'decrypt_integrity_violation', error);
+          throw new Error('OS-SEC-002: Fallo de integridad en descifrado.');
         }
       },
     );
@@ -147,34 +139,26 @@ export class OmnisyncSecurity {
 
   /**
    * @method anonymizeForAI
-   * @description Limpia un texto de PII (teléfonos, emails) antes de enviarlo a Gemini.
+   * @description Limpia PII mediante lógica de strings (Edge-Safe).
    */
   public static anonymizeForAI(text: string): string {
-    let cleanText = text;
-
-    // RegEx de Élite para Emails
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    // RegEx para Teléfonos (Basado en E.164 simplificado)
     const phoneRegex = /\+?[1-9]\d{1,14}/g;
 
-    cleanText = cleanText.replace(emailRegex, '[REDACTED_EMAIL]');
-    cleanText = cleanText.replace(phoneRegex, '[REDACTED_PHONE]');
+    const cleanText = text
+      .replace(emailRegex, '[REDACTED_EMAIL]')
+      .replace(phoneRegex, '[REDACTED_PHONE]');
 
-    OmnisyncTelemetry.verbose(
-      'OmnisyncSecurity',
-      'anonymizeForAI',
-      'PII data has been redacted',
-    );
-
+    OmnisyncTelemetry.verbose('OmnisyncSecurity', 'anonymize', 'PII_REDACTED');
     return cleanText;
   }
 
   /**
    * @method verifyTokenIntegrity
-   * @description Valida si un token de sesión es estructuralmente correcto y no ha sido manipulado.
+   * @description Valida la estructura del token (Edge-Safe).
    */
   public static verifyTokenIntegrity(token: string): boolean {
-    const isTokenValid = token.length > 32;
+    const isTokenValid = typeof token === 'string' && token.length > 32;
 
     if (!isTokenValid) {
       OmnisyncSentinel.report({
@@ -183,10 +167,51 @@ export class OmnisyncSecurity {
         apparatus: 'OmnisyncSecurity',
         operation: 'verifyToken',
         message: 'security.auth.invalid_token',
-        context: { tokenPreview: token.substring(0, 10) },
+        context: { tokenPreview: token?.substring(0, 10) },
       });
     }
 
     return isTokenValid;
+  }
+
+  /**
+   * @method generateSovereignId
+   * @description Genera un identificador aleatorio compatible con Node y Edge.
+   */
+  public static generateSovereignId(): string {
+    if (typeof globalThis.crypto?.randomUUID === 'function') {
+      return globalThis.crypto.randomUUID();
+    }
+    // Fallback para entornos donde randomUUID no está habilitado
+    return Math.random().toString(36).substring(2, 15);
+  }
+
+  /**
+   * @method isNodeEnvironment
+   * @private
+   * @description Detecta si el runtime actual es Node.js nativo.
+   */
+  private static isNodeEnvironment(): boolean {
+    return (
+      typeof process !== 'undefined' &&
+      process.versions != null &&
+      process.versions.node != null
+    );
+  }
+
+  /**
+   * @method reportSecurityBreach
+   * @private
+   */
+  private static async reportSecurityBreach(code: string, op: string, error: unknown): Promise<void> {
+    await OmnisyncSentinel.report({
+      errorCode: code,
+      severity: 'CRITICAL',
+      apparatus: 'OmnisyncSecurity',
+      operation: op,
+      message: 'security.encryption.anomaly',
+      context: { errorTrace: String(error) },
+      isRecoverable: false,
+    });
   }
 }
